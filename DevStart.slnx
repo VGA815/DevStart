@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/DevStart.Domain/DevStart.Domain.csproj" Id="4a912fa3-ea21-44a6-b6bb-2c916917baf1" />
     <Project Path="src/DevStart.SharedKernel/DevStart.SharedKernel.csproj" />
   </Folder>
 </Solution>
