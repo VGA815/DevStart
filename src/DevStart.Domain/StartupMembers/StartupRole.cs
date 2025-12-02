@@ -2,7 +2,7 @@
 {
     public enum StartupRole
     {
-        Creator = 0,
+        Founder = 0,
         Administration = 1,
         Member = 2,
     }
