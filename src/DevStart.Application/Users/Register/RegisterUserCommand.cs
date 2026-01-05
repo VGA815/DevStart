@@ -2,6 +2,15 @@
 
 namespace DevStart.Application.Users.Register
 {
-    public sealed record RegisterUserCommand(string Email, string Password, string Username)
-        : ICommand<Guid>;
+    public sealed class RegisterUserCommand: ICommand<Guid>
+    {
+        public string Email { get; set; } = null!;
+        public string Password { get; set; } = null!;
+        public string Username { get; set; } = null!;
+        public string? Bio { get; set; }
+        public string? Name { get; set; }
+        public string? Url { get; set; }
+        public List<string> SocialMediaLinks { get; set; } = [];
+        public bool IsPublic { get; set; }
+    }
 }
