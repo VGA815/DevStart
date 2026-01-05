@@ -10,5 +10,15 @@ namespace DevStart.Domain.Users
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public User(string email, string username, string passwordHash, IDateTimeProvider dateTimeProvider)
+        {
+            Id = Guid.NewGuid();
+            Username = username;
+            Email = email;
+            PasswordHash = passwordHash;
+            CreatedAt = dateTimeProvider.UtcNow;
+            UpdatedAt = dateTimeProvider.UtcNow;
+        }
     }
 }

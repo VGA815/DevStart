@@ -9,9 +9,21 @@ namespace DevStart.Domain.StartupRoadmapItems
         public Guid StartupId { get; set; }
         public StartupStage StartupStage { get; set; }
         public string Title { get; set; }
-        public string Desription { get; set; }
+        public string? Desription { get; set; }
         public RoadmapItemStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime TargetDate { get; set; }
+
+        public StartupRoadmapItem(Guid startupId, StartupStage startupStage, string title, string? description, RoadmapItemStatus status, IDateTimeProvider dateTimeProvider, DateTime targetDate)
+        {
+            Id = Guid.NewGuid();
+            StartupId = startupId;
+            StartupStage = startupStage;
+            Title = title;
+            Desription = description;
+            Status = status;
+            CreatedAt = dateTimeProvider.UtcNow;
+            TargetDate = targetDate;
+        }
     }
 }

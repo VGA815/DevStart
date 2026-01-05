@@ -17,5 +17,32 @@ namespace DevStart.Domain.Startups
         public string AvatarUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public Startup(
+            string name, 
+            string publicEmail, 
+            string description, 
+            string url, 
+            bool isStopped, 
+            StartupStage stage, 
+            List<string> socialMediaLinks,
+            StartupLocation location,
+            string billingEmail,
+            string avatarUrl,
+            IDateTimeProvider dateTimeProvider)
+        {
+            Id = Guid.NewGuid();
+            Name = name;
+            PublicEmail = publicEmail;
+            Description = description;
+            Url = url;
+            IsStopped = isStopped;
+            Stage = stage;
+            SocialMediaLinks = socialMediaLinks;
+            Location = location;
+            BillingEmail = billingEmail;
+            AvatarUrl = avatarUrl;
+            CreatedAt = dateTimeProvider.UtcNow;
+            UpdatedAt = dateTimeProvider.UtcNow;
+        }
     }
 }
