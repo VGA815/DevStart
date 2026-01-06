@@ -13,7 +13,7 @@ namespace DevStart.Application.Profiles.Update
         public async Task<Result> Handle(UpdateProfileCommand command, CancellationToken cancellationToken)
         {
             Profile? profile = await context.Profiles
-                .SingleOrDefaultAsync(p => p.UserId == command.UserId, cancellationToken);
+                .SingleOrDefaultAsync(p => p.UserId == command.UserId && p.UserId == userContext.UserId, cancellationToken);
 
             if (profile == null)
             {

@@ -5,6 +5,7 @@ namespace DevStart.Application.Startups.Update
 {
     public sealed class UpdateStartupCommand : ICommand
     {
+        public Guid StartupId { get; set; }
         public string Name { get; set; } = null!;
         public string PublicEmail { get; set; } = null!;
         public string Description { get; set; } = null!;
