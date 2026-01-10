@@ -26,12 +26,7 @@ namespace DevStart.Application.UserPreferences.Create
                 return Result.Failure<Guid>(UserErrors.NotFound(command.UserId));
             }
 
-            UserPreference userPreference = new UserPreference()
-            {
-                UserId = userContext.UserId,
-                ReceiveNotifications = command.ReceiveNotifications,
-                Theme = command.Theme,
-            };
+            UserPreference userPreference = new UserPreference(userContext.UserId, command.Theme, command.ReceiveNotifications);
 
             context.Preferences.Add(userPreference);
 

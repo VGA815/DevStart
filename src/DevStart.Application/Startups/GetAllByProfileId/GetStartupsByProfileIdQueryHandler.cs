@@ -12,13 +12,17 @@ namespace DevStart.Application.Startups.GetAllByProfileId
     {
         public async Task<Result<List<StartupResponse>>> Handle(GetStartupsByProfileIdQuery query, CancellationToken cancellationToken)
         {
-            List<Guid> startupIds = await context.StartupMembers
+            List<Guid> startupMemberIds = await context.StartupMembers
                 .Where(sm => sm.ProfileId == query.ProfileId)
                 .Select(sm => sm.StartupId)
                 .ToListAsync(cancellationToken);
+            List<Guid> startupInvestorIds = await context.StartupInvestors
+                .Where(si => si.ProfileId == query.ProfileId && si.IsPublic)
+                .Select(si => si.StartupId)
+                .ToListAsync(cancellationToken);
 
             List<StartupResponse> startups = await context.Startups
-                .Where(s => startupIds.Contains(s.Id))
+                .Where(s => startupMemberIds.Contains(s.Id) || startupInvestorIds.Contains(s.Id))
                 .Select(s => new StartupResponse
                 {
                     Id = s.Id,

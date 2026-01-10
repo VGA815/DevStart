@@ -27,17 +27,7 @@ namespace DevStart.Application.Profiles.Create
             }
 
 
-            Profile profile = new Profile()
-            {
-                Name = command.Name,
-                AvatarUrl = command.AvatarUrl,
-                Bio = command.Bio,
-                IsAvailableForHire = command.IsAvailableForHire,
-                IsPublic = command.IsPublic,
-                SocialMediaLinks = command.SocialMediaLinks,
-                Url = command.Url,
-                UserId = command.UserId,
-            };
+            Profile profile = new Profile(command.UserId, command.SocialMediaLinks, command.IsAvailableForHire, command.IsPublic, command.Name, command.Url, command.AvatarUrl, command.Bio);
 
             context.Profiles.Add(profile);
 
