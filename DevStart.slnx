@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/DevStart.Application/DevStart.Application.csproj" Id="d01d910b-cc2e-493f-8250-17eb047265f1" />
     <Project Path="src/DevStart.Domain/DevStart.Domain.csproj" Id="4a912fa3-ea21-44a6-b6bb-2c916917baf1" />
+    <Project Path="src/DevStart.Infrastructure/DevStart.Infrastructure.csproj" Id="fa1a66f9-8c6c-40ac-9add-1da1ac7db586" />
     <Project Path="src/DevStart.SharedKernel/DevStart.SharedKernel.csproj" />
   </Folder>
 </Solution>
