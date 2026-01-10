@@ -9,5 +9,14 @@ namespace DevStart.Domain.StartupInvestors
         public bool IsPublic { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public StartupInvestor(Guid profileId, Guid startupId, bool isPublic, IDateTimeProvider dateTimeProvider)
+        {
+            ProfileId = profileId;
+            StartupId = startupId;
+            IsPublic = isPublic;
+            CreatedAt = dateTimeProvider.UtcNow;
+            UpdatedAt = dateTimeProvider.UtcNow;
+        }
     }
 }
