@@ -32,7 +32,7 @@ namespace DevStart.Application.StartupRoadmapItems.Create
                 command.Title,
                 command.Desription,
                 command.Status,
-                dateTimeProvider,
+                dateTimeProvider.UtcNow,
                 command.TargetDate);
 
             context.StartupRoadmapItems.Add(startupRoadmapItem);

@@ -26,7 +26,7 @@ namespace DevStart.Application.StartupFollowers.Create
             StartupFollower startupFollower = new StartupFollower(
                 command.ProfileId,
                 command.StartupId,
-                dateTimeProvider);
+                dateTimeProvider.UtcNow);
 
             context.StartupFollowers.Add(startupFollower);
 

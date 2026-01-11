@@ -19,7 +19,7 @@ namespace DevStart.Application.Users.Register
                 return Result.Failure<Guid>(UserErrors.EmailNotUnique);
             }
 
-            User user = new User(command.Email, command.Username, passwordHasher.Hash(command.Password), dateTimeProvider);
+            User user = new User(command.Email, command.Username, passwordHasher.Hash(command.Password), dateTimeProvider.UtcNow, dateTimeProvider.UtcNow);
             Profile profile = new Profile(user.Id, command.SocialMediaLinks, false, command.IsPublic, command.Name, command.Url, null, command.Bio);
             UserPreference userPreference = new UserPreference(user.Id, UserPreferenceTheme.System, true);
 

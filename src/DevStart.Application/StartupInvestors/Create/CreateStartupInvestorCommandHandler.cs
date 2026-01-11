@@ -27,7 +27,8 @@ namespace DevStart.Application.StartupInvestors.Create
                 command.ProfileId,
                 command.StartupId,
                 command.IsPublic,
-                dateTimeProvider);
+                dateTimeProvider.UtcNow,
+                dateTimeProvider.UtcNow);
 
             context.StartupInvestors.Add(startupInvestor);
 

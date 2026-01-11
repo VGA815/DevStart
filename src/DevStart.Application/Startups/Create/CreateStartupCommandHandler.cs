@@ -41,14 +41,16 @@ namespace DevStart.Application.Startups.Create
                 command.Location,
                 command.BillingEmail,
                 command.AvatarUrl,
-                dateTimeProvider);
+                dateTimeProvider.UtcNow,
+                dateTimeProvider.UtcNow);
 
             StartupMember startupMember = new StartupMember(
                 command.UserId,
                 startup.Id,
                 StartupRole.Founder,
                 true,
-                dateTimeProvider);
+                dateTimeProvider.UtcNow,
+                dateTimeProvider.UtcNow);
 
             StartupProduct startupProduct = new StartupProduct(
                 startup.Id,

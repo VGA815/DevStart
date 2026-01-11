@@ -25,7 +25,7 @@ namespace DevStart.Application.StartupMetrics.Create
                 command.StartupId,
                 command.MetricType,
                 command.Value,
-                dateTimeProvider);
+                dateTimeProvider.UtcNow);
 
             context.StartupMetrics.Add(startupMetric);
 
