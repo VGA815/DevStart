@@ -9,9 +9,13 @@ namespace DevStart.Infrastructure.UserPreferences
     {
         public void Configure(EntityTypeBuilder<UserPreference> builder)
         {
-            builder.HasKey(up => up.UserId);
+            builder.ToTable("user_preferences");
 
-            builder.HasOne<User>().WithOne();
+            builder.HasKey(x => x.UserId);
+
+            builder.Property(x => x.UserId).HasColumnName("user_id");
+            builder.Property(x => x.Theme).HasColumnName("theme");
+            builder.Property(x => x.ReceiveNotifications).HasColumnName("receive_notifications");
         }
     }
 }

@@ -8,11 +8,19 @@ namespace DevStart.Infrastructure.Users
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.HasKey(u => u.Id);
+            builder.ToTable("users");
 
-            builder.HasIndex(u => u.Email).IsUnique();
+            builder.HasKey(x => x.Id);
 
-            builder.Property(u => u.Username);
+            builder.Property(x => x.Id).HasColumnName("id");
+            builder.Property(x => x.Username).HasColumnName("username").IsRequired().HasMaxLength(100);
+            builder.Property(x => x.Email).HasColumnName("email").IsRequired().HasMaxLength(255);
+            builder.Property(x => x.PasswordHash).HasColumnName("password_hash").IsRequired();
+            builder.Property(x => x.CreatedAt).HasColumnName("created_at");
+            builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+            builder.HasIndex(x => x.Email).IsUnique();
+            builder.HasIndex(x => x.Username).IsUnique();
         }
     }
 }
