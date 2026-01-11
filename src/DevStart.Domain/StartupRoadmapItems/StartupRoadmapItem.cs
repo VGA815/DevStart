@@ -13,8 +13,12 @@ namespace DevStart.Domain.StartupRoadmapItems
         public RoadmapItemStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime TargetDate { get; set; }
+        public StartupRoadmapItem()
+        {
+            
+        }
 
-        public StartupRoadmapItem(Guid startupId, StartupStage startupStage, string title, string? description, RoadmapItemStatus status, IDateTimeProvider dateTimeProvider, DateTime targetDate)
+        public StartupRoadmapItem(Guid startupId, StartupStage startupStage, string title, string? description, RoadmapItemStatus status, DateTime createdAt, DateTime targetDate)
         {
             Id = Guid.NewGuid();
             StartupId = startupId;
@@ -22,7 +26,7 @@ namespace DevStart.Domain.StartupRoadmapItems
             Title = title;
             Desription = description;
             Status = status;
-            CreatedAt = dateTimeProvider.UtcNow;
+            CreatedAt = createdAt;
             TargetDate = targetDate;
         }
     }

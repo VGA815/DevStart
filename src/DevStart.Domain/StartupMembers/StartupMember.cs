@@ -11,14 +11,14 @@ namespace DevStart.Domain.StartupMembers
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        public StartupMember(Guid profileId, Guid startupId, StartupRole role, bool isPublic, IDateTimeProvider dateTimeProvider)
+        public StartupMember(Guid profileId, Guid startupId, StartupRole role, bool isPublic, DateTime createdAt, DateTime updatedAt)
         {
             ProfileId = profileId;
             StartupId = startupId;
             Role = role;
             IsPublic = isPublic;
-            CreatedAt = dateTimeProvider.UtcNow;
-            UpdatedAt = dateTimeProvider.UtcNow;
+            CreatedAt = createdAt;
+            UpdatedAt = updatedAt;
         }
     }
 }

@@ -10,12 +10,12 @@ namespace DevStart.Domain.StartupMetrics
         public decimal Value { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        public StartupMetric(Guid startupId, MetricType metricType, decimal value, IDateTimeProvider dateTimeProvider)
+        public StartupMetric(Guid startupId, MetricType metricType, decimal value, DateTime createdAt)
         {
             Id = Guid.NewGuid();
             MetricType = metricType;
             Value = value;
-            CreatedAt = dateTimeProvider.UtcNow;
+            CreatedAt = createdAt;
             StartupId = startupId;
         }
     }

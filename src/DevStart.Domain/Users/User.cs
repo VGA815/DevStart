@@ -11,14 +11,14 @@ namespace DevStart.Domain.Users
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        public User(string email, string username, string passwordHash, IDateTimeProvider dateTimeProvider)
+        public User(string email, string username, string passwordHash, DateTime createdAt, DateTime updatedAt)
         {
             Id = Guid.NewGuid();
             Username = username;
             Email = email;
             PasswordHash = passwordHash;
-            CreatedAt = dateTimeProvider.UtcNow;
-            UpdatedAt = dateTimeProvider.UtcNow;
+            CreatedAt = createdAt;
+            UpdatedAt = updatedAt;
         }
     }
 }

@@ -28,7 +28,8 @@ namespace DevStart.Domain.Startups
             StartupLocation location,
             string billingEmail,
             string avatarUrl,
-            IDateTimeProvider dateTimeProvider)
+            DateTime createdAt,
+            DateTime updatedAt)
         {
             Id = Guid.NewGuid();
             Name = name;
@@ -41,8 +42,8 @@ namespace DevStart.Domain.Startups
             Location = location;
             BillingEmail = billingEmail;
             AvatarUrl = avatarUrl;
-            CreatedAt = dateTimeProvider.UtcNow;
-            UpdatedAt = dateTimeProvider.UtcNow;
+            CreatedAt = createdAt;
+            UpdatedAt = updatedAt;
         }
     }
 }

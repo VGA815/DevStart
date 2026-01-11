@@ -10,13 +10,13 @@ namespace DevStart.Domain.StartupInvestors
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        public StartupInvestor(Guid profileId, Guid startupId, bool isPublic, IDateTimeProvider dateTimeProvider)
+        public StartupInvestor(Guid profileId, Guid startupId, bool isPublic, DateTime createdAt, DateTime updatedAt)
         {
             ProfileId = profileId;
             StartupId = startupId;
             IsPublic = isPublic;
-            CreatedAt = dateTimeProvider.UtcNow;
-            UpdatedAt = dateTimeProvider.UtcNow;
+            CreatedAt = createdAt;
+            UpdatedAt = updatedAt;
         }
     }
 }
