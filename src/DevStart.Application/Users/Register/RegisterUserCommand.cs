@@ -12,5 +12,16 @@ namespace DevStart.Application.Users.Register
         public string? Url { get; set; }
         public List<string> SocialMediaLinks { get; set; } = [];
         public bool IsPublic { get; set; }
+        public RegisterUserCommand(string email, string password, string username, string? bio, string? name, string? url, List<string> socialMediaLinks, bool isPublic)
+        {
+            Email = email;
+            Password = password;
+            Username = username;
+            Bio = bio;
+            Name = name;
+            Url = url;
+            SocialMediaLinks = socialMediaLinks;
+            IsPublic = isPublic;
+        }
     }
 }

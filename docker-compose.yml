@@ -1,0 +1,37 @@
+services:
+  devstart.webapi:
+    image: ${DOCKER_REGISTRY-}devstartwebapi
+    build:
+      context: .
+      dockerfile: src/DevStart.WebApi/Dockerfile
+    networks:
+      - devstart-net
+  main-db:
+    container_name: main-db
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - 5432:5432
+    networks:
+      - devstart-net
+    volumes:
+      - main-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: psql -U postgres -q -d postgres -c "SELECT 'ready';"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  seq:
+    image: datalust/seq:2024.3
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    networks:
+      - devstart-net
+    ports:
+      - 8081:80

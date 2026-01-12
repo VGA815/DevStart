@@ -6,4 +6,7 @@
     <Project Path="src/DevStart.SharedKernel/DevStart.SharedKernel.csproj" />
     <Project Path="src/DevStart.WebApi/DevStart.WebApi.csproj" Id="0c4ac40a-2654-474d-877f-0376b1396604" />
   </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
 </Solution>
