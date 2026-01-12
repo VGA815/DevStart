@@ -17,7 +17,7 @@ using System.Text;
 
 namespace DevStart.Infrastructure
 {
-    internal static class DependencyInjection
+    public static class DependencyInjection
     {
         public static IServiceCollection AddInfrastructure(
             this IServiceCollection services,
