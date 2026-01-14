@@ -56,7 +56,7 @@ namespace DevStart.Infrastructure.Database
             modelBuilder.HasDefaultSchema(Schemas.Default);
         }
 
-        public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             int result = await base.SaveChangesAsync(cancellationToken);
 

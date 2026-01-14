@@ -47,7 +47,8 @@ namespace DevStart.Infrastructure.DomainEvents
                 return (HandlerWrapper)Activator.CreateInstance(wrapperType, handler);
             }
         }
-        private abstract class HandlerWrapper<T>(object handler) : HandlerWrapper where T : IDomainEvent
+
+        private sealed class HandlerWrapper<T>(object handler) : HandlerWrapper where T : IDomainEvent
         {
             private readonly IDomainEventHandler<T> _handler = (IDomainEventHandler<T>)handler;
 

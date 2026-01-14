@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 
 namespace DevStart.Infrastructure.Database
@@ -15,7 +16,7 @@ namespace DevStart.Infrastructure.Database
             .Build();
 
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseNpgsql(config.GetConnectionString("Database"))
+                .UseNpgsql(config.GetConnectionString("Database"), o => o.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Default)).UseSnakeCaseNamingConvention()
                 .Options;
 
             return new ApplicationDbContext(

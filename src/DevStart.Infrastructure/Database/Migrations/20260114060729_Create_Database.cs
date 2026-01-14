@@ -26,7 +26,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_email_verification_tokens", x => x.token_id);
+                    table.PrimaryKey("pk_email_verification_tokens", x => x.token_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -44,7 +44,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_media_files", x => x.id);
+                    table.PrimaryKey("pk_media_files", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -63,7 +63,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_profiles", x => x.user_id);
+                    table.PrimaryKey("pk_profiles", x => x.user_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -80,7 +80,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startup_document_files", x => x.id);
+                    table.PrimaryKey("pk_startup_document_files", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -94,7 +94,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startup_followers", x => new { x.profile_id, x.startup_id });
+                    table.PrimaryKey("pk_startup_followers", x => new { x.profile_id, x.startup_id });
                 });
 
             migrationBuilder.CreateTable(
@@ -110,7 +110,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startup_investors", x => new { x.profile_id, x.startup_id });
+                    table.PrimaryKey("pk_startup_investors", x => new { x.profile_id, x.startup_id });
                 });
 
             migrationBuilder.CreateTable(
@@ -127,7 +127,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startup_members", x => new { x.profile_id, x.startup_id });
+                    table.PrimaryKey("pk_startup_members", x => new { x.profile_id, x.startup_id });
                 });
 
             migrationBuilder.CreateTable(
@@ -143,7 +143,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startup_metrics", x => x.id);
+                    table.PrimaryKey("pk_startup_metrics", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -160,7 +160,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startup_products", x => x.startup_id);
+                    table.PrimaryKey("pk_startup_products", x => x.startup_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -179,7 +179,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startup_roadmap_items", x => x.id);
+                    table.PrimaryKey("pk_startup_roadmap_items", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -203,7 +203,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_startups", x => x.id);
+                    table.PrimaryKey("pk_startups", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -217,7 +217,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_user_preferences", x => x.user_id);
+                    table.PrimaryKey("pk_user_preferences", x => x.user_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -234,36 +234,36 @@ namespace DevStart.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_users", x => x.id);
+                    table.PrimaryKey("pk_users", x => x.id);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_email_verification_tokens_user_id",
+                name: "ix_email_verification_tokens_user_id",
                 schema: "public",
                 table: "email_verification_tokens",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_startup_metrics_startup_id",
+                name: "ix_startup_metrics_startup_id",
                 schema: "public",
                 table: "startup_metrics",
                 column: "startup_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_startup_roadmap_items_startup_id",
+                name: "ix_startup_roadmap_items_startup_id",
                 schema: "public",
                 table: "startup_roadmap_items",
                 column: "startup_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_email",
+                name: "ix_users_email",
                 schema: "public",
                 table: "users",
                 column: "email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_username",
+                name: "ix_users_username",
                 schema: "public",
                 table: "users",
                 column: "username",

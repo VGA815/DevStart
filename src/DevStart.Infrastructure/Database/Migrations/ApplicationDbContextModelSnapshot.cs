@@ -42,9 +42,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
-                    b.HasKey("TokenId");
+                    b.HasKey("TokenId")
+                        .HasName("pk_email_verification_tokens");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_email_verification_tokens_user_id");
 
                     b.ToTable("email_verification_tokens", "public");
                 });
@@ -82,7 +84,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("uploader_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_media_files");
 
                     b.ToTable("media_files", "public");
                 });
@@ -123,7 +126,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("url");
 
-                    b.HasKey("UserId");
+                    b.HasKey("UserId")
+                        .HasName("pk_profiles");
 
                     b.ToTable("profiles", "public");
                 });
@@ -157,7 +161,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("upload_date");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_startup_document_files");
 
                     b.ToTable("startup_document_files", "public");
                 });
@@ -176,7 +181,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.HasKey("ProfileId", "StartupId");
+                    b.HasKey("ProfileId", "StartupId")
+                        .HasName("pk_startup_followers");
 
                     b.ToTable("startup_followers", "public");
                 });
@@ -203,7 +209,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.HasKey("ProfileId", "StartupId");
+                    b.HasKey("ProfileId", "StartupId")
+                        .HasName("pk_startup_investors");
 
                     b.ToTable("startup_investors", "public");
                 });
@@ -234,7 +241,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
-                    b.HasKey("ProfileId", "StartupId");
+                    b.HasKey("ProfileId", "StartupId")
+                        .HasName("pk_startup_members");
 
                     b.ToTable("startup_members", "public");
                 });
@@ -262,9 +270,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("numeric")
                         .HasColumnName("value");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_startup_metrics");
 
-                    b.HasIndex("StartupId");
+                    b.HasIndex("StartupId")
+                        .HasDatabaseName("ix_startup_metrics_startup_id");
 
                     b.ToTable("startup_metrics", "public");
                 });
@@ -301,7 +311,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("value_proposition");
 
-                    b.HasKey("StartupId");
+                    b.HasKey("StartupId")
+                        .HasName("pk_startup_products");
 
                     b.ToTable("startup_products", "public");
                 });
@@ -342,9 +353,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("title");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_startup_roadmap_items");
 
-                    b.HasIndex("StartupId");
+                    b.HasIndex("StartupId")
+                        .HasDatabaseName("ix_startup_roadmap_items_startup_id");
 
                     b.ToTable("startup_roadmap_items", "public");
                 });
@@ -411,7 +424,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("url");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_startups");
 
                     b.ToTable("startups", "public");
                 });
@@ -431,7 +445,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("theme");
 
-                    b.HasKey("UserId");
+                    b.HasKey("UserId")
+                        .HasName("pk_user_preferences");
 
                     b.ToTable("user_preferences", "public");
                 });
@@ -468,13 +483,16 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("username");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_users");
 
                     b.HasIndex("Email")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_email");
 
                     b.HasIndex("Username")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_username");
 
                     b.ToTable("users", "public");
                 });
