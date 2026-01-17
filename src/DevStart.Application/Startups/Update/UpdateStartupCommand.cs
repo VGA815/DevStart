@@ -16,5 +16,21 @@ namespace DevStart.Application.Startups.Update
         public StartupLocation Location { get; set; }
         public string BillingEmail { get; set; } = null!;
         public string AvatarUrl { get; set; } = null!;
+
+        public UpdateStartupCommand(Guid startupId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage startupStage,
+            List<string> socialMediaLinks, StartupLocation location, string billingEmail, string avatarUrl)
+        {
+            StartupId = startupId;
+            Name = name;
+            PublicEmail = publicEmail;
+            Description = description;
+            Url = url;
+            IsStopped = isStopped;
+            Stage = startupStage;
+            SocialMediaLinks = socialMediaLinks;
+            Location = location;
+            BillingEmail = billingEmail;
+            AvatarUrl = avatarUrl;
+        }
     }
 }

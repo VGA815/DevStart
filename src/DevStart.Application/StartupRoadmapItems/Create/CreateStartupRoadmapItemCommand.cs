@@ -12,5 +12,15 @@ namespace DevStart.Application.StartupRoadmapItems.Create
         public string? Desription { get; set; }
         public RoadmapItemStatus Status { get; set; }
         public DateTime TargetDate { get; set; }
+
+        public CreateStartupRoadmapItemCommand(Guid startupId, StartupStage startupStage, string title, string? description, RoadmapItemStatus status, DateTime targetDate)
+        {
+            StartupId = startupId;
+            StartupStage = startupStage;
+            Title = title;
+            Desription = description;
+            Status = status;
+            TargetDate = targetDate;
+        }
     }
 }

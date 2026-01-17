@@ -13,5 +13,16 @@ namespace DevStart.Application.StartupRoadmapItems.Update
         public string? Desription { get; set; }
         public RoadmapItemStatus Status { get; set; }
         public DateTime TargetDate { get; set; }
+
+        public UpdateStartupRoadmapItemCommand(Guid itemId, Guid startupId, StartupStage startupStage, string title, string? description, RoadmapItemStatus status, DateTime targetDate)
+        {
+            ItemId = itemId;
+            StartupId = startupId;
+            StartupStage = startupStage;
+            Title = title;
+            Desription = description;
+            Status = status;
+            TargetDate = targetDate;
+        }
     }
 }
