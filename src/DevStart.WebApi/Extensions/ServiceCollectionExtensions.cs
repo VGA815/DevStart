@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 
 namespace DevStart.WebApi.Extensions
@@ -24,24 +23,12 @@ namespace DevStart.WebApi.Extensions
 
                 o.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, securityScheme);
 
-                /*
-                var securityRequirement = new OpenApiSecurityRequirement
-                {
-                    {
-                        new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = JwtBearerDefaults.AuthenticationScheme
-                        }
-                    },
-                    []
-                    }
-                };
 
-                o.AddSecurityRequirement(securityRequirement);
-                */
+                o.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+                {
+                    [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+                });
+                
             });
 
             return services;
