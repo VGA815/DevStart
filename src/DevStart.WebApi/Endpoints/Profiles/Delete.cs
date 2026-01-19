@@ -1,30 +1,30 @@
 ﻿
 using DevStart.Application.Abstractions.Messaging;
-using DevStart.Application.StartupMetrics.Delete;
+using DevStart.Application.Profiles.Delete;
 using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
 using DevStart.WebApi.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 
-namespace DevStart.WebApi.Endpoints.StartupMetrics
+namespace DevStart.WebApi.Endpoints.Profiles
 {
     internal sealed class Delete : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("startups/metrics", async (
-                [FromQuery] Guid metricId, 
-                ICommandHandler<DeleteStartupMetricCommand> handler, 
+            app.MapDelete("profiles", async (
+                [FromQuery] Guid profileId, 
+                ICommandHandler<DeleteProfileCommand> handler, 
                 CancellationToken cancellationToken) =>
             {
-                var command = new DeleteStartupMetricCommand(metricId);
+                var command = new DeleteProfileCommand(profileId);
 
                 Result result = await handler.Handle(command, cancellationToken);
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
                 .RequireAuthorization()
-                .WithTags(Tags.StartupMetrics);
+                .WithTags(Tags.Profiles);
         }
     }
 }
