@@ -7,9 +7,8 @@ namespace DevStart.Application.StartupMetrics.Update
         public UpdateStartupMetricCommandValidator()
         {
             RuleFor(x => x.StartupId).NotEmpty();
-            RuleFor(x => x.CreatedAt).NotEmpty();
             RuleFor(x => x.Id).NotEmpty();
-            RuleFor(x => x.MetricType).NotEmpty().IsInEnum();
+            RuleFor(x => x.MetricType).IsInEnum();
             RuleFor(x => x.Value).NotEmpty();
         }
     }

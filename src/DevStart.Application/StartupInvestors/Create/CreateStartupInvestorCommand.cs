@@ -7,5 +7,12 @@ namespace DevStart.Application.StartupInvestors.Create
         public Guid StartupId { get; set; }
         public Guid ProfileId { get; set; }
         public bool IsPublic { get; set; }
+
+        public CreateStartupInvestorCommand(Guid startupId, Guid profileId, bool isPublic)
+        {
+            StartupId = startupId;
+            ProfileId = profileId;
+            IsPublic = isPublic;
+        }
     }
 }

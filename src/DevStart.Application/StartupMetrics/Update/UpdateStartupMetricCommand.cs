@@ -9,6 +9,13 @@ namespace DevStart.Application.StartupMetrics.Update
         public Guid StartupId { get; set; }
         public MetricType MetricType { get; set; }
         public decimal Value { get; set; }
-        public DateTime CreatedAt { get; set; }
+
+        public UpdateStartupMetricCommand(Guid id, Guid startupId, MetricType metricType, decimal value)
+        {
+            Id = id;
+            StartupId = startupId;
+            MetricType = metricType;
+            Value = value;
+        }
     }
 }

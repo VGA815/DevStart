@@ -6,5 +6,11 @@ namespace DevStart.Application.StartupFollowers.Create
     {
         public Guid StartupId { get; set; }
         public Guid ProfileId { get; set; }
+
+        public CreateStartupFollowerCommand(Guid startupId, Guid profileId)
+        {
+            StartupId = startupId;
+            ProfileId = profileId;
+        }
     }
 }

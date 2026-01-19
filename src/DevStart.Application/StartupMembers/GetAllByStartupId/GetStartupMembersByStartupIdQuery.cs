@@ -2,5 +2,5 @@
 
 namespace DevStart.Application.StartupMembers.GetAllByStartupId
 {
-    public sealed record GetStartupMembersByStartupIdQuery(Guid StartupId, Guid ProfileId) : IQuery<List<StartupMemberResponse>>;
+    public sealed record GetStartupMembersByStartupIdQuery(Guid StartupId) : IQuery<List<StartupMemberResponse>>;
 }
