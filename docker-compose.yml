@@ -35,3 +35,17 @@ services:
       - devstart-net
     ports:
       - 8081:80
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    networks:
+      - devstart-net
+    ports:
+      - "9000:9000"
+      - "9090:9090"
+    environment:
+      MINIO_ROOT_USER: "minioadmin"
+      MINIO_ROOT_PASSWORD: "minioadminpassword"
+    volumes:
+      - minio-data:/data
+    command: minio server /data
