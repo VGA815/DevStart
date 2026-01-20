@@ -7,7 +7,6 @@ namespace DevStart.Application.StartupInvestors.ChangeVisibility
         public ChangeStartupInvestorVisibilityCommandValidator()
         {
             RuleFor(x => x.StartupId).NotEmpty();
-            RuleFor(x => x.IsPublic).NotEmpty();
         }
     }
 }

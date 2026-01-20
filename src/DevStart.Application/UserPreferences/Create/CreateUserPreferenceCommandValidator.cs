@@ -7,7 +7,6 @@ namespace DevStart.Application.UserPreferences.Create
         public CreateUserPreferenceCommandValidator()
         {
             RuleFor(up => up.UserId).NotEmpty();
-            RuleFor(up => up.ReceiveNotifications).NotEmpty();
             RuleFor(up => up.Theme).IsInEnum();
         }
     }

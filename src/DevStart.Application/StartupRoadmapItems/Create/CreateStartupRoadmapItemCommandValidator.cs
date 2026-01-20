@@ -8,8 +8,8 @@ namespace DevStart.Application.StartupRoadmapItems.Create
         {
             RuleFor(sri => sri.Title).NotEmpty();
             RuleFor(sri => sri.StartupId).NotEmpty();
-            RuleFor(sri => sri.StartupStage).NotEmpty().IsInEnum();
-            RuleFor(sri => sri.Status).NotEmpty().IsInEnum();
+            RuleFor(sri => sri.StartupStage).IsInEnum();
+            RuleFor(sri => sri.Status).IsInEnum();
         }
     }
 }

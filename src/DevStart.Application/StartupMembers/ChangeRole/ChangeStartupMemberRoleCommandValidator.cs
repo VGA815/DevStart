@@ -8,7 +8,7 @@ namespace DevStart.Application.StartupMembers.ChangeRole
         {
             RuleFor(x => x.StartupId).NotEmpty();
             RuleFor(x => x.ProfileId).NotEmpty();
-            RuleFor(x => x.Role).NotEmpty().IsInEnum();
+            RuleFor(x => x.Role).IsInEnum();
         }
     }
 }

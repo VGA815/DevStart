@@ -12,9 +12,8 @@ namespace DevStart.Application.Startups.Create
             RuleFor(s => s.PublicEmail).NotEmpty();
             RuleFor(s => s.BillingEmail).NotEmpty();
             RuleFor(s => s.AvatarUrl).NotEmpty();
-            RuleFor(s => s.Stage).NotEmpty().IsInEnum();
-            RuleFor(s => s.IsStopped).NotEmpty();
-            RuleFor(s => s.Location).NotEmpty();
+            RuleFor(s => s.Stage).IsInEnum();
+            RuleFor(s => s.Location).IsInEnum();
             RuleFor(s => s.Stack).NotEmpty();
             RuleFor(s => s.ProductValueProposition).NotEmpty();
             RuleFor(s => s.ProductProblemSolution).NotEmpty();

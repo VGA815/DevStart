@@ -8,7 +8,6 @@ namespace DevStart.Application.Profiles.Create
         {
             RuleFor(c => c.UserId).NotEmpty();
             RuleFor(c => c.IsPublic).NotEmpty();
-            RuleFor(c => c.IsAvailableForHire).NotEmpty();
         }
     }
 }

@@ -7,7 +7,6 @@ namespace DevStart.Application.StartupInvestors.Create
         public CreateStartupInvestorCommandValidator()
         {
             RuleFor(x => x.StartupId).NotEmpty();
-            RuleFor(x => x.IsPublic).NotEmpty();
             RuleFor(x => x.ProfileId).NotEmpty();
         }
     }

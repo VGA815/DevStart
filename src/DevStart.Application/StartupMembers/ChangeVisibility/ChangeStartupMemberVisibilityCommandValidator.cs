@@ -7,7 +7,6 @@ namespace DevStart.Application.StartupMembers.ChangeVisibility
         public ChangeStartupMemberVisibilityCommandValidator()
         {
             RuleFor(x => x.StartupId).NotEmpty();
-            RuleFor(x => x.IsPublic).NotEmpty();
             RuleFor(x => x.ProfileId).NotEmpty();
         }
     }
