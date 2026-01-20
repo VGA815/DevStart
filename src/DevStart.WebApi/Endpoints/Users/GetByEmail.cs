@@ -12,17 +12,16 @@ namespace DevStart.WebApi.Endpoints.Users
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapGet("users", async (
-                [FromQuery] string Email, 
+                [FromQuery] string email, 
                 IQueryHandler<GetUserByEmailQuery, UserResponse> handler, 
                 CancellationToken cancellationToken) =>
             {
-                var query = new GetUserByEmailQuery(Email);
+                var query = new GetUserByEmailQuery(email);
 
                 Result<UserResponse> result = await handler.Handle(query, cancellationToken);
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .HasPermission(Permissions.UsersAccess)
                 .WithTags(Tags.Users);
         }
     }
