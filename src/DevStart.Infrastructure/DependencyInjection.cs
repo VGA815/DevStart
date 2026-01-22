@@ -4,6 +4,7 @@ using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.Database;
 using DevStart.Infrastructure.DomainEvents;
+using DevStart.Infrastructure.FileStorage;
 using DevStart.Infrastructure.Time;
 using DevStart.SharedKernel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,6 +14,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Minio;
 using System.Text;
 
 namespace DevStart.Infrastructure
@@ -25,6 +27,7 @@ namespace DevStart.Infrastructure
             services
                 .AddServices()
                 .AddDatabase(configuration)
+                .AddFileStorage(configuration)
                 .AddHealthChecks(configuration)
                 .AddAuthenticationInternal(configuration)
                 .AddAuthorizationInternal();
@@ -90,6 +93,21 @@ namespace DevStart.Infrastructure
             services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
             services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+
+            return services;
+        }
+        private static IServiceCollection AddFileStorage(this IServiceCollection services, IConfiguration configuration)
+        {            
+            services.AddSingleton(opt =>
+            {
+                return new MinioClient()
+                    .WithEndpoint(configuration["Minio:Endpoint"])
+                    .WithCredentials(configuration["Minio:AccessKey"], configuration["Minio:SecretKey"])
+                    .WithSSL(bool.Parse(configuration["Minio:UseSsl"]!))
+                    .Build();
+            });
+
+            services.AddScoped<IFileStorage, MinioFileStorage>();
 
             return services;
         }
