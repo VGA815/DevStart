@@ -9,12 +9,10 @@ namespace DevStart.Infrastructure.FileStorage
     public class MinioFileStorage : IFileStorage
     {
         private readonly MinioClient minioClient;
-        private readonly string bucket;
         public MinioFileStorage(IOptions<MinioOptions> options)
         {
             var o = options.Value;
             
-            bucket = o.Bucket;
             minioClient = (MinioClient)new MinioClient()
                 .WithEndpoint(o.Endpoint)
                 .WithCredentials(o.AccessKey, o.SecretKey)
@@ -24,10 +22,11 @@ namespace DevStart.Infrastructure.FileStorage
         public async Task UploadAsync(
             string objectName,
             Stream data,
+            string bucket,
             string contentType,
             CancellationToken ct)
         {
-            await EnsureBucketExists(ct);
+            await EnsureBucketExists(bucket, ct);
 
             var args = new PutObjectArgs()
                 .WithBucket(bucket)
@@ -41,6 +40,7 @@ namespace DevStart.Infrastructure.FileStorage
 
         public async Task<Stream> DownloadAsync(
             string objectName,
+            string bucket,
             CancellationToken ct)
         {
             var ms = new MemoryStream();
@@ -58,6 +58,7 @@ namespace DevStart.Infrastructure.FileStorage
 
         public async Task DeleteAsync(
             string objectName,
+            string bucket,
             CancellationToken ct)
         {
             var args = new RemoveObjectArgs()
@@ -67,7 +68,7 @@ namespace DevStart.Infrastructure.FileStorage
             await minioClient.RemoveObjectAsync(args, ct);
         }
 
-        private async Task EnsureBucketExists(CancellationToken ct)
+        private async Task EnsureBucketExists(string bucket, CancellationToken ct)
         {
             var exists = await minioClient.BucketExistsAsync(
                 new BucketExistsArgs().WithBucket(bucket), ct);

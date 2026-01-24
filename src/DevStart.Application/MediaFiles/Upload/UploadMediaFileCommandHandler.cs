@@ -17,23 +17,25 @@ namespace DevStart.Application.MediaFiles.Upload
             {
                 return Result.Failure<Guid>(UserErrors.NotFound(command.OwnerId));
             }
+            Guid fileId = Guid.NewGuid();
 
+            var objectKey = $"/users/{userContext.UserId}/{fileId}.webp";
+            
             MediaFile mediaFile = new MediaFile()
             {
                 FileSize = (int)command.Size,
                 FileType = MediaFileType.Img,
-                FileUrl = "",
-                Id = Guid.NewGuid(),
-                Name = $"USERID_{userContext.UserId}_MEDIAFILE",
+                FileUrl = objectKey,
+                Id = fileId,
+                Name = command.Bucket,
                 UploadDate = dateTimeProvider.UtcNow,
                 UploaderId = userContext.UserId
             };
 
-            var objectKey = $"files/{mediaFile.Id}";
-
             await fileStorage.UploadAsync(
                 objectKey,
                 command.FileStream,
+                command.Bucket,
                 command.ContentType,
                 cancellationToken);
 

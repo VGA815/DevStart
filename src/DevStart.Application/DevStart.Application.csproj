@@ -20,4 +20,8 @@
     <ProjectReference Include="..\DevStart.Domain\DevStart.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="MediaFiles\GetById\" />
+  </ItemGroup>
+
 </Project>

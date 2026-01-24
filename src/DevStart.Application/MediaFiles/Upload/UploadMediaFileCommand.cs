@@ -7,14 +7,16 @@ namespace DevStart.Application.MediaFiles.Upload
         public Guid OwnerId { get; set; }
         public Stream FileStream { get; set; } = null!;
         public string ContentType { get; set; } = null!;
+        public string Bucket {  get; set; } = null!;
         public long Size { get; set; }
 
-        public UploadMediaFileCommand(Guid ownerId, Stream fileStream, string contentType, long size)
+        public UploadMediaFileCommand(Guid ownerId, Stream fileStream, string contentType, long size, string bucket)
         {
             OwnerId = ownerId;
             FileStream = fileStream;
             ContentType = contentType;
             Size = size;
+            Bucket = bucket;
         }
     }
 }

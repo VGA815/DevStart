@@ -5,15 +5,14 @@ using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
 using DevStart.WebApi.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json.Serialization;
 
 namespace DevStart.WebApi.Endpoints.MediaFiles
 {
-    internal sealed class Upload : IEndpoint
+    internal sealed class UploadAvatar : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("files/media", async (IFormFile file, [FromQuery] Guid ownerId, ICommandHandler<UploadMediaFileCommand, Guid> handler, CancellationToken cancellationToken) =>
+            app.MapPost("users/avatars", async (IFormFile file, [FromQuery] Guid ownerId, ICommandHandler<UploadMediaFileCommand, Guid> handler, CancellationToken cancellationToken) =>
             {
                 await using var stream = file.OpenReadStream();
 
@@ -21,7 +20,9 @@ namespace DevStart.WebApi.Endpoints.MediaFiles
                     ownerId,
                     stream,
                     file.ContentType,
-                    file.Length);
+                    file.Length,
+                    "avatars");
+                    
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
 
