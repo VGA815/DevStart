@@ -6,15 +6,14 @@
             string objectKey,
             Stream data,
             string contentType,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken);
 
-        Task<string> GetPresignedUrlAsync(
-            string objectKey,
-            TimeSpan expiresIn,
-            CancellationToken cancellationToken= default);
+        Task<Stream> DownloadAsync(
+            string objectName,
+            CancellationToken cancellationToken);
 
         Task DeleteAsync(
             string objectKey,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken);
     }
 }

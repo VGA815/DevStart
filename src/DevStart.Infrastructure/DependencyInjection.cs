@@ -97,17 +97,11 @@ namespace DevStart.Infrastructure
             return services;
         }
         private static IServiceCollection AddFileStorage(this IServiceCollection services, IConfiguration configuration)
-        {            
-            services.AddSingleton(opt =>
-            {
-                return new MinioClient()
-                    .WithEndpoint(configuration["Minio:Endpoint"])
-                    .WithCredentials(configuration["Minio:AccessKey"], configuration["Minio:SecretKey"])
-                    .WithSSL(bool.Parse(configuration["Minio:UseSsl"]!))
-                    .Build();
-            });
+        {
+            services.Configure<MinioOptions>(
+                    configuration.GetSection("Minio"));
 
-            services.AddScoped<IFileStorage, MinioFileStorage>();
+            services.AddSingleton<IFileStorage, MinioFileStorage>();
 
             return services;
         }

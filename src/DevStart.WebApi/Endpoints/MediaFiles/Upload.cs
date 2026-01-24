@@ -28,6 +28,7 @@ namespace DevStart.WebApi.Endpoints.MediaFiles
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
                 .RequireAuthorization()
+                .DisableAntiforgery()
                 .WithTags(Tags.MediaFiles);
         }
     }
