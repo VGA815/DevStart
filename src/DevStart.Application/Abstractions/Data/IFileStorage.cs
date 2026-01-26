@@ -18,5 +18,11 @@
             string objectKey,
             string bucket,
             CancellationToken cancellationToken);
+
+        Task<string> GetPresignedUrl(
+            string objectKey,
+            string bucket,
+            int expirySeconds,
+            CancellationToken cancellationToken);
     }
 }

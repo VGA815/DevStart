@@ -7,5 +7,6 @@
         public string SecretKey { get; init; } = null!;
         public string Bucket { get; init; } = null!;
         public bool UseSsl { get; init; }
+        public string PubEndpoint { get; init; } = null!;
     }
 }

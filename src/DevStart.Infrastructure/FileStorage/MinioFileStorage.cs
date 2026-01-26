@@ -9,12 +9,19 @@ namespace DevStart.Infrastructure.FileStorage
     public class MinioFileStorage : IFileStorage
     {
         private readonly MinioClient minioClient;
+        private readonly MinioClient _pubClient;
         public MinioFileStorage(IOptions<MinioOptions> options)
         {
             var o = options.Value;
             
             minioClient = (MinioClient)new MinioClient()
                 .WithEndpoint(o.Endpoint)
+                .WithCredentials(o.AccessKey, o.SecretKey)
+                .WithSSL(o.UseSsl)
+                .Build();
+
+            _pubClient = (MinioClient)new MinioClient()
+                .WithEndpoint(o.PubEndpoint)
                 .WithCredentials(o.AccessKey, o.SecretKey)
                 .WithSSL(o.UseSsl)
                 .Build();
@@ -78,6 +85,15 @@ namespace DevStart.Infrastructure.FileStorage
                 await minioClient.MakeBucketAsync(
                     new MakeBucketArgs().WithBucket(bucket), ct);
             }
+        }
+
+        public async Task<string> GetPresignedUrl(string objectKey, string bucket, int expirySeconds, CancellationToken cancellationToken)
+        {
+            return await _pubClient.PresignedGetObjectAsync(
+                new PresignedGetObjectArgs()
+                    .WithBucket(bucket)
+                    .WithExpiry(expirySeconds)
+                    .WithObject(objectKey));
         }
     }
 }
