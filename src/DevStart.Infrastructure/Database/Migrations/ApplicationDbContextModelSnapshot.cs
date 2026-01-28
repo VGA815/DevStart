@@ -58,6 +58,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Bucket")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("bucket");
+
                     b.Property<int>("FileSize")
                         .HasColumnType("integer")
                         .HasColumnName("file_size");
@@ -66,15 +71,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("file_type");
 
-                    b.Property<string>("FileUrl")
+                    b.Property<string>("ObjectName")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("file_url");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                        .HasColumnName("object_name");
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("timestamp with time zone")

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevStart.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260114060729_Create_Database")]
+    [Migration("20260128110737_Create_Database")]
     partial class Create_Database
     {
         /// <inheritdoc />
@@ -61,6 +61,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Bucket")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("bucket");
+
                     b.Property<int>("FileSize")
                         .HasColumnType("integer")
                         .HasColumnName("file_size");
@@ -69,15 +74,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("file_type");
 
-                    b.Property<string>("FileUrl")
+                    b.Property<string>("ObjectName")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("file_url");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                        .HasColumnName("object_name");
 
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("timestamp with time zone")

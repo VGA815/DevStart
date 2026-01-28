@@ -6,8 +6,8 @@ namespace DevStart.Domain.MediaFiles
     {
         public Guid Id { get; set; }
         public Guid UploaderId { get; set; }
-        public string FileUrl { get; set; } = null!;
-        public string Name { get; set; } = null!;
+        public string ObjectName { get; set; } = null!;
+        public string Bucket { get; set; } = null!;
         public MediaFileType FileType { get; set; }
         public int FileSize { get; set; }
         public DateTime UploadDate { get; set; }

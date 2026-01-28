@@ -36,8 +36,8 @@ namespace DevStart.Infrastructure.Database.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     uploader_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    file_url = table.Column<string>(type: "text", nullable: false),
-                    name = table.Column<string>(type: "text", nullable: false),
+                    object_name = table.Column<string>(type: "text", nullable: false),
+                    bucket = table.Column<string>(type: "text", nullable: false),
                     file_type = table.Column<int>(type: "integer", nullable: false),
                     file_size = table.Column<int>(type: "integer", nullable: false),
                     upload_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)

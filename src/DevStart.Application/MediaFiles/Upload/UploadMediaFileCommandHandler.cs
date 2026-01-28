@@ -17,6 +17,7 @@ namespace DevStart.Application.MediaFiles.Upload
             {
                 return Result.Failure<Guid>(UserErrors.NotFound(command.OwnerId));
             }
+
             Guid fileId = Guid.NewGuid();
 
             var objectKey = $"/users/{userContext.UserId}/{fileId}.webp";
@@ -25,9 +26,9 @@ namespace DevStart.Application.MediaFiles.Upload
             {
                 FileSize = (int)command.Size,
                 FileType = MediaFileType.Img,
-                FileUrl = objectKey,
+                ObjectName = objectKey,
                 Id = fileId,
-                Name = command.Bucket,
+                Bucket = command.Bucket,
                 UploadDate = dateTimeProvider.UtcNow,
                 UploaderId = userContext.UserId
             };
