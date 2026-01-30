@@ -24,7 +24,7 @@ namespace DevStart.Application.StartupMetrics.GetById
                 CreatedAt = startupMetric.CreatedAt,
                 Id = startupMetric.Id,
                 MetricType = startupMetric.MetricType,
-                StartupId = startupMetric.Id,
+                StartupId = startupMetric.StartupId,
                 Value = startupMetric.Value,
             };
 

@@ -13,6 +13,10 @@ namespace DevStart.Application.Profiles.Create
     {
         public async Task<Result<Guid>> Handle(CreateProfileCommand command, CancellationToken cancellationToken)
         {
+            if (await context.Profiles.AnyAsync(p => p.UserId == command.UserId, cancellationToken))
+            {
+                throw new NotImplementedException();
+            }
             if (command.UserId != userContext.UserId)
             {
                 return Result.Failure<Guid>(UserErrors.Unauthorized());

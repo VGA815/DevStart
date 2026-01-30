@@ -21,7 +21,7 @@ namespace DevStart.Application.StartupMetrics.GetAllByStartupId
                 .Select(sm => new StartupMetricResponse
                 {
                     CreatedAt = sm.CreatedAt,
-                    Id = sm.StartupId,
+                    Id = sm.Id,
                     MetricType = sm.MetricType,
                     StartupId = sm.StartupId,
                     Value = sm.Value,

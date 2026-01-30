@@ -22,6 +22,7 @@ namespace DevStart.WebApi.Endpoints.MediaFiles
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
+                .RequireRateLimiting("fixed")
                 .WithTags(Tags.MediaFiles);
         }
     }

@@ -22,6 +22,7 @@ namespace DevStart.WebApi.Endpoints.Users
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
+                .RequireAuthorization()
                 .WithTags(Tags.Users);
         }
     }

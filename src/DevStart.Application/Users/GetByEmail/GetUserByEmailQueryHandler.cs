@@ -26,7 +26,7 @@ namespace DevStart.Application.Users.GetByEmail
             {
                 return Result.Failure<UserResponse>(UserErrors.NotFoundByEmail);
             }
-            if (user.Id == userContext.UserId)
+            if (user.Id != userContext.UserId)
             {
                 return Result.Failure<UserResponse>(UserErrors.Unauthorized());
             }

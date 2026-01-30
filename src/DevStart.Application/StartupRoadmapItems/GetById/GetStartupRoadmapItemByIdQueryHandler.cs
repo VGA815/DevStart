@@ -1,9 +1,6 @@
-﻿using DevStart.Application.Abstractions.Authentication;
-using DevStart.Application.Abstractions.Data;
+﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
-using DevStart.Domain.StartupMembers;
 using DevStart.Domain.StartupRoadmapItems;
-using DevStart.Domain.Users;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +24,7 @@ namespace DevStart.Application.StartupRoadmapItems.GetById
                 Id = startupRoadmapItem.Id,
                 CreatedAt = startupRoadmapItem.CreatedAt,
                 Desription = startupRoadmapItem.Desription,
-                StartupId = startupRoadmapItem.Id,
+                StartupId = startupRoadmapItem.StartupId,
                 StartupStage = startupRoadmapItem.StartupStage,
                 Status = startupRoadmapItem.Status,
                 TargetDate = startupRoadmapItem.TargetDate,
