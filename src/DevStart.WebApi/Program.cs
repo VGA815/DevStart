@@ -21,6 +21,8 @@ builder.Services
 
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 
+builder.Services.AddRateLimiting();
+
 var app = builder.Build();
 
 app.MapEndpoints();
@@ -44,6 +46,8 @@ app.UseExceptionHandler();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseRateLimiter();
 
 app.MapControllers();
 
