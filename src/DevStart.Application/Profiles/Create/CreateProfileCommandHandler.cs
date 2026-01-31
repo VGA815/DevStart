@@ -15,7 +15,7 @@ namespace DevStart.Application.Profiles.Create
         {
             if (await context.Profiles.AnyAsync(p => p.UserId == command.UserId, cancellationToken))
             {
-                throw new NotImplementedException();
+                return Result.Failure<Guid>(ProfileErrors.NotUnique);
             }
             if (command.UserId != userContext.UserId)
             {
