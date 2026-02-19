@@ -1,6 +1,7 @@
 volumes:
   main-db-data:
   minio-data:
+  redis-data:
 
 networks:
   devstart-net:
