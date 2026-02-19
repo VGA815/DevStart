@@ -2,6 +2,7 @@
 using DevStart.Application.Abstractions.Data;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.Authorization;
+using DevStart.Infrastructure.Caching;
 using DevStart.Infrastructure.Database;
 using DevStart.Infrastructure.DomainEvents;
 using DevStart.Infrastructure.FileStorage;
@@ -13,8 +14,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Minio;
+using StackExchange.Redis;
 using System.Text;
 
 namespace DevStart.Infrastructure
@@ -28,6 +31,7 @@ namespace DevStart.Infrastructure
                 .AddServices()
                 .AddDatabase(configuration)
                 .AddFileStorage(configuration)
+                .AddCaching(configuration)
                 .AddHealthChecks(configuration)
                 .AddAuthenticationInternal(configuration)
                 .AddAuthorizationInternal();
@@ -102,6 +106,21 @@ namespace DevStart.Infrastructure
                     configuration.GetSection("Minio"));
 
             services.AddSingleton<IFileStorage, MinioFileStorage>();
+
+            return services;
+        }
+        private static IServiceCollection AddCaching(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<RedisOptions>(
+                configuration.GetSection("Redis"));
+
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var options = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
+                return ConnectionMultiplexer.Connect(options.ConnectionString);
+            });
+
+            services.AddScoped<ICacheService, RedisCacheService>();
 
             return services;
         }
