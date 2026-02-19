@@ -28,6 +28,8 @@ namespace DevStart.Application.Profiles.Update
             profile.Name = command.Name;
             profile.Url = command.Url;
 
+            profile.Raise(new ProfileUpdatedDomainEvent(profile.UserId));
+
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
