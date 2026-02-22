@@ -23,6 +23,8 @@ namespace DevStart.Application.UserPreferences.Update
             userPreference.ReceiveNotifications = command.ReceiveNotifications;
             userPreference.Theme = command.Theme;
 
+            userPreference.Raise(new UserPreferenceUpdatedDomainEvent(userPreference.UserId));
+
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();

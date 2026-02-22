@@ -6,20 +6,15 @@ namespace DevStart.Application.Abstractions.Behaviors
 {
     internal sealed class CachingDecorator
     {
-        internal sealed class QueryHandler<TQuery, TResult>
+        internal sealed class QueryHandler<TQuery, TResult>(
+            IQueryHandler<TQuery, TResult> innerHandler,
+            ICacheService cacheService)
             : IQueryHandler<TQuery, TResult>
             where TQuery : IQuery<TResult>
         {
-            private readonly IQueryHandler<TQuery, TResult> _handler;
-            private readonly ICacheService _cache;
+            private readonly IQueryHandler<TQuery, TResult> _handler = innerHandler;
+            private readonly ICacheService _cache = cacheService;
 
-            public QueryHandler(
-                IQueryHandler<TQuery, TResult> innerHandler,
-                ICacheService cacheService)
-            {
-                _cache = cacheService;
-                _handler = innerHandler;
-            }
             public async Task<Result<TResult>> Handle(TQuery query, CancellationToken cancellationToken)
             {
                 if (query is not ICacheableQuery cacheableQuery)

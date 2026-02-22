@@ -1,9 +1,6 @@
 ﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Domain.Profiles;
 using DevStart.SharedKernel;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DevStart.Application.Profiles.Update
 {
@@ -11,7 +8,7 @@ namespace DevStart.Application.Profiles.Update
     {
         public async Task Handle(ProfileUpdatedDomainEvent domainEvent, CancellationToken cancellationToken)
         {
-            var key = $"v1:user:{domainEvent.ProfileId}";
+            var key = $"v1:profiles:{domainEvent.ProfileId}";
             await _cache.RemoveAsync(key);
         }
     }

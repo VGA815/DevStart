@@ -35,6 +35,8 @@ namespace DevStart.Application.StartupProducts.Update
             startupProduct.Differentiators = command.Differentiators;
             startupProduct.Stack = command.Stack;
             startupProduct.Problem = command.Problem;
+
+            startupProduct.Raise(new StartupProductUpdatedDomainEvent(startupProduct.StartupId));
             
             await context.SaveChangesAsync(cancellationToken);
 

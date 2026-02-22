@@ -42,6 +42,8 @@ namespace DevStart.Application.Startups.Update
             startup.Stage = command.Stage;
             startup.UpdatedAt = dateTimeProvider.UtcNow;
 
+            startup.Raise(new StartupUpdatedDomainEvent(startup.Id));
+
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
