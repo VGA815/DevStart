@@ -7,6 +7,7 @@ namespace DevStart.Domain.Users
         public Guid Id { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
+        public bool IsVerified { get; set; }
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -19,6 +20,7 @@ namespace DevStart.Domain.Users
             PasswordHash = passwordHash;
             CreatedAt = createdAt;
             UpdatedAt = updatedAt;
+            IsVerified = false;
         }
     }
 }

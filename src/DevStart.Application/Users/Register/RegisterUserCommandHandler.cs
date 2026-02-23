@@ -23,7 +23,7 @@ namespace DevStart.Application.Users.Register
             Profile profile = new Profile(user.Id, command.SocialMediaLinks, false, command.IsPublic, command.Name, command.Url, null, command.Bio);
             UserPreference userPreference = new UserPreference(user.Id, UserPreferenceTheme.System, true);
 
-            user.Raise(new UserRegisteredDomainEvent(user.Id));
+            user.Raise(new UserRegisteredDomainEvent(user.Id, user.Email));
 
             context.Users.Add(user);
             context.Preferences.Add(userPreference);

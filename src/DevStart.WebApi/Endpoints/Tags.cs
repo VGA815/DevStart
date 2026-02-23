@@ -14,5 +14,6 @@
         public const string StartupDocumentFiles = "StartupDocumentFiles";
         public const string Profiles = "Profiles";
         public const string MediaFiles = "MediaFiles";
+        public const string EmailVerification = "EmailVerification";
     }
 }

@@ -16,6 +16,7 @@ namespace DevStart.Infrastructure.Users
             builder.Property(x => x.Username).HasColumnName("username").IsRequired().HasMaxLength(100);
             builder.Property(x => x.Email).HasColumnName("email").IsRequired().HasMaxLength(255);
             builder.Property(x => x.PasswordHash).HasColumnName("password_hash").IsRequired();
+            builder.Property(x => x.IsVerified).HasColumnName("is_verified");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 

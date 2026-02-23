@@ -16,8 +16,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Minio;
 using StackExchange.Redis;
+using System.Net.Mail;
 using System.Text;
 
 namespace DevStart.Infrastructure
@@ -34,6 +34,7 @@ namespace DevStart.Infrastructure
                 .AddCaching(configuration)
                 .AddHealthChecks(configuration)
                 .AddAuthenticationInternal(configuration)
+                .AddSmtp(configuration)
                 .AddAuthorizationInternal();
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
@@ -121,6 +122,27 @@ namespace DevStart.Infrastructure
             });
 
             services.AddScoped<ICacheService, RedisCacheService>();
+
+            return services;
+        }
+        private static IServiceCollection AddSmtp(this IServiceCollection services, IConfiguration configuration)
+        {
+            var smtp = new SmtpClient
+            {
+                Host = configuration["Smtp:Host"]!,
+                Port = int.Parse(configuration["Smtp:Port"]!),
+                EnableSsl = bool.Parse(configuration["Smtp:EnableSsl"]!),
+                UseDefaultCredentials = bool.Parse(configuration["Smtp:UseDefaultCredentials"]!),
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                Credentials = new System.Net.NetworkCredential(
+                    configuration["Smtp:Username"],
+                    configuration["Smtp:Password"])
+            };
+
+            services.AddFluentEmail(configuration["Smtp:Username"]!)
+                .AddSmtpSender(smtp);
+
+            services.AddSingleton<IEmailSender, EmailSender>();
 
             return services;
         }
