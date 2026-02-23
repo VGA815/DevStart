@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevStart.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260128110737_Create_Database")]
+    [Migration("20260223014307_Create_Database")]
     partial class Create_Database
     {
         /// <inheritdoc />
@@ -470,6 +470,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("email");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_verified");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
