@@ -81,3 +81,26 @@ services:
     stdin_open: true
     networks:
       - devstart-net
+  centrifugo:
+    container_name: centrifugo
+    image: centrifugo/centrifugo:v5
+    volumes:
+      - ./config/centrifugo/config.json:/centrifugo/config.json
+    command: centrifugo -c config.json --api_insecure --swagger
+    ports:
+      - 8082:8000
+      - 8083:8001
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    networks:
+      - devstart-net
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    networks:
+      - devstart-net
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI

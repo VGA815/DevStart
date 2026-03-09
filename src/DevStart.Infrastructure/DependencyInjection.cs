@@ -1,11 +1,13 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
+using DevStart.Application.Abstractions.Notifications;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.Caching;
 using DevStart.Infrastructure.Database;
 using DevStart.Infrastructure.DomainEvents;
 using DevStart.Infrastructure.FileStorage;
+using DevStart.Infrastructure.Notifications;
 using DevStart.Infrastructure.Time;
 using DevStart.SharedKernel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -34,6 +36,7 @@ namespace DevStart.Infrastructure
                 .AddCaching(configuration)
                 .AddHealthChecks(configuration)
                 .AddAuthenticationInternal(configuration)
+                .AddCentrifugo(configuration)
                 .AddSmtp(configuration)
                 .AddAuthorizationInternal();
         private static IServiceCollection AddServices(this IServiceCollection services)
@@ -49,13 +52,13 @@ namespace DevStart.Infrastructure
 
             services.AddDbContext<ApplicationDbContext>(
                 options => options
-                    .UseNpgsql(connectionString, npgsqlOptions => 
+                    .UseNpgsql(connectionString, npgsqlOptions =>
                         npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Default))
                     .UseSnakeCaseNamingConvention());
 
             services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-            return services;                   
+            return services;
         }
         private static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)
         {
@@ -142,8 +145,21 @@ namespace DevStart.Infrastructure
             services.AddFluentEmail(configuration["Smtp:Username"]!)
                 .AddSmtpSender(smtp);
 
-            services.AddSingleton<IEmailSender, EmailSender>();
+            services.AddScoped<IEmailSender, EmailSender>();
 
+            return services;
+        }
+        private static IServiceCollection AddCentrifugo(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<CentrifugoOptions>(
+                configuration.GetSection("Centrifugo"));
+            services.AddHttpClient("centrifugo", (sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<CentrifugoOptions>>().Value;
+                client.BaseAddress = new Uri(options.ApiUrl);
+                client.DefaultRequestHeaders.Add("X-API-Key", options.ApiKey);
+            });
+            services.AddScoped<INotificationSender, CentrifugoNotificationSender>();
             return services;
         }
     }

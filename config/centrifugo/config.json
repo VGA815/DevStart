@@ -1,0 +1,14 @@
+{
+    "token_hmac_secret_key": "super-duper-secret-value-that-should-be-in-user-secrets",
+    "api_key": "centrifugo-internal-api-key",
+	"admin_password": "password",
+    "admin_secret": "secret",
+    "admin": true,
+	"namespaces": [
+		{
+			"name": "notifications",
+			"presence": false,
+			"history_size": 0
+		}
+	]
+  }

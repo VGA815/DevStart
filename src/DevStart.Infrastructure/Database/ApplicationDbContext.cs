@@ -1,6 +1,7 @@
 ﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.MediaFiles;
+using DevStart.Domain.Notifications;
 using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupFollowers;
@@ -48,6 +49,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<MediaFile> MediaFiles { get; set; }
 
         public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -15,5 +15,6 @@
         public const string Profiles = "Profiles";
         public const string MediaFiles = "MediaFiles";
         public const string EmailVerification = "EmailVerification";
+        public const string Notifications = "Notifications";
     }
 }

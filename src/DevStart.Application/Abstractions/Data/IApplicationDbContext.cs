@@ -1,5 +1,6 @@
 ﻿using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.MediaFiles;
+using DevStart.Domain.Notifications;
 using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupFollowers;
@@ -30,7 +31,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<Profile> Profiles { get; }
         DbSet<MediaFile> MediaFiles { get; }
         DbSet<EmailVerificationToken> EmailVerificationTokens { get; }
-
+        DbSet<Notification> Notifications { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
