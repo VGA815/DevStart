@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.MediaFiles.GetById
 {
-    internal sealed class GetMediaFileByIdQueryHandler(IApplicationDbContext context, IFileStorage fileStorage, IUserContext userContext)
+    internal sealed class GetMediaFileByIdQueryHandler(IApplicationDbContext context, IFileStorage fileStorage)
         : IQueryHandler<GetMediaFileByIdQuery, MediaFileResponse>
     {
         public async Task<Result<MediaFileResponse>> Handle(GetMediaFileByIdQuery query, CancellationToken cancellationToken)
