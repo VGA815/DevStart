@@ -10,14 +10,13 @@ namespace DevStart.WebApi.Endpoints.Notifications
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("notifications/user/{userId:guid}", async (
-                Guid userId,
+            app.MapGet("notifications/user", async (
                 int page,
                 int pageSize,
                 IQueryHandler<GetNotificationsByUserIdQuery, List<NotificationResponse>> handler,
                 CancellationToken cancellationToken) =>
             {
-                var query = new GetNotificationsByUserIdQuery(userId, page, pageSize);
+                var query = new GetNotificationsByUserIdQuery(page, pageSize);
                 Result<List<NotificationResponse>> result = await handler.Handle(query, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })

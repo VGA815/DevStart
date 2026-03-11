@@ -12,11 +12,11 @@ namespace DevStart.Application.Notifications.GetByUserId
     {
         public async Task<Result<List<NotificationResponse>>> Handle(GetNotificationsByUserIdQuery query, CancellationToken cancellationToken)
         {
-            User? user = await context.Users.SingleOrDefaultAsync(u => u.Id == query.UserId, cancellationToken);
+            User? user = await context.Users.SingleOrDefaultAsync(u => u.Id == userContext.UserId, cancellationToken);
 
             if (user == null)
             {
-                return Result.Failure<List<NotificationResponse>>(UserErrors.NotFound(query.UserId));
+                return Result.Failure<List<NotificationResponse>>(UserErrors.NotFound(userContext.UserId));
             }
             if (user.Id != userContext.UserId)
             {
@@ -24,7 +24,7 @@ namespace DevStart.Application.Notifications.GetByUserId
             }
 
             List<NotificationResponse> notifications = await context.Notifications
-                .Where(n => n.UserId == query.UserId)
+                .Where(n => n.UserId == userContext.UserId)
                 .OrderByDescending(n => n.CreatedAt)
                 .Skip((query.Page - 1) * query.PageSize)
                 .Take(query.PageSize)
