@@ -26,7 +26,7 @@ namespace DevStart.Application.StartupRoadmapItems.Create
                 return Result.Failure<Guid>(UserErrors.Unauthorized());
             }
 
-            StartupRoadmapItem startupRoadmapItem = new StartupRoadmapItem(
+            StartupRoadmapItem startupRoadmapItem = StartupRoadmapItem.Create(
                 command.StartupId,
                 command.StartupStage,
                 command.Title,

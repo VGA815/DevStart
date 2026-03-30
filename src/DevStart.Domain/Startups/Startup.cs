@@ -5,45 +5,39 @@ namespace DevStart.Domain.Startups
     public sealed class Startup : Entity
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string PublicEmail { get; set; }
-        public string Description { get; set; }
-        public string Url { get; set; }
+        public string Name { get; set; } = null!;
+        public string PublicEmail { get; set; } = null!;
+        public string? Description { get; set; }
+        public string? Url { get; set; }
         public bool IsStopped { get; set; }
         public StartupStage Stage { get; set; }
-        public List<string> SocialMediaLinks { get; set; } = [];
-        public StartupLocation Location { get; set; }
-        public string BillingEmail { get; set; }
-        public string AvatarUrl { get; set; }
+        public List<string>? SocialMediaLinks { get; set; } = [];
+        public StartupLocation? Location { get; set; }
+        public string? BillingEmail { get; set; }
+        public Guid? AvatarId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public Startup(
-            string name, 
-            string publicEmail, 
-            string description, 
-            string url, 
-            bool isStopped, 
-            StartupStage stage, 
-            List<string> socialMediaLinks,
-            StartupLocation location,
-            string billingEmail,
-            string avatarUrl,
-            DateTime createdAt,
-            DateTime updatedAt)
-        {
-            Id = Guid.NewGuid();
-            Name = name;
-            PublicEmail = publicEmail;
-            Description = description;
-            Url = url;
-            IsStopped = isStopped;
-            Stage = stage;
-            SocialMediaLinks = socialMediaLinks;
-            Location = location;
-            BillingEmail = billingEmail;
-            AvatarUrl = avatarUrl;
-            CreatedAt = createdAt;
-            UpdatedAt = updatedAt;
-        }
+        public static Startup Create(
+            string name, string publicEmail, string? description,
+            string? url, StartupStage startupStage, StartupLocation? location,
+            string? billingEmail, Guid? avatarId, DateTime createdAt,
+            List<string>? socialMediaLinks)
+            => new ()
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                AvatarId = avatarId,
+                BillingEmail = billingEmail,
+                CreatedAt = createdAt,
+                Description = description,
+                IsStopped = false,
+                Location = location,
+                PublicEmail = publicEmail,
+                SocialMediaLinks = socialMediaLinks,
+                Stage = startupStage,
+                UpdatedAt = createdAt,
+                Url = url
+            };
+        public Startup() { }
     }
 }

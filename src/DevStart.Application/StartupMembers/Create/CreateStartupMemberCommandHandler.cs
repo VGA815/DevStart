@@ -45,7 +45,7 @@ namespace DevStart.Application.StartupMembers.Create
                 return Result.Failure<Guid>(StartupErrors.NotFound(command.StartupId));
             }
 
-            StartupMember startupMember = new StartupMember(command.ProfileId, command.StartupId, command.Role, command.IsPublic, dateTimeProvider.UtcNow, dateTimeProvider.UtcNow);
+            StartupMember startupMember = StartupMember.Create(command.ProfileId, command.StartupId, command.Role, command.IsPublic, dateTimeProvider.UtcNow);
 
             context.StartupMembers.Add(startupMember);
 

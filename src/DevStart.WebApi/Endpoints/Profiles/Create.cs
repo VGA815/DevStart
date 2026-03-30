@@ -16,7 +16,7 @@ namespace DevStart.WebApi.Endpoints.Profiles
             [property: JsonPropertyName("name")] string Name,
             [property: JsonPropertyName("bio")] string? Bio,
             [property: JsonPropertyName("is_available_for_hire")] bool IsAvailableForHire,
-            [property: JsonPropertyName("avatar_url")] string? AvatarUrl,
+            [property: JsonPropertyName("avatar_id")] Guid? AvatarId,
             [property: JsonPropertyName("url")] string? Url,
             [property: JsonPropertyName("is_public")] bool IsPublic,
             [property: JsonPropertyName("social_media_links")] List<string> SocialMediaLinks);
@@ -31,7 +31,7 @@ namespace DevStart.WebApi.Endpoints.Profiles
                     request.UserId,
                     request.Name,
                     request.Bio,
-                    request.AvatarUrl,
+                    request.AvatarId,
                     request.IsAvailableForHire,
                     request.IsPublic,
                     request.SocialMediaLinks,

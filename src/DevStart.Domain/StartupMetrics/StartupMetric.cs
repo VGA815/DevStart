@@ -9,14 +9,20 @@ namespace DevStart.Domain.StartupMetrics
         public MetricType MetricType { get; set; }
         public decimal Value { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        public StartupMetric(Guid startupId, MetricType metricType, decimal value, DateTime createdAt)
+        public static StartupMetric Create(Guid startupId, MetricType metricType, decimal value, DateTime createdAt)
         {
-            Id = Guid.NewGuid();
-            MetricType = metricType;
-            Value = value;
-            CreatedAt = createdAt;
-            StartupId = startupId;
+            return new StartupMetric
+            {
+                Id = Guid.NewGuid(),
+                StartupId = startupId,
+                MetricType = metricType,
+                Value = value,
+                CreatedAt = createdAt
+            };
+        }
+        public StartupMetric()
+        {
+            
         }
     }
 }

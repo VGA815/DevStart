@@ -14,16 +14,19 @@ namespace DevStart.Domain.Notifications
         public DateTime CreatedAt { get; set; }
 
         public Notification() {}
-        public Notification(Guid userId, string type, string title, string body, DateTime createdAt, Guid? referenceId = null)
+        public static Notification Create(Guid userId, string type, string title, string body, DateTime createdAt, Guid? referenceId = null)
         {
-            Id = Guid.NewGuid();
-            UserId = userId;
-            Type = type;
-            Title = title;
-            Body = body;
-            ReferenceId = referenceId;
-            IsRead = false;
-            CreatedAt = createdAt;
+            return new Notification
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Type = type,
+                Title = title,
+                Body = body,
+                ReferenceId = referenceId,
+                IsRead = false,
+                CreatedAt = createdAt
+            };
         }
         public void MarkAsRead()
         {

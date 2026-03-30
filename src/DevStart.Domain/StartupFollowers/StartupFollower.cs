@@ -8,11 +8,11 @@ namespace DevStart.Domain.StartupFollowers
         public Guid StartupId { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        public StartupFollower(Guid profileId, Guid startupId, DateTime createdAt)
+        public StartupFollower()
         {
-            ProfileId = profileId;
-            StartupId = startupId;
-            CreatedAt = createdAt;
+            
         }
+        public static StartupFollower Create(Guid ProfileId, Guid StartupId, DateTime CreatedAt)
+            => new () { StartupId = StartupId, ProfileId = ProfileId, CreatedAt = CreatedAt };
     }
 }

@@ -31,7 +31,7 @@ namespace DevStart.Application.Profiles.Create
             }
 
 
-            Profile profile = new Profile(command.UserId, command.SocialMediaLinks, command.IsAvailableForHire, command.IsPublic, command.Name, command.Url, command.AvatarUrl, command.Bio);
+            Profile profile = Profile.Create(command.UserId, command.Name, command.Bio, command.Url, command.IsAvailableForHire, command.IsPublic, command.AvatarId);
 
             context.Profiles.Add(profile);
 

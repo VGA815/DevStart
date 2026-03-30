@@ -19,9 +19,9 @@ namespace DevStart.Application.Users.Register
                 return Result.Failure<Guid>(UserErrors.EmailNotUnique);
             }
 
-            User user = new User(command.Email, command.Username, passwordHasher.Hash(command.Password), dateTimeProvider.UtcNow, dateTimeProvider.UtcNow);
-            Profile profile = new Profile(user.Id, command.SocialMediaLinks, false, command.IsPublic, command.Name, command.Url, null, command.Bio);
-            UserPreference userPreference = new UserPreference(user.Id, UserPreferenceTheme.System, true);
+            User user = User.Create(command.Username, command.Email, passwordHasher.Hash(command.Password), dateTimeProvider.UtcNow);
+            Profile profile = Profile.Create(user.Id, command.Name, command.Bio, command.Url, false, command.IsPublic, null);
+            UserPreference userPreference = UserPreference.Create(user.Id, UserPreferenceTheme.System);
 
             user.Raise(new UserRegisteredDomainEvent(user.Id, user.Email));
 

@@ -21,7 +21,7 @@ namespace DevStart.Application.StartupMetrics.Create
                 return Result.Failure<Guid>(StartupMemberErrors.NotFound(userContext.UserId, command.StartupId));
             }
 
-            StartupMetric startupMetric = new StartupMetric(
+            StartupMetric startupMetric = StartupMetric.Create(
                 command.StartupId,
                 command.MetricType,
                 command.Value,

@@ -23,7 +23,7 @@ namespace DevStart.Application.Profiles.GetById
                 .Select(p => new ProfileResponse
                 {
                     UserId = p.UserId,
-                    AvatarUrl = p.AvatarUrl,
+                    AvatarId = p.AvatarId,
                     Bio = p.Bio,
                     IsAvailableForHire = p.IsAvailableForHire,
                     IsPublic = p.IsPublic,

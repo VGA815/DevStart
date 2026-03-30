@@ -22,7 +22,7 @@ namespace DevStart.Infrastructure.Startups
             builder.Property(x => x.Stage).HasColumnName("stage");
             builder.Property(x => x.Location).HasColumnName("location");
             builder.Property(x => x.BillingEmail).HasColumnName("billing_email");
-            builder.Property(x => x.AvatarUrl).HasColumnName("avatar_url");
+            builder.Property(x => x.AvatarId).HasColumnName("avatar_id");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 

@@ -8,21 +8,32 @@ namespace DevStart.Domain.Profiles
         public string? Name { get; set; }
         public string? Bio { get; set; }
         public string? Url { get; set; }
-        public List<string> SocialMediaLinks { get; set; }
+        public List<string> SocialMediaLinks { get; set; } = [];
         public bool IsAvailableForHire { get; set; }
         public bool IsPublic { get; set; }
-        public string? AvatarUrl { get; set; }
+        public Guid? AvatarId { get; set; }
 
-        public Profile(Guid userId, List<string> socialMediaLinks, bool isAvailableForHire, bool isPublic, string? name, string? url, string? avatarUrl, string? bio)
+        public static Profile Create(
+            Guid userId,
+            string? name,
+            string? bio,
+            string? url,
+            bool isAvailableForHire,
+            bool isPublic,
+            Guid? avatarId)
+            => new()
+            {
+                UserId = userId,
+                Name = name,
+                Bio = bio,
+                Url = url,
+                IsAvailableForHire = isAvailableForHire,
+                IsPublic = isPublic,
+                AvatarId = avatarId
+            };
+        public Profile()
         {
-            UserId = userId;
-            Name = name;
-            SocialMediaLinks = socialMediaLinks;
-            Bio = bio;
-            Url = url;
-            IsAvailableForHire = isAvailableForHire;
-            IsPublic = isPublic;
-            AvatarUrl = avatarUrl;
+            
         }
     }
 }

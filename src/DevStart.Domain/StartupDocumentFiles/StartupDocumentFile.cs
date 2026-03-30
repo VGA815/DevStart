@@ -7,8 +7,22 @@ namespace DevStart.Domain.StartupDocumentFiles
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public Guid StartupId { get; set; }
-        public string FileUrl { get; set; } = null!;
+        public Guid FileId { get; set; }
         public DocumentFileType FileType { get; set; }
         public DateTime UploadDate { get; set; }
+        public StartupDocumentFile()
+        {
+            
+        }
+        public static StartupDocumentFile Create(string name, Guid startupId, Guid fileId, DocumentFileType documentFileType, DateTime uploadAt)
+            => new()
+            {
+                StartupId = startupId,
+                FileId = fileId,
+                FileType = documentFileType,
+                Id = Guid.NewGuid(),
+                Name = name,
+                UploadDate = uploadAt
+            };
     }
 }

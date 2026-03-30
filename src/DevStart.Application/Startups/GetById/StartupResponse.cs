@@ -7,14 +7,14 @@ namespace DevStart.Application.Startups.GetById
         public Guid Id { get; init; }
         public string Name { get; init; } = null!;
         public string PublicEmail { get; init; } = null!;
-        public string Description { get; init; } = null!;
-        public string Url { get; init; } = null!;
+        public string? Description { get; init; }
+        public string? Url { get; init; }
         public bool IsStopped { get; init; }
         public StartupStage Stage { get; init; }
-        public List<string> SocialMediaLinks { get; init; } = [];
-        public StartupLocation Location { get; init; }
-        public string BillingEmail { get; init; } = null!;
-        public string AvatarUrl { get; init; } = null!;
+        public List<string>? SocialMediaLinks { get; init; } = [];
+        public StartupLocation? Location { get; init; }
+        public string? BillingEmail { get; init; }
+        public Guid? AvatarUrl { get; init; }
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
     }

@@ -26,7 +26,7 @@ namespace DevStart.Application.Startups.GetAllByProfileId
                 .Select(s => new StartupResponse
                 {
                     Id = s.Id,
-                    AvatarUrl = s.AvatarUrl,
+                    AvatarId = s.AvatarId,
                     BillingEmail = s.BillingEmail,
                     CreatedAt = DateTime.UtcNow,
                     Description = s.Description,

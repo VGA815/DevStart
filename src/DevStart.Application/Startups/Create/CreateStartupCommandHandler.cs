@@ -30,29 +30,26 @@ namespace DevStart.Application.Startups.Create
 
             // TODO: Email addresses verification
 
-            Startup startup = new Startup(
+            Startup startup = Startup.Create(
                 command.Name,
                 command.PublicEmail,
                 command.Description,
                 command.Url,
-                command.IsStopped,
                 command.Stage,
-                command.SocialMediaLinks,
                 command.Location,
                 command.BillingEmail,
-                command.AvatarUrl,
+                command.AvatarId,
                 dateTimeProvider.UtcNow,
-                dateTimeProvider.UtcNow);
+                command.SocialMediaLinks);
 
-            StartupMember startupMember = new StartupMember(
+            StartupMember startupMember = StartupMember.Create(
                 command.UserId,
                 startup.Id,
                 StartupRole.Founder,
                 true,
-                dateTimeProvider.UtcNow,
                 dateTimeProvider.UtcNow);
 
-            StartupProduct startupProduct = new StartupProduct(
+            StartupProduct startupProduct = StartupProduct.Create(
                 startup.Id,
                 command.ProductName,
                 command.ProductProblemSolution,

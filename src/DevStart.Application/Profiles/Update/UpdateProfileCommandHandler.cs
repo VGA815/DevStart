@@ -20,7 +20,7 @@ namespace DevStart.Application.Profiles.Update
                 return Result.Failure(ProfileErrors.NotFound(command.UserId));
             }
 
-            profile.AvatarUrl = command.AvatarUrl;
+            profile.AvatarId = command.AvatarId;
             profile.IsPublic = command.IsPublic;
             profile.SocialMediaLinks = command.SocialMediaLinks;
             profile.Bio = command.Bio;

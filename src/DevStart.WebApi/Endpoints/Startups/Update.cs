@@ -23,7 +23,7 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("social_media_links")] List<string> SocialMediaLinks,
             [property: JsonPropertyName("location")] StartupLocation StartupLocation,
             [property: JsonPropertyName("billing_email")] string BillingEmail,
-            [property: JsonPropertyName("avatar_url")] string AvatarUrl);
+            [property: JsonPropertyName("avatar_url")] Guid? AvatarId);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPut("startups", async (
@@ -42,7 +42,7 @@ namespace DevStart.WebApi.Endpoints.Startups
                     request.SocialMediaLinks,
                     request.StartupLocation,
                     request.BillingEmail,
-                    request.AvatarUrl);
+                    request.AvatarId);
 
                 Result result = await handler.Handle(command, cancellationToken);
 

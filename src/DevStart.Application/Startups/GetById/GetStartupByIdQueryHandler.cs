@@ -18,7 +18,7 @@ namespace DevStart.Application.Startups.GetById
                 .Select(s => new StartupResponse
                 {
                     Id = s.Id,
-                    AvatarUrl = s.AvatarUrl,
+                    AvatarUrl = s.AvatarId,
                     BillingEmail = s.BillingEmail,
                     CreatedAt = s.CreatedAt,
                     Description = s.Description,

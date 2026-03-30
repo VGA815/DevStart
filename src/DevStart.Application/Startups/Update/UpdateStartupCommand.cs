@@ -15,10 +15,10 @@ namespace DevStart.Application.Startups.Update
         public List<string> SocialMediaLinks { get; set; } = null!;
         public StartupLocation Location { get; set; }
         public string BillingEmail { get; set; } = null!;
-        public string AvatarUrl { get; set; } = null!;
+        public Guid? AvatarId { get; set; }
 
         public UpdateStartupCommand(Guid startupId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage startupStage,
-            List<string> socialMediaLinks, StartupLocation location, string billingEmail, string avatarUrl)
+            List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId)
         {
             StartupId = startupId;
             Name = name;
@@ -30,7 +30,7 @@ namespace DevStart.Application.Startups.Update
             SocialMediaLinks = socialMediaLinks;
             Location = location;
             BillingEmail = billingEmail;
-            AvatarUrl = avatarUrl;
+            AvatarId = avatarId;
         }
     }
 }

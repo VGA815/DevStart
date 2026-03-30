@@ -10,15 +10,19 @@ namespace DevStart.Domain.StartupMembers
         public bool IsPublic { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-
-        public StartupMember(Guid profileId, Guid startupId, StartupRole role, bool isPublic, DateTime createdAt, DateTime updatedAt)
+        public StartupMember()
         {
-            ProfileId = profileId;
-            StartupId = startupId;
-            Role = role;
-            IsPublic = isPublic;
-            CreatedAt = createdAt;
-            UpdatedAt = updatedAt;
+            
         }
+        public static StartupMember Create(Guid profileId, Guid startupId, StartupRole role, bool isPublic, DateTime createdAt)
+            => new()
+            {
+                ProfileId = profileId,
+                CreatedAt = createdAt,
+                IsPublic = isPublic,
+                Role = role,
+                StartupId = startupId,
+                UpdatedAt = createdAt
+            };
     }
 }

@@ -7,11 +7,8 @@ namespace DevStart.Domain.UserPreferences
         public Guid UserId { get; set; }
         public UserPreferenceTheme Theme { get; set; }
         public bool ReceiveNotifications { get; set; }
-        public UserPreference(Guid userId, UserPreferenceTheme theme, bool receiveNotifications)
-        {
-            UserId = userId;
-            Theme = theme;
-            ReceiveNotifications = receiveNotifications;
-        }
+        public UserPreference() {}
+        public static UserPreference Create(Guid userId, UserPreferenceTheme theme) 
+            => new () { UserId = userId, Theme = theme, ReceiveNotifications = true };
     }
 }

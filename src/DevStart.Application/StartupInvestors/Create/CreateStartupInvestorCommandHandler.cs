@@ -23,11 +23,10 @@ namespace DevStart.Application.StartupInvestors.Create
                 return Result.Failure<(Guid startupId, Guid profileId)>(UserErrors.NotFound(userContext.UserId));
             }
 
-            StartupInvestor startupInvestor = new StartupInvestor(
+            StartupInvestor startupInvestor = StartupInvestor.Create(
                 command.ProfileId,
                 command.StartupId,
                 command.IsPublic,
-                dateTimeProvider.UtcNow,
                 dateTimeProvider.UtcNow);
 
             context.StartupInvestors.Add(startupInvestor);

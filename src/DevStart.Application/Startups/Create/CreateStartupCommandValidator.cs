@@ -11,7 +11,7 @@ namespace DevStart.Application.Startups.Create
             RuleFor(s => s.SocialMediaLinks).NotEmpty();
             RuleFor(s => s.PublicEmail).NotEmpty();
             RuleFor(s => s.BillingEmail).NotEmpty();
-            RuleFor(s => s.AvatarUrl).NotEmpty();
+            RuleFor(s => s.AvatarId).NotEmpty();
             RuleFor(s => s.Stage).IsInEnum();
             RuleFor(s => s.Location).IsInEnum();
             RuleFor(s => s.Stack).NotEmpty();

@@ -19,7 +19,7 @@ namespace DevStart.Infrastructure.Profiles
             builder.Property(x => x.Url).HasColumnName("url");
             builder.Property(x => x.IsAvailableForHire).HasColumnName("is_available_for_hire");
             builder.Property(x => x.IsPublic).HasColumnName("is_public");
-            builder.Property(x => x.AvatarUrl).HasColumnName("avatar_url");
+            builder.Property(x => x.AvatarId).HasColumnName("avatar_id");
 
             builder.Property(x => x.SocialMediaLinks)
                 .HasColumnName("social_media_links")

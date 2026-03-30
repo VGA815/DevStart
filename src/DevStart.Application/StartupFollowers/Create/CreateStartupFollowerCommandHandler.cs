@@ -23,7 +23,7 @@ namespace DevStart.Application.StartupFollowers.Create
                 return Result.Failure<(Guid startupId, Guid profileId)>(UserErrors.Unauthorized());
             }
 
-            StartupFollower startupFollower = new StartupFollower(
+            StartupFollower startupFollower = StartupFollower.Create(
                 command.ProfileId,
                 command.StartupId,
                 dateTimeProvider.UtcNow);

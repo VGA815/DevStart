@@ -9,6 +9,6 @@
         public List<string> SocialMediaLinks { get; set; } = [];
         public bool IsPublic { get; set; }
         public bool IsAvailableForHire { get; set; }
-        public string? AvatarUrl { get; set; }
+        public Guid? AvatarId { get; set; }
     }
 }

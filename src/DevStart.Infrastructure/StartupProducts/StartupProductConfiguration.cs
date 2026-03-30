@@ -21,7 +21,7 @@ namespace DevStart.Infrastructure.StartupProducts
 
             builder.Property(x => x.Stack)
                 .HasColumnName("stack")
-                .HasConversion(EfJson.StringListConverter)
+                .HasConversion(EfJson.StringListConverter!)
                 .HasColumnType("jsonb");
         }
     }

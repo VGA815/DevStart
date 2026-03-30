@@ -15,7 +15,7 @@ namespace DevStart.Application.Startups.Create
         public List<string> SocialMediaLinks { get; set; } = null!;
         public StartupLocation Location { get; set; }
         public string BillingEmail { get; set; } = null!;
-        public string AvatarUrl { get; set; } = null!;
+        public Guid? AvatarId { get; set; }
         public string ProductName { get; set; } = null!;
         public string ProductProblemSolution { get; set; } = null!;
         public List<string> Stack { get; set; } = [];
@@ -23,7 +23,7 @@ namespace DevStart.Application.Startups.Create
         public string ProductDifferentiators { get; set; } = null!;
 
         public CreateStartupCommand(Guid userId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage stage, List<string> socialMediaLinks, StartupLocation location,
-            string billingEmail, string avatarUrl, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators)
+            string billingEmail, Guid? avatarId, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators)
         {
             UserId = userId;
             Name = name;
@@ -34,7 +34,7 @@ namespace DevStart.Application.Startups.Create
             Stage = stage;
             Location = location;
             BillingEmail = billingEmail;
-            AvatarUrl = avatarUrl;
+            AvatarId = avatarId;
             ProductName = productName;
             SocialMediaLinks = socialMediaLinks;
             ProductProblemSolution = productProblemSolution;
