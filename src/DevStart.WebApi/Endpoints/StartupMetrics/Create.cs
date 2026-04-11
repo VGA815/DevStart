@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupMetrics.Create;
 using DevStart.Domain.StartupMetrics;
@@ -29,7 +30,7 @@ namespace DevStart.WebApi.Endpoints.StartupMetrics
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupMetricsCreate)
                 .WithTags(Tags.StartupMetrics);
         }
     }

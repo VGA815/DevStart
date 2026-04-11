@@ -30,7 +30,12 @@ namespace DevStart.Application.StartupProducts.Update
             StartupProduct? startupProduct = await context.StartupProducts
                 .SingleOrDefaultAsync(sp => sp.StartupId == command.StartupId, cancellationToken);
 
-            startupProduct!.Solution = command.Solution;
+            if (startupProduct == null)
+            {
+                return Result.Failure(StartupProductErrors.NotFound(command.StartupId));
+            }
+
+            startupProduct.Solution = command.Solution;
             startupProduct.ValueProposition = command.ValueProposition;
             startupProduct.Differentiators = command.Differentiators;
             startupProduct.Stack = command.Stack;

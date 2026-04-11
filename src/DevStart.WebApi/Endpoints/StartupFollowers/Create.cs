@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupFollowers.Create;
 using DevStart.SharedKernel;
@@ -27,7 +28,7 @@ namespace DevStart.WebApi.Endpoints.StartupFollowers
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupFollowersCreate)
                 .WithTags(Tags.StartupFollowers);
         }
 

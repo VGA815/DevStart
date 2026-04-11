@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupProducts.Update;
 using DevStart.SharedKernel;
@@ -37,7 +38,7 @@ namespace DevStart.WebApi.Endpoints.StartupProduct
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupProductsUpdate)
                 .WithTags(Tags.StartupProducts);
         }
     }

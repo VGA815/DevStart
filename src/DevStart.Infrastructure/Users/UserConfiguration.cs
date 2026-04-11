@@ -19,6 +19,7 @@ namespace DevStart.Infrastructure.Users
             builder.Property(x => x.IsVerified).HasColumnName("is_verified");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+            builder.Property(x => x.Role).HasColumnName("role").HasDefaultValue(UserSystemRole.User);
 
             builder.HasIndex(x => x.Email).IsUnique();
             builder.HasIndex(x => x.Username).IsUnique();

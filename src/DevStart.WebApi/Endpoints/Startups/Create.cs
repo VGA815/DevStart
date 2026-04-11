@@ -1,4 +1,5 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+﻿using DevStart.Application.Abstractions.Authorization;
+using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Startups.Create;
 using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
@@ -57,7 +58,7 @@ namespace DevStart.WebApi.Endpoints.Startups
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupsCreate)
                 .WithTags(Tags.Startups);
         }
     }

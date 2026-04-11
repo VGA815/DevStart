@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupMembers.ChangeRole;
 using DevStart.Domain.StartupMembers;
@@ -29,7 +30,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupMembersChangeRole)
                 .WithTags(Tags.StartupMembers);
         }
     }

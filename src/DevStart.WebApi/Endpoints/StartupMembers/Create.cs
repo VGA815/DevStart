@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupMembers.Create;
 using DevStart.Domain.StartupMembers;
@@ -31,7 +32,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupMembersCreate)
                 .WithTags(Tags.StartupMembers);
         }
     }

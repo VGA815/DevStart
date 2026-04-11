@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupRoadmapItems.Update;
 using DevStart.Domain.StartupRoadmapItems;
@@ -41,7 +42,7 @@ namespace DevStart.WebApi.Endpoints.StartupRoadmapItems
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupRoadmapItemsUpdate)
                 .WithTags(Tags.StartupRoadmapItems);
         }
     }

@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Startups.Update;
 using DevStart.Domain.Startups;
@@ -48,7 +49,7 @@ namespace DevStart.WebApi.Endpoints.Startups
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupsUpdate)
                 .WithTags(Tags.Startups);
         }
     }

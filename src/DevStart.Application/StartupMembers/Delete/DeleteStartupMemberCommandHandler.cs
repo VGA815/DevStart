@@ -29,12 +29,7 @@ namespace DevStart.Application.StartupMembers.Delete
                 return Result.Failure(StartupMemberErrors.NotFound(userContext.UserId, command.StartupId));
             }
 
-            if (startupMember1.StartupId !=  startupMember.StartupId)
-            {
-                return Result.Failure(UserErrors.Unauthorized());
-            }
-
-            if (startupMember1.Role != StartupRole.Founder || startupMember1.ProfileId != startupMember.ProfileId)
+            if (startupMember1.Role != StartupRole.Founder && startupMember1.ProfileId != startupMember.ProfileId)
             {
                 return Result.Failure(UserErrors.Unauthorized());
             }

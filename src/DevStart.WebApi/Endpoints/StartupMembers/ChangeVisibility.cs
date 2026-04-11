@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupMembers.ChangeVisibility;
 using DevStart.SharedKernel;
@@ -28,7 +29,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupMembersChangeVisibility)
                 .WithTags(Tags.StartupMembers);
         }
     }

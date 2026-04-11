@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.MediaFiles.Upload;
 using DevStart.SharedKernel;
@@ -28,7 +29,7 @@ namespace DevStart.WebApi.Endpoints.MediaFiles
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.MediaFilesUpload)
                 .DisableAntiforgery()
                 .WithTags(Tags.MediaFiles);
         }

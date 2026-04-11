@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupMembers.Delete;
 using DevStart.SharedKernel;
@@ -24,7 +25,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupMembersDelete)
                 .WithTags(Tags.StartupMembers);
         }
     }

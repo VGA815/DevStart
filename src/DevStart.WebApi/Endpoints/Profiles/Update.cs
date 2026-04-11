@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Profiles.Update;
 using DevStart.SharedKernel;
@@ -41,7 +42,7 @@ namespace DevStart.WebApi.Endpoints.Profiles
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.ProfilesUpdate)
                 .WithTags(Tags.Profiles);
         }
     }

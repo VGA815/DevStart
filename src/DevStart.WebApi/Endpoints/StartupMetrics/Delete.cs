@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupMetrics.Delete;
 using DevStart.SharedKernel;
@@ -23,7 +24,7 @@ namespace DevStart.WebApi.Endpoints.StartupMetrics
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupMetricsDelete)
                 .WithTags(Tags.StartupMetrics);
         }
     }

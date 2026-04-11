@@ -1,4 +1,5 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+﻿using DevStart.Application.Abstractions.Authorization;
+using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Notifications.GetById;
 using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
@@ -19,7 +20,7 @@ namespace DevStart.WebApi.Endpoints.Notifications
                 Result<NotificationResponse> result = await handler.Handle(query, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.NotificationsRead)
                 .WithTags(Tags.Notifications);
         }
     }

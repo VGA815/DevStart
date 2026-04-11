@@ -18,10 +18,22 @@ namespace DevStart.Application.MediaFiles.Upload
                 return Result.Failure<Guid>(UserErrors.NotFound(command.OwnerId));
             }
 
+            if (command.Size > int.MaxValue)
+            {
+                return Result.Failure<Guid>(Error.Failure("MediaFiles.FileTooLarge", "File size exceeds the maximum allowed size."));
+            }
+
             Guid fileId = Guid.NewGuid();
 
             var objectKey = $"/users/{userContext.UserId}/{fileId}.webp";
-            
+
+            await fileStorage.UploadAsync(
+                objectKey,
+                command.FileStream,
+                command.Bucket,
+                command.ContentType,
+                cancellationToken);
+
             MediaFile mediaFile = new MediaFile()
             {
                 FileSize = (int)command.Size,
@@ -32,13 +44,6 @@ namespace DevStart.Application.MediaFiles.Upload
                 UploadDate = dateTimeProvider.UtcNow,
                 UploaderId = userContext.UserId
             };
-
-            await fileStorage.UploadAsync(
-                objectKey,
-                command.FileStream,
-                command.Bucket,
-                command.ContentType,
-                cancellationToken);
 
             context.MediaFiles.Add(mediaFile);
 

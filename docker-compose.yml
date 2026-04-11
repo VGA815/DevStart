@@ -4,6 +4,9 @@ services:
     build:
       context: .
       dockerfile: src/DevStart.WebApi/Dockerfile
+    ports:
+      - 5000:8080
+      - 5001:8081
     networks:
       - devstart-net
   main-db:

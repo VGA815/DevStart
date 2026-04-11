@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.UserPreferences.Update;
 using DevStart.Domain.UserPreferences;
@@ -29,7 +30,7 @@ namespace DevStart.WebApi.Endpoints.UserPreferences
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.UserPreferencesUpdate)
                 .WithTags(Tags.UserPreferences);
         }
     }

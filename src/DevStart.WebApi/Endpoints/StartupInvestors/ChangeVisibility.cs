@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupInvestors.ChangeVisibility;
 using DevStart.SharedKernel;
@@ -27,7 +28,7 @@ namespace DevStart.WebApi.Endpoints.StartupInvestors
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupInvestorsChangeVisibility)
                 .WithTags(Tags.StartupInvestors);
         }
     }

@@ -11,6 +11,7 @@ namespace DevStart.Domain.Users
         public string PasswordHash { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public UserSystemRole Role { get; set; }
         public static User Create(string username, string email, string passwordHash, DateTime createdAt)
         {
             return new User()
@@ -22,6 +23,7 @@ namespace DevStart.Domain.Users
                 PasswordHash = passwordHash,
                 UpdatedAt = createdAt,
                 Username = username,
+                Role = UserSystemRole.User,
             };
         }
         public User()

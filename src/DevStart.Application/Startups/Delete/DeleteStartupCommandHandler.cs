@@ -28,7 +28,12 @@ namespace DevStart.Application.Startups.Delete
             Startup? startup = await context.Startups
                 .SingleOrDefaultAsync(s => s.Id == startupMember.StartupId, cancellationToken);
 
-            context.Startups.Remove(startup!);
+            if (startup == null)
+            {
+                return Result.Failure(StartupErrors.NotFound(command.StartupId));
+            }
+
+            context.Startups.Remove(startup);
 
             await context.SaveChangesAsync(cancellationToken);
 

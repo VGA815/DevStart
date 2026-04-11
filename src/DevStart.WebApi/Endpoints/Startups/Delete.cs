@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Startups.Delete;
 using DevStart.SharedKernel;
@@ -23,7 +24,7 @@ namespace DevStart.WebApi.Endpoints.Startups
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.StartupsDelete)
                 .WithTags(Tags.Startups);
         }
     }

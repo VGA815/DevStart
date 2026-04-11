@@ -1,4 +1,5 @@
 ﻿
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.UserPreferences.GetById;
 using DevStart.SharedKernel;
@@ -22,7 +23,7 @@ namespace DevStart.WebApi.Endpoints.UserPreferences
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-                .RequireAuthorization()
+                .HasPermission(Permissions.UserPreferencesRead)
                 .WithTags(Tags.UserPreferences);
         }
     }
