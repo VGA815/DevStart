@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.MediaFiles
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("users/avatars/{avatarId:guid}", async (
+            app.MapGet("api/users/avatars/{avatarId:guid}", async (
                 Guid avatarId, 
                 IQueryHandler<GetMediaFileByIdQuery, MediaFileResponse> handler, 
                 CancellationToken cancellationToken) =>

@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.Startups
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("startups", async (
+            app.MapDelete("api/startups", async (
                 [FromQuery] Guid startupId, 
                 ICommandHandler<DeleteStartupCommand> handler, 
                 CancellationToken cancellationToken) =>

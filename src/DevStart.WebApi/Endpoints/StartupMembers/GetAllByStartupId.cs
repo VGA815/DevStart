@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups/{startupId:guid}/members", async (
+            app.MapGet("api/startups/{startupId:guid}/members", async (
                 Guid startupId, 
                 IQueryHandler<GetStartupMembersByStartupIdQuery, List<StartupMemberResponse>> handler, 
                 CancellationToken cancellationToken) =>

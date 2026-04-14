@@ -17,7 +17,7 @@ namespace DevStart.WebApi.Endpoints.StartupFollowers
             [property: JsonPropertyName("profile_id")] Guid ProfileId);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("startups/followers", async (
+            app.MapPost("api/startups/followers", async (
                 [FromBody] Request request, 
                 ICommandHandler<CreateStartupFollowerCommand, (Guid startupId, Guid profileId)> handler, 
                 CancellationToken cancellationToken) =>

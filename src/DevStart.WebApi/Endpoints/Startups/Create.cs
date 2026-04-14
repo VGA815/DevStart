@@ -31,7 +31,7 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("product_differentiators")] string ProductDifferentiators);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("startups/", async (
+            app.MapPost("api/startups/", async (
                 [FromBody] Request request, 
                 ICommandHandler<CreateStartupCommand, Guid> handler, 
                 CancellationToken cancellationToken) =>

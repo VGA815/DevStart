@@ -12,7 +12,7 @@ namespace DevStart.WebApi.Endpoints.Startups
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups", async (
+            app.MapGet("api/startups", async (
                 [FromQuery] int page,
                 [FromQuery] int pageSize,
                 IQueryHandler <GetStartupsQuery, List <StartupResponse>> handler,

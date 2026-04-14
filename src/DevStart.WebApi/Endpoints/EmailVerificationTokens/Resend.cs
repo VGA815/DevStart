@@ -12,7 +12,7 @@ namespace DevStart.WebApi.Endpoints.EmailVerificationTokens
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("email-verification/resend", async (
+            app.MapPost("api/email-verification/resend", async (
                 [FromQuery] string email, 
                 ICommandHandler<ResendEmailVerificationCommand> innerHandler,
                 CancellationToken cancellationToken) => 

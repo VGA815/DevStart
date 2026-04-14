@@ -12,7 +12,7 @@ namespace DevStart.WebApi.Endpoints.StartupFollowers
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups/followers", async (
+            app.MapGet("api/startups/followers", async (
                 [FromQuery] Guid startupId,
                 [FromQuery] int page,
                 [FromQuery] int pageSize,

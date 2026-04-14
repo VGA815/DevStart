@@ -10,7 +10,7 @@ namespace DevStart.WebApi.Endpoints.StartupRoadmapItems
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups/{startupId:guid}/roadmap/items", async (
+            app.MapGet("api/startups/{startupId:guid}/roadmap/items", async (
                 Guid startupId, 
                 IQueryHandler<GetStartupRoadmapItemsByStartupIdQuery, List<StartupRoadmapItemResponse>> handler, 
                 CancellationToken cancellationToken) =>

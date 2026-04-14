@@ -21,7 +21,7 @@ namespace DevStart.WebApi.Endpoints.Users
             [property: JsonPropertyName("is_public")] bool IsPublic);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("users/register", async (
+            app.MapPost("api/users/register", async (
                 Request request,
                 ICommandHandler<RegisterUserCommand, Guid> handler,
                 CancellationToken cancellationToken) =>

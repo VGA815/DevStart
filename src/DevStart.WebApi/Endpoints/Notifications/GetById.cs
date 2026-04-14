@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.Notifications
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("/notifications/{notificationId:guid}", async (
+            app.MapGet("api/notifications/{notificationId:guid}", async (
                 Guid notificationId, 
                 IQueryHandler<GetNotificationByIdQuery, NotificationResponse> handler,
                 CancellationToken cancellationToken) => 

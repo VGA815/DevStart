@@ -12,7 +12,7 @@ namespace DevStart.WebApi.Endpoints.StartupInvestors
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups/investors", async (
+            app.MapGet("api/startups/investors", async (
                 [FromQuery] Guid profileId, 
                 [FromQuery] Guid startupId, 
                 IQueryHandler<GetStartupInvestorByIdQuery, StartupInvestorResponse> handler, 

@@ -12,7 +12,7 @@ namespace DevStart.WebApi.Endpoints.Users
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("users", async (
+            app.MapGet("api/users", async (
                 [FromQuery] string email, 
                 IQueryHandler<GetUserByEmailQuery, UserResponse> handler, 
                 CancellationToken cancellationToken) =>

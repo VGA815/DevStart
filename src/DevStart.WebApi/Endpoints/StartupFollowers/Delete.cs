@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.StartupFollowers
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("startups/followers", async (
+            app.MapDelete("api/startups/followers", async (
                 [FromQuery] Guid startupId, 
                 ICommandHandler<DeleteStartupFollowerCommand> handler, 
                 CancellationToken cancellationToken) =>

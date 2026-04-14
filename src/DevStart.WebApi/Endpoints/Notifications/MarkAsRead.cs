@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.Notifications
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("/notifications/{notificationId:guid}", 
+            app.MapPut("api/notifications/{notificationId:guid}", 
                 async (Guid notificationId, ICommandHandler<MarkNotificationAsReadCommand> handler, CancellationToken cancellationToken) =>
                 {
                     MarkNotificationAsReadCommand command = new(notificationId);

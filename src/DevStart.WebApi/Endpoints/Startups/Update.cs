@@ -27,7 +27,7 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("avatar_url")] Guid? AvatarId);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("startups", async (
+            app.MapPut("api/startups", async (
                 [FromBody] Request request, 
                 ICommandHandler<UpdateStartupCommand> handler, 
                 CancellationToken cancellationToken) =>

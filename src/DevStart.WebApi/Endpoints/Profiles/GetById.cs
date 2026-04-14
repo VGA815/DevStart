@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.Profiles
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("profiles/{profileId:guid}", async (
+            app.MapGet("api/profiles/{profileId:guid}", async (
                 Guid profileId, 
                 IQueryHandler<GetProfileByIdQuery, ProfileResponse> handler, 
                 CancellationToken cancellationToken) =>

@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.StartupProduct
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups/products/{productId:guid}", async (
+            app.MapGet("api/startups/products/{productId:guid}", async (
                 Guid productId, 
                 IQueryHandler<GetStartupProductByIdQuery, StartupProductResponse> handler, 
                 CancellationToken cancellationToken) =>

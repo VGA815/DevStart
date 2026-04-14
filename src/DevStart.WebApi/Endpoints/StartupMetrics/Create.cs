@@ -19,7 +19,7 @@ namespace DevStart.WebApi.Endpoints.StartupMetrics
             [property: JsonPropertyName("value")] decimal Value);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("startups/metrics", async (
+            app.MapPost("api/startups/metrics", async (
                 [FromBody] Request request, 
                 ICommandHandler<CreateStartupMetricCommand, Guid> handler, 
                 CancellationToken cancellationToken) =>

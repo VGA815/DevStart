@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.EmailVerificationTokens
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("verify", async (
+            app.MapGet("api/verify", async (
                 [FromQuery] Guid token, 
                 IQueryHandler<VerifyEmailQuery, EmailVerificationResponse> innerHandler, 
                 CancellationToken cancellationToken) => 

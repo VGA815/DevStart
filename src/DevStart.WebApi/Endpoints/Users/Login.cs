@@ -15,7 +15,7 @@ namespace DevStart.WebApi.Endpoints.Users
             [property: JsonPropertyName("password")] string Password);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("users/login", async (
+            app.MapPost("api/users/login", async (
                 Request request,
                 ICommandHandler<LoginUserCommand, string> handler,
                 CancellationToken cancellationToken) =>

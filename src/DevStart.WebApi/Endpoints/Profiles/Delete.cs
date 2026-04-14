@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.Profiles
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("profiles", async (
+            app.MapDelete("api/profiles", async (
                 [FromQuery] Guid profileId, 
                 ICommandHandler<DeleteProfileCommand> handler, 
                 CancellationToken cancellationToken) =>

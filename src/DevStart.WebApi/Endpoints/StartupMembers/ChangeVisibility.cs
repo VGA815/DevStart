@@ -18,7 +18,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
             [property: JsonPropertyName("is_public")] bool IsPublic);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("startups/members/visibility", async (
+            app.MapPut("api/startups/members/visibility", async (
                 [FromBody] Request request, 
                 ICommandHandler<ChangeStartupMemberVisibilityCommand> handler, 
                 CancellationToken cancellationToken) =>

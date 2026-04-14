@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.StartupRoadmapItems
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("startups/roadmap/items", async (
+            app.MapDelete("api/startups/roadmap/items", async (
                 [FromQuery] Guid itemId, 
                 ICommandHandler<DeleteStartupRoadmapItemCommand> handler, 
                 CancellationToken cancellationToken) =>

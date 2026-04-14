@@ -23,7 +23,7 @@ namespace DevStart.WebApi.Endpoints.Profiles
             [property: JsonPropertyName("social_media_links")] List<string> SocialMediaLinks);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("profiles", async (
+            app.MapPut("api/profiles", async (
                 [FromBody] Request request, 
                 ICommandHandler<UpdateProfileCommand> handler, 
                 CancellationToken cancellationToken) =>

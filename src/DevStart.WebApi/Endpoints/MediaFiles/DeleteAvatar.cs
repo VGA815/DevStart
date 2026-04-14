@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.MediaFiles
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("users/avatars", async (
+            app.MapDelete("api/users/avatars", async (
                 [FromQuery] Guid fileId, 
                 ICommandHandler<DeleteMediaFileCommand> handler, 
                 CancellationToken cancellationToken) =>

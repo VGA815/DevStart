@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.StartupMetrics
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapDelete("startups/metrics", async (
+            app.MapDelete("api/startups/metrics", async (
                 [FromQuery] Guid metricId, 
                 ICommandHandler<DeleteStartupMetricCommand> handler, 
                 CancellationToken cancellationToken) =>

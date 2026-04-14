@@ -12,7 +12,7 @@ namespace DevStart.WebApi.Endpoints.UserPreferences
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("users/preferences/{preferenceId:guid}", async (
+            app.MapGet("api/users/preferences/{preferenceId:guid}", async (
                 Guid preferenceId, 
                 IQueryHandler<GetUserPreferenceByIdQuery, UserPreferenceResponse> handler, 
                 CancellationToken cancellationToken) =>

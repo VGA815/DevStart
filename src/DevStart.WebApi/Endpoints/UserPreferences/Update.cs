@@ -19,7 +19,7 @@ namespace DevStart.WebApi.Endpoints.UserPreferences
             [property: JsonPropertyName("receive_notifications")] bool ReceiveNotifications);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("users/preferences", async (
+            app.MapPut("api/users/preferences", async (
                 [FromBody] Request request, 
                 ICommandHandler<UpdateUserPreferenceCommand> handler, 
                 CancellationToken cancellationToken) =>

@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.MediaFiles
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("users/avatars", async (IFormFile file, [FromQuery] Guid ownerId, ICommandHandler<UploadMediaFileCommand, Guid> handler, CancellationToken cancellationToken) =>
+            app.MapPost("api/users/avatars", async (IFormFile file, [FromQuery] Guid ownerId, ICommandHandler<UploadMediaFileCommand, Guid> handler, CancellationToken cancellationToken) =>
             {
                 await using var stream = file.OpenReadStream();
 

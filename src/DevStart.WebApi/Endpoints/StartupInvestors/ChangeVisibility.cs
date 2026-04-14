@@ -17,7 +17,7 @@ namespace DevStart.WebApi.Endpoints.StartupInvestors
             [property: JsonPropertyName("is_public")] bool IsPublic);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("startups/investors", async (
+            app.MapPut("api/startups/investors", async (
                 [FromBody] Request request, 
                 ICommandHandler<ChangeStartupInvestorVisibilityCommand> handler, 
                 CancellationToken cancellationToken) =>

@@ -19,7 +19,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
             [property: JsonPropertyName("role")] StartupRole Role);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("startups/members/role", async (
+            app.MapPut("api/startups/members/role", async (
                 [FromBody] Request request, 
                 ICommandHandler<ChangeStartupMemberRoleCommand> handler, 
                 CancellationToken cancellationToken) =>

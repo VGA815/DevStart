@@ -21,7 +21,7 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
             [property: JsonPropertyName("is_public")] bool IsPublic);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("startups/members", async (
+            app.MapPost("api/startups/members", async (
                 [FromBody] Request request, 
                 ICommandHandler<CreateStartupMemberCommand, Guid> handler, 
                 CancellationToken cancellationToken) =>

@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.StartupMetrics
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups/{startupId:guid}/metrics", async (
+            app.MapGet("api/startups/{startupId:guid}/metrics", async (
                 Guid startupId, 
                 IQueryHandler<GetStartupMetricsByStartupIdQuery, List<StartupMetricResponse>> handler, 
                 CancellationToken cancellationToken) =>

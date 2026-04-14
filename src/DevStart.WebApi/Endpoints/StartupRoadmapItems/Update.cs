@@ -24,7 +24,7 @@ namespace DevStart.WebApi.Endpoints.StartupRoadmapItems
             [property: JsonPropertyName("target_date")] DateTime TargetDate);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("startups/roadmap/items", async (
+            app.MapPut("api/startups/roadmap/items", async (
                 [FromBody] Request request, 
                 ICommandHandler<UpdateStartupRoadmapItemCommand> handler, 
                 CancellationToken cancellationToken) =>

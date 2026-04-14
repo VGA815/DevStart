@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.Startups
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("startups/{startupId:guid}", async (
+            app.MapGet("api/startups/{startupId:guid}", async (
                 Guid startupId, 
                 IQueryHandler<GetStartupByIdQuery, StartupResponse> handler, 
                 CancellationToken cancellationToken) =>
