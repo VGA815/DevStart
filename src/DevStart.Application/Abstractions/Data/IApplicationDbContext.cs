@@ -1,4 +1,5 @@
 ﻿using DevStart.Domain.EmailVerificationTokens;
+using DevStart.Domain.InviteTokens;
 using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Notifications;
 using DevStart.Domain.Profiles;
@@ -32,6 +33,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<MediaFile> MediaFiles { get; }
         DbSet<EmailVerificationToken> EmailVerificationTokens { get; }
         DbSet<Notification> Notifications { get; }
+        DbSet<InviteToken> InviteTokens { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

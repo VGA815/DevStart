@@ -7,13 +7,8 @@ namespace DevStart.Application.Startups.Create
         public CreateStartupCommandValidator()
         {
             RuleFor(s => s.Name).NotEmpty();
-            RuleFor(s => s.Description).NotEmpty();
-            RuleFor(s => s.SocialMediaLinks).NotEmpty();
             RuleFor(s => s.PublicEmail).NotEmpty();
-            RuleFor(s => s.BillingEmail).NotEmpty();
-            RuleFor(s => s.AvatarId).NotEmpty();
             RuleFor(s => s.Stage).IsInEnum();
-            RuleFor(s => s.Location).IsInEnum();
             RuleFor(s => s.Stack).NotEmpty();
             RuleFor(s => s.ProductValueProposition).NotEmpty();
             RuleFor(s => s.ProductProblemSolution).NotEmpty();

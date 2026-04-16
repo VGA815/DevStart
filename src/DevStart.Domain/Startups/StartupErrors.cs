@@ -13,5 +13,8 @@ namespace DevStart.Domain.Startups
         public static readonly Error NameNotUnique = Error.Conflict(
             "Startups.NameNotUnique",
             "The provided name is not unique");
+        public static readonly Error UserAlreadyMember = Error.Conflict(
+            "Startups.UserAlreadyMember",
+            "The user is already a member of the startup");
     }
 }
