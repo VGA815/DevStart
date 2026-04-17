@@ -2,6 +2,7 @@
 using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.InviteTokens;
 using DevStart.Domain.MediaFiles;
+using DevStart.Domain.Messages;
 using DevStart.Domain.Notifications;
 using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupDocumentFiles;
@@ -54,6 +55,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<Notification> Notifications { get; set; }
 
         public DbSet<InviteToken> InviteTokens { get; set; }
+
+        public DbSet<Message> Messages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

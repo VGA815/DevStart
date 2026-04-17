@@ -50,6 +50,10 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.UserPreferencesRead,
                 Permissions.UserPreferencesUpdate,
+
+                Permissions.MessagesSend,
+                Permissions.MessagesRead,
+                Permissions.MessagesUpdate,
             },
             [UserSystemRole.Admin] = new HashSet<string>
             {
@@ -92,6 +96,10 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.UserPreferencesRead,
                 Permissions.UserPreferencesUpdate,
+
+                Permissions.MessagesSend,
+                Permissions.MessagesRead,
+                Permissions.MessagesUpdate,
             },
         };
 

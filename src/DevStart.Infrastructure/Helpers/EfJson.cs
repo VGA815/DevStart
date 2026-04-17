@@ -10,5 +10,11 @@ namespace DevStart.Infrastructure.Helpers
             v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
             v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new()
         );
+
+        public static readonly ValueConverter<List<Guid>, string> GuidListConverter =
+        new(
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+            v => JsonSerializer.Deserialize<List<Guid>>(v, (JsonSerializerOptions?)null) ?? new()
+        );
     }
 }

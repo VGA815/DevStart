@@ -41,5 +41,9 @@ namespace DevStart.Application.Abstractions.Authorization
 
         public const string UserPreferencesRead              = "user_preferences::read";
         public const string UserPreferencesUpdate            = "user_preferences::update";
+
+        public const string MessagesSend                     = "messages::send";
+        public const string MessagesRead                     = "messages::read";
+        public const string MessagesUpdate                   = "messages::update";
     }
 }

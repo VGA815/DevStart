@@ -11,12 +11,12 @@ namespace DevStart.WebApi.Endpoints.StartupProduct
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("api/startups/products/{productId:guid}", async (
-                Guid productId, 
+            app.MapGet("api/startups/{startupId:guid}/products", async (
+                Guid startupId,
                 IQueryHandler<GetStartupProductByIdQuery, StartupProductResponse> handler, 
                 CancellationToken cancellationToken) =>
             {
-                var query = new GetStartupProductByIdQuery(productId);
+                var query = new GetStartupProductByIdQuery(startupId);
 
                 Result<StartupProductResponse> result = await handler.Handle(query, cancellationToken);
 

@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace DevStart.Application.Startups.Update
 {
@@ -6,12 +6,8 @@ namespace DevStart.Application.Startups.Update
     {
         public UpdateStartupCommandValidator()
         {
-            RuleFor(s => s.SocialMediaLinks).NotEmpty();
-            RuleFor(s => s.PublicEmail).NotEmpty();
-            RuleFor(s => s.AvatarId).NotEmpty();
-            RuleFor(s => s.BillingEmail).NotEmpty();
-            RuleFor(s => s.Description).NotEmpty();
             RuleFor(s => s.Name).NotEmpty();
+            RuleFor(s => s.PublicEmail).NotEmpty().EmailAddress();
             RuleFor(s => s.Stage).IsInEnum();
         }
     }

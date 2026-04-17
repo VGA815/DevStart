@@ -17,5 +17,6 @@
         public const string EmailVerification = "EmailVerification";
         public const string Notifications = "Notifications";
         public const string InviteTokens = "InviteTokens";
+        public const string Messages = "Messages";
     }
 }
