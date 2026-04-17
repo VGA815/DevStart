@@ -1,15 +1,13 @@
-﻿using DevStart.Application.Abstractions.Data;
+using DevStart.Application.Abstractions.Caching;
+using DevStart.Application.Abstractions.Data;
 using DevStart.Domain.MediaFiles;
 using DevStart.SharedKernel;
 
 namespace DevStart.Application.MediaFiles.Upload
 {
-    internal sealed class MediaFileUpdatedDomainEventHandler(ICacheService _cache) : IDomainEventHandler<MediaFileUpdatedDomainEvent>
+    internal sealed class MediaFileUpdatedDomainEventHandler(ICacheService cache) : IDomainEventHandler<MediaFileUpdatedDomainEvent>
     {
-        public async Task Handle(MediaFileUpdatedDomainEvent domainEvent, CancellationToken cancellationToken)
-        {
-            string key = $"v1:mediafiles:{domainEvent.MediaFileId}";
-            await _cache.RemoveAsync(key);
-        }
+        public Task Handle(MediaFileUpdatedDomainEvent domainEvent, CancellationToken cancellationToken) =>
+            cache.RemoveAsync(CacheKeys.MediaFile(domainEvent.MediaFileId), cancellationToken);
     }
 }

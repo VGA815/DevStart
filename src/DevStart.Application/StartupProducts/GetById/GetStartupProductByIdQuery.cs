@@ -1,11 +1,12 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Caching;
+using DevStart.Application.Abstractions.Messaging;
 
 namespace DevStart.Application.StartupProducts.GetById
 {
     public sealed record GetStartupProductByIdQuery(Guid StartupId) : IQuery<StartupProductResponse>, ICacheableQuery
     {
-        public string CacheKey => $"v1:startup-products:{StartupId}";
+        public string CacheKey => CacheKeys.StartupProduct(StartupId);
 
-        public TimeSpan? Expiration => TimeSpan.FromMinutes(5);
+        public TimeSpan Expiration => CacheTtl.Default;
     }
 }

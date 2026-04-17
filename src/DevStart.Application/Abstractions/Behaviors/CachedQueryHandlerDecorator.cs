@@ -1,6 +1,7 @@
-﻿using DevStart.Application.Abstractions.Data;
+using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.SharedKernel;
+using Microsoft.Extensions.Logging;
 
 namespace DevStart.Application.Abstractions.Behaviors
 {
@@ -8,29 +9,36 @@ namespace DevStart.Application.Abstractions.Behaviors
     {
         internal sealed class QueryHandler<TQuery, TResult>(
             IQueryHandler<TQuery, TResult> innerHandler,
-            ICacheService cacheService)
+            ICacheService cacheService,
+            ILogger<QueryHandler<TQuery, TResult>> logger)
             : IQueryHandler<TQuery, TResult>
             where TQuery : IQuery<TResult>
         {
-            private readonly IQueryHandler<TQuery, TResult> _handler = innerHandler;
-            private readonly ICacheService _cache = cacheService;
-
             public async Task<Result<TResult>> Handle(TQuery query, CancellationToken cancellationToken)
             {
                 if (query is not ICacheableQuery cacheableQuery)
                 {
-                    return await _handler.Handle(query, cancellationToken);
+                    return await innerHandler.Handle(query, cancellationToken);
                 }
 
-                var key = cacheableQuery.CacheKey;
+                string key = cacheableQuery.CacheKey;
 
-                var cached = await _cache.GetAsync<TResult>(key);
+                TResult? cached = await cacheService.GetAsync<TResult>(key, cancellationToken);
 
-                if (cached != null) return cached;
+                if (cached is not null)
+                {
+                    logger.LogDebug("Cache hit for {QueryType} key={Key}", typeof(TQuery).Name, key);
+                    return Result.Success(cached);
+                }
 
-                var result = await _handler.Handle(query, cancellationToken);
+                logger.LogDebug("Cache miss for {QueryType} key={Key}", typeof(TQuery).Name, key);
 
-                await _cache.SetAsync(key, result, cacheableQuery.Expiration!.Value);
+                Result<TResult> result = await innerHandler.Handle(query, cancellationToken);
+
+                if (result.IsSuccess && result.Value is not null)
+                {
+                    await cacheService.SetAsync(key, result.Value, cacheableQuery.Expiration, cancellationToken);
+                }
 
                 return result;
             }

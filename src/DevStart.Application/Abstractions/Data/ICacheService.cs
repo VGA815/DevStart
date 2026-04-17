@@ -1,12 +1,13 @@
-﻿using DevStart.SharedKernel;
-
 namespace DevStart.Application.Abstractions.Data
 {
     public interface ICacheService
     {
-        Task<Result<T>?> GetAsync<T>(string key);
-        Task SetAsync<T>(string key, T value, TimeSpan ttl);
-        Task RemoveAsync(string key);
-        Task RemoveByPrefixAsync(string prefix);
+        Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default);
+
+        Task SetAsync<T>(string key, T value, TimeSpan ttl, CancellationToken cancellationToken = default);
+
+        Task RemoveAsync(string key, CancellationToken cancellationToken = default);
+
+        Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default);
     }
 }

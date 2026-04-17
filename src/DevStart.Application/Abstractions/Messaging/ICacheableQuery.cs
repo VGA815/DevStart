@@ -1,8 +1,9 @@
-﻿namespace DevStart.Application.Abstractions.Messaging
+namespace DevStart.Application.Abstractions.Messaging
 {
     public interface ICacheableQuery
     {
         string CacheKey { get; }
-        TimeSpan? Expiration { get; }
+
+        TimeSpan Expiration { get; }
     }
 }

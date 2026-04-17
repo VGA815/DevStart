@@ -1,5 +1,4 @@
-﻿using DevStart.Application.Abstractions.Data;
-using DevStart.SharedKernel;
+using DevStart.Application.Abstractions.Data;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -8,46 +7,72 @@ namespace DevStart.Infrastructure.Caching
 {
     internal sealed class RedisCacheService : ICacheService
     {
+        private static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+
+        private readonly IConnectionMultiplexer _multiplexer;
         private readonly IDatabase _db;
         private readonly RedisOptions _options;
-        private readonly JsonSerializerOptions _serializerOptions;
+
         public RedisCacheService(
             IConnectionMultiplexer multiplexer,
             IOptions<RedisOptions> options)
         {
+            _multiplexer = multiplexer;
             _db = multiplexer.GetDatabase();
             _options = options.Value;
-            _serializerOptions = new JsonSerializerOptions
+        }
+
+        public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            RedisValue value = await _db.StringGetAsync(BuildKey(key));
+
+            if (!value.HasValue)
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            };
-        }
-        private string BuildKey(string key)
-            => $"{_options.InstanceName}:{key}";
-        public async Task<Result<T>?> GetAsync<T>(string key)
-        {
-            var value = await _db.StringGetAsync(BuildKey(key));
+                return default;
+            }
 
-            if (!value.HasValue) return default;
-
-            return JsonSerializer.Deserialize<Result<T>?>(value!.ToString(), _serializerOptions);
+            return JsonSerializer.Deserialize<T>((string)value!, SerializerOptions);
         }
 
-        public async Task RemoveAsync(string key)
+        public async Task SetAsync<T>(string key, T value, TimeSpan ttl, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string json = JsonSerializer.Serialize(value, SerializerOptions);
+
+            await _db.StringSetAsync(BuildKey(key), json, expiry: ttl);
+        }
+
+        public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             await _db.KeyDeleteAsync(BuildKey(key));
         }
 
-        public Task RemoveByPrefixAsync(string prefix)
+        public async Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string pattern = $"{BuildKey(prefix)}*";
+
+            foreach (System.Net.EndPoint endpoint in _multiplexer.GetEndPoints())
+            {
+                IServer server = _multiplexer.GetServer(endpoint);
+
+
+                await foreach (RedisKey key in server.KeysAsync(pattern: pattern, pageSize: 250).WithCancellation(cancellationToken))
+                {
+                    await _db.KeyDeleteAsync(key);
+                }
+            }
         }
 
-        public async Task SetAsync<T>(string key, T value, TimeSpan ttl)
-        {
-            var json = JsonSerializer.Serialize(value, _serializerOptions);
-
-            await _db.StringSetAsync(BuildKey(key), json, new Expiration(ttl));
-        }
+        private string BuildKey(string key) => $"{_options.InstanceName}:{key}";
     }
 }

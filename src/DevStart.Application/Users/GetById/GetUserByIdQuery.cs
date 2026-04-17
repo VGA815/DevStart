@@ -1,11 +1,12 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Caching;
+using DevStart.Application.Abstractions.Messaging;
 
 namespace DevStart.Application.Users.GetById
 {
     public sealed record GetUserByIdQuery(Guid UserId) : IQuery<UserResponse>, ICacheableQuery
     {
-        public string CacheKey => $"v1:user:{UserId}";
+        public string CacheKey => CacheKeys.User(UserId);
 
-        public TimeSpan? Expiration => TimeSpan.FromMinutes(5);
+        public TimeSpan Expiration => CacheTtl.Default;
     }
 }

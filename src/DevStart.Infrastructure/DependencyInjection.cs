@@ -124,7 +124,7 @@ namespace DevStart.Infrastructure
                 return ConnectionMultiplexer.Connect(options.ConnectionString);
             });
 
-            services.AddScoped<ICacheService, RedisCacheService>();
+            services.AddSingleton<ICacheService, RedisCacheService>();
 
             return services;
         }
