@@ -29,6 +29,7 @@ namespace DevStart.Application.StartupRoadmapItems.Update
                 return Result.Failure(StartupRoadmapItemErrors.NotFound(command.ItemId));
             }
 
+            startupRoadmapItem.Title = command.Title;
             startupRoadmapItem.Desription = command.Desription;
             startupRoadmapItem.Status = command.Status;
             startupRoadmapItem.StartupStage = command.StartupStage;

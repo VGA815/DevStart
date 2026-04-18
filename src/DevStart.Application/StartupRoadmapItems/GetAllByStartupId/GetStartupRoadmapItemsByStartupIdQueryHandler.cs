@@ -21,12 +21,12 @@ namespace DevStart.Application.StartupRoadmapItems.GetAllByStartupId
                 .Select(sri => new StartupRoadmapItemResponse
                 {
                     StartupId = sri.StartupId,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = sri.CreatedAt,
                     Desription = sri.Desription,
                     Id = sri.Id,
                     StartupStage = sri.StartupStage,
                     Status = sri.Status,
-                    TargetDate = DateTime.UtcNow,
+                    TargetDate = sri.TargetDate,
                     Title = sri.Title,
                 })
                 .ToListAsync(cancellationToken);
