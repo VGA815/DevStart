@@ -12,6 +12,8 @@ namespace DevStart.Application.Abstractions.Caching
 
         public static string StartupProduct(Guid startupProductId) => $"{Version}:startup-products:{startupProductId}";
 
+        public static string StartupDocumentFile(Guid startupDocumentFileId) => $"{Version}:startup-document-file:{startupDocumentFileId}";
+
         public static string MediaFile(Guid fileId) => $"{Version}:media-files:{fileId}";
 
         public static string Notification(Guid notificationId) => $"{Version}:notifications:{notificationId}";

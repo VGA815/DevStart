@@ -58,6 +58,8 @@ namespace DevStart.Infrastructure.Database
 
         public DbSet<Message> Messages { get; set; }
 
+        public DbSet<StartupDocumentFile> StartupDocumentFiles { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);

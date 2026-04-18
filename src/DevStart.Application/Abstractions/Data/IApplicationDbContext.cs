@@ -36,6 +36,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<Notification> Notifications { get; }
         DbSet<InviteToken> InviteTokens { get; }
         DbSet<Message> Messages { get; }
+        DbSet<StartupDocumentFile> StartupDocumentFiles { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
