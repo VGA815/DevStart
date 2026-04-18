@@ -3,8 +3,9 @@
     public enum StartupStage
     {
         Idea = 0,
-        Mvp = 1,
-        Traction = 2,
-        Growth = 3,
+        PreSeed = 1,
+        Mvp = 2,
+        Seed = 3,
+        SeriesA = 4,
     }
 }

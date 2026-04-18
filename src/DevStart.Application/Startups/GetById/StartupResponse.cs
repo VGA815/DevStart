@@ -9,6 +9,7 @@ namespace DevStart.Application.Startups.GetById
         public string PublicEmail { get; init; } = null!;
         public string? Description { get; init; }
         public string? Url { get; init; }
+        public string? ShortDescription { get; set; }
         public bool IsStopped { get; init; }
         public StartupStage Stage { get; init; }
         public List<string>? SocialMediaLinks { get; init; } = [];

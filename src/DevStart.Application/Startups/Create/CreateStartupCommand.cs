@@ -8,6 +8,7 @@ namespace DevStart.Application.Startups.Create
         public Guid UserId { get; set; }
         public string Name { get; set; } = null!;
         public string PublicEmail { get; set; } = null!;
+        public string? ShortDescription { get; set; }
         public string? Description { get; set; }
         public string? Url { get; set; }
         public bool IsStopped { get; set; }
@@ -23,12 +24,13 @@ namespace DevStart.Application.Startups.Create
         public string ProductDifferentiators { get; set; } = null!;
 
         public CreateStartupCommand(Guid userId, string name, string publicEmail, string? description, string? url, bool isStopped, StartupStage stage, List<string>? socialMediaLinks, StartupLocation? location,
-            string? billingEmail, Guid? avatarId, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators)
+            string? billingEmail, Guid? avatarId, string? shortDescription, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators)
         {
             UserId = userId;
             Name = name;
             PublicEmail = publicEmail;
             Description = description;
+            ShortDescription = shortDescription;
             Url = url;
             IsStopped = isStopped;
             Stage = stage;

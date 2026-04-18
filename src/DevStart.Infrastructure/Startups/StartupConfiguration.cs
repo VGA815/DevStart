@@ -18,6 +18,7 @@ namespace DevStart.Infrastructure.Startups
             builder.Property(x => x.PublicEmail).HasColumnName("public_email");
             builder.Property(x => x.Description).HasColumnName("description");
             builder.Property(x => x.Url).HasColumnName("url");
+            builder.Property(x => x.ShortDescription).HasColumnName("short_description");
             builder.Property(x => x.IsStopped).HasColumnName("is_stopped");
             builder.Property(x => x.Stage).HasColumnName("stage");
             builder.Property(x => x.Location).HasColumnName("location");

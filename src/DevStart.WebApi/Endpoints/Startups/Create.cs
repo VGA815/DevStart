@@ -28,7 +28,8 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("product_problem_solution")] string ProductProblemSolution,
             [property: JsonPropertyName("stack")] List<string> Stack,
             [property: JsonPropertyName("product_value_proposition")] string ProductValueProposition,
-            [property: JsonPropertyName("product_differentiators")] string ProductDifferentiators);
+            [property: JsonPropertyName("product_differentiators")] string ProductDifferentiators,
+            [property: JsonPropertyName("short_description")] string ShortDescription);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("api/startups/", async (
@@ -48,6 +49,7 @@ namespace DevStart.WebApi.Endpoints.Startups
                     request.StartupLocation,
                     request.BillingEmail,
                     request.AvatarId,
+                    request.ShortDescription,
                     request.ProductName,
                     request.ProductProblemSolution,
                     request.Stack,

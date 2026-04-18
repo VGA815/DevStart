@@ -35,6 +35,7 @@ namespace DevStart.Application.Startups.GetAll
                 .Select(s => new StartupResponse
                 {
                     Id = s.Id,
+                    ShortDescription = s.ShortDescription,
                     Name = s.Name,
                     PublicEmail = s.PublicEmail,
                     Description = s.Description,

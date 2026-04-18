@@ -6,5 +6,6 @@
         USA = 1,
         China = 2,
         India = 3,
+        Other = 4,
     }
 }

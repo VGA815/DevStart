@@ -1,7 +1,5 @@
-﻿using DevStart.Application.Abstractions.Authentication;
-using DevStart.Application.Abstractions.Data;
+﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
-using DevStart.Domain.StartupMembers;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +26,7 @@ namespace DevStart.Application.Startups.GetAllByProfileId
                     Id = s.Id,
                     AvatarId = s.AvatarId,
                     BillingEmail = s.BillingEmail,
+                    ShortDescription = s.ShortDescription,
                     CreatedAt = DateTime.UtcNow,
                     Description = s.Description,
                     IsStopped = s.IsStopped,

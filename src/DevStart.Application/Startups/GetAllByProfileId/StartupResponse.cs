@@ -8,6 +8,7 @@ namespace DevStart.Application.Startups.GetAllByProfileId
         public string Name { get; init; } = null!;
         public string PublicEmail { get; init; } = null!;
         public string? Description { get; init; }
+        public string? ShortDescription { get; set; }
         public string? Url { get; init; } = null!;
         public bool IsStopped { get; init; }
         public StartupStage Stage { get; init; }

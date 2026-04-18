@@ -1,7 +1,5 @@
-﻿using DevStart.Application.Abstractions.Authentication;
-using DevStart.Application.Abstractions.Data;
+﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
-using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +21,7 @@ namespace DevStart.Application.Startups.GetById
                     CreatedAt = s.CreatedAt,
                     Description = s.Description,
                     IsStopped = s.IsStopped,
+                    ShortDescription = s.ShortDescription,
                     Location = s.Location,
                     Name = s.Name,
                     PublicEmail = s.PublicEmail,

@@ -7,6 +7,7 @@ namespace DevStart.Domain.Startups
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public string PublicEmail { get; set; } = null!;
+        public string? ShortDescription { get; set; }
         public string? Description { get; set; }
         public string? Url { get; set; }
         public bool IsStopped { get; set; }
@@ -21,11 +22,12 @@ namespace DevStart.Domain.Startups
             string name, string publicEmail, string? description,
             string? url, StartupStage startupStage, StartupLocation? location,
             string? billingEmail, Guid? avatarId, DateTime createdAt,
-            List<string>? socialMediaLinks)
+            List<string>? socialMediaLinks, string? shortDescription)
             => new ()
             {
                 Id = Guid.NewGuid(),
                 Name = name,
+                ShortDescription = shortDescription,
                 AvatarId = avatarId,
                 BillingEmail = billingEmail,
                 CreatedAt = createdAt,

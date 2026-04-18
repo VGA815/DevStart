@@ -40,7 +40,8 @@ namespace DevStart.Application.Startups.Create
                 command.BillingEmail,
                 command.AvatarId,
                 dateTimeProvider.UtcNow,
-                command.SocialMediaLinks);
+                command.SocialMediaLinks,
+                command.ShortDescription);
 
             StartupMember startupMember = StartupMember.Create(
                 command.UserId,
