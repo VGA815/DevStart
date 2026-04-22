@@ -47,6 +47,8 @@ namespace DevStart.Application.StartupMembers.Create
 
             StartupMember startupMember = StartupMember.Create(command.ProfileId, command.StartupId, command.Role, command.IsPublic, dateTimeProvider.UtcNow);
 
+            startupMember.Raise(new StartupMemberCreatedDomainEvent(startupMember.ProfileId, startupMember.StartupId));
+
             context.StartupMembers.Add(startupMember);
 
             await context.SaveChangesAsync(cancellationToken);

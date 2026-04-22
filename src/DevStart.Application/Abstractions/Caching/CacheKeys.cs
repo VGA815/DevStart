@@ -16,8 +16,10 @@ namespace DevStart.Application.Abstractions.Caching
 
         public static string MediaFile(Guid fileId) => $"{Version}:media-files:{fileId}";
 
-        public static string Notification(Guid notificationId) => $"{Version}:notifications:{notificationId}";
-
         public static string UserPreference(Guid userPreferenceId) => $"{Version}:user-preferences:{userPreferenceId}";
+
+        public static string StartupMetric(Guid metricId) => $"{Version}:startup-metrics:{metricId}";
+
+        public static string StartupRoadmapItem(Guid itemId) => $"{Version}:startup-roadmap-items:{itemId}";
     }
 }

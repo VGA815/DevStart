@@ -1,4 +1,4 @@
-﻿using DevStart.SharedKernel;
+using DevStart.SharedKernel;
 
 namespace DevStart.Domain.Notifications
 {
@@ -6,7 +6,7 @@ namespace DevStart.Domain.Notifications
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
-        public string Type { get; set; } = null!;
+        public NotificationType Type { get; set; }
         public string Title { get; set; } = null!;
         public string Body { get; set; } = null!;
         public Guid? ReferenceId { get; set; }
@@ -14,7 +14,7 @@ namespace DevStart.Domain.Notifications
         public DateTime CreatedAt { get; set; }
 
         public Notification() {}
-        public static Notification Create(Guid userId, string type, string title, string body, DateTime createdAt, Guid? referenceId = null)
+        public static Notification Create(Guid userId, NotificationType type, string title, string body, DateTime createdAt, Guid? referenceId = null)
         {
             return new Notification
             {

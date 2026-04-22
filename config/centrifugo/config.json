@@ -3,6 +3,10 @@
   "api_key": "centrifugo-internal-api-key",
   "admin_password": "password",
   "admin_secret": "secret",
+  "allowed_origins": [
+    "http://localhost:*",
+    "https://localhost:*"
+  ],
   "health": {
     "enabled": true
   },
@@ -14,7 +18,9 @@
     {
       "name": "notifications",
       "presence": false,
-      "history_size": 0
+      "history_size": 50,
+      "history_ttl": "24h",
+      "allow_subscribe_for_client": true
     }
   ]
 }

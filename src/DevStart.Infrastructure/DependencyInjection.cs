@@ -160,6 +160,8 @@ namespace DevStart.Infrastructure
                 client.DefaultRequestHeaders.Add("X-API-Key", options.ApiKey);
             });
             services.AddScoped<INotificationSender, CentrifugoNotificationSender>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddSingleton<ICentrifugoTokenProvider, CentrifugoTokenProvider>();
             return services;
         }
     }

@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Authorization;
+using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Notifications.MarkAsRead;
 using DevStart.SharedKernel;
@@ -11,7 +11,7 @@ namespace DevStart.WebApi.Endpoints.Notifications
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("api/notifications/{notificationId:guid}", 
+            app.MapPut("api/notifications/{notificationId:guid}/read",
                 async (Guid notificationId, ICommandHandler<MarkNotificationAsReadCommand> handler, CancellationToken cancellationToken) =>
                 {
                     MarkNotificationAsReadCommand command = new(notificationId);

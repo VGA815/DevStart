@@ -8,15 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.Profiles.GetById
 {
-    internal sealed class GetProfileByIdQueryHandler(IApplicationDbContext context, IUserContext userContext)
+    internal sealed class GetProfileByIdQueryHandler(IApplicationDbContext context)
         : IQueryHandler<GetProfileByIdQuery, ProfileResponse>
     {
         public async Task<Result<ProfileResponse>> Handle(GetProfileByIdQuery query, CancellationToken cancellationToken)
         {
-            if (query.UserId != userContext.UserId)
-            {
-                return Result.Failure<ProfileResponse>(UserErrors.Unauthorized());
-            }
 
             ProfileResponse? profile = await context.Profiles
                 .Where(p => p.UserId == query.UserId)

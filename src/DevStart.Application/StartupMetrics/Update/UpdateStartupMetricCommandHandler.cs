@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -14,7 +14,7 @@ namespace DevStart.Application.StartupMetrics.Update
         public async Task<Result> Handle(UpdateStartupMetricCommand command, CancellationToken cancellationToken)
         {
             StartupMember? startupMember = await context.StartupMembers
-                .SingleOrDefaultAsync(sm => sm.StartupId  == command.StartupId && sm.ProfileId == userContext.UserId, cancellationToken);
+                .SingleOrDefaultAsync(sm => sm.StartupId == command.StartupId && sm.ProfileId == userContext.UserId, cancellationToken);
 
             if (startupMember == null)
             {
@@ -31,6 +31,8 @@ namespace DevStart.Application.StartupMetrics.Update
 
             startupMetric.MetricType = command.MetricType;
             startupMetric.Value = command.Value;
+
+            startupMetric.Raise(new StartupMetricUpdatedDomainEvent(startupMetric.Id));
 
             await context.SaveChangesAsync(cancellationToken);
 

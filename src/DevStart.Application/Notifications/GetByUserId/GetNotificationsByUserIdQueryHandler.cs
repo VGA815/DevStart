@@ -1,7 +1,7 @@
-﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
-using DevStart.Domain.Users;
+using DevStart.Domain.Notifications;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,19 +12,16 @@ namespace DevStart.Application.Notifications.GetByUserId
     {
         public async Task<Result<List<NotificationResponse>>> Handle(GetNotificationsByUserIdQuery query, CancellationToken cancellationToken)
         {
-            User? user = await context.Users.SingleOrDefaultAsync(u => u.Id == userContext.UserId, cancellationToken);
+            IQueryable<Notification> notifications = context.Notifications
+                .AsNoTracking()
+                .Where(n => n.UserId == userContext.UserId);
 
-            if (user == null)
+            if (query.IsRead.HasValue)
             {
-                return Result.Failure<List<NotificationResponse>>(UserErrors.NotFound(userContext.UserId));
-            }
-            if (user.Id != userContext.UserId)
-            {
-                return Result.Failure<List<NotificationResponse>>(UserErrors.Unauthorized());
+                notifications = notifications.Where(n => n.IsRead == query.IsRead.Value);
             }
 
-            List<NotificationResponse> notifications = await context.Notifications
-                .Where(n => n.UserId == userContext.UserId)
+            List<NotificationResponse> items = await notifications
                 .OrderByDescending(n => n.CreatedAt)
                 .Skip((query.Page - 1) * query.PageSize)
                 .Take(query.PageSize)
@@ -41,7 +38,7 @@ namespace DevStart.Application.Notifications.GetByUserId
                 })
                 .ToListAsync(cancellationToken);
 
-            return notifications;
+            return items;
         }
     }
 }

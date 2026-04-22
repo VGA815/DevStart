@@ -31,6 +31,7 @@ namespace DevStart.Application.Startups.Update
             // TODO: Email verification
 
             startup!.Url = command.Url;
+            startup.ShortDescription = command.ShortDescription;
             startup.AvatarId = command.AvatarId;
             startup.SocialMediaLinks = command.SocialMediaLinks;
             startup.BillingEmail = command.BillingEmail;

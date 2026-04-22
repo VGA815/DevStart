@@ -1,7 +1,9 @@
-﻿namespace DevStart.Application.Abstractions.Notifications
+using DevStart.Domain.Notifications;
+
+namespace DevStart.Application.Abstractions.Notifications
 {
     public interface INotificationSender
     {
-        Task SendAsync(Guid id, Guid userId, string type, string title, string body, DateTime createdAt, Guid? referenceId = null, CancellationToken cancellationToken = default);
+        Task SendAsync(Notification notification, CancellationToken cancellationToken);
     }
 }

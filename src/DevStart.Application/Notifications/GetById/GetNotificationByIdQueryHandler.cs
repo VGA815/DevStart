@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.Notifications;
@@ -10,9 +10,10 @@ namespace DevStart.Application.Notifications.GetById
     internal sealed class GetNotificationByIdQueryHandler(IApplicationDbContext context, IUserContext userContext)
         : IQueryHandler<GetNotificationByIdQuery, NotificationResponse>
     {
-        async Task<Result<NotificationResponse>> IQueryHandler<GetNotificationByIdQuery, NotificationResponse>.Handle(GetNotificationByIdQuery query, CancellationToken cancellationToken)
+        public async Task<Result<NotificationResponse>> Handle(GetNotificationByIdQuery query, CancellationToken cancellationToken)
         {
             NotificationResponse? notification = await context.Notifications
+                .AsNoTracking()
                 .Where(n => n.Id == query.NotificationId && n.UserId == userContext.UserId)
                 .Select(n => new NotificationResponse
                 {
@@ -26,10 +27,12 @@ namespace DevStart.Application.Notifications.GetById
                     CreatedAt = n.CreatedAt
                 })
                 .SingleOrDefaultAsync(cancellationToken);
+
             if (notification is null)
             {
                 return Result.Failure<NotificationResponse>(NotificationErrors.NotFound(query.NotificationId));
             }
+
             return notification;
         }
     }

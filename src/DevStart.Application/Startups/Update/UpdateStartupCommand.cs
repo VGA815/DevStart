@@ -8,6 +8,7 @@ namespace DevStart.Application.Startups.Update
         public Guid StartupId { get; set; }
         public string Name { get; set; } = null!;
         public string PublicEmail { get; set; } = null!;
+        public string? ShortDescription { get; set; }
         public string Description { get; set; } = null!;
         public string Url { get; set; } = null!;
         public bool IsStopped { get; set; }
@@ -18,12 +19,13 @@ namespace DevStart.Application.Startups.Update
         public Guid? AvatarId { get; set; }
 
         public UpdateStartupCommand(Guid startupId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage startupStage,
-            List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId)
+            List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId, string? shortDescription)
         {
             StartupId = startupId;
             Name = name;
             PublicEmail = publicEmail;
             Description = description;
+            ShortDescription = shortDescription;
             Url = url;
             IsStopped = isStopped;
             Stage = startupStage;

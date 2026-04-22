@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -20,7 +20,7 @@ namespace DevStart.Application.StartupRoadmapItems.Update
             {
                 return Result.Failure(StartupMemberErrors.NotFound(userContext.UserId, command.StartupId));
             }
-            
+
             StartupRoadmapItem? startupRoadmapItem = await context.StartupRoadmapItems
                 .SingleOrDefaultAsync(sri => sri.Id == command.ItemId, cancellationToken);
 
@@ -34,7 +34,9 @@ namespace DevStart.Application.StartupRoadmapItems.Update
             startupRoadmapItem.Status = command.Status;
             startupRoadmapItem.StartupStage = command.StartupStage;
             startupRoadmapItem.TargetDate = command.TargetDate;
-            
+
+            startupRoadmapItem.Raise(new StartupRoadmapItemUpdatedDomainEvent(startupRoadmapItem.Id));
+
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();

@@ -1,24 +1,21 @@
 using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
-using DevStart.Application.Notifications;
-using DevStart.Application.Notifications.GetById;
+using DevStart.Application.Notifications.GetUnreadCount;
 using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
 using DevStart.WebApi.Infrastructure;
 
 namespace DevStart.WebApi.Endpoints.Notifications
 {
-    internal sealed class GetById : IEndpoint
+    internal sealed class GetUnreadCount : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("api/notifications/{notificationId:guid}", async (
-                Guid notificationId,
-                IQueryHandler<GetNotificationByIdQuery, NotificationResponse> handler,
+            app.MapGet("api/notifications/unread-count", async (
+                IQueryHandler<GetUnreadCountQuery, int> handler,
                 CancellationToken cancellationToken) =>
             {
-                var query = new GetNotificationByIdQuery(notificationId);
-                Result<NotificationResponse> result = await handler.Handle(query, cancellationToken);
+                Result<int> result = await handler.Handle(new GetUnreadCountQuery(), cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
                 .HasPermission(Permissions.NotificationsRead)
