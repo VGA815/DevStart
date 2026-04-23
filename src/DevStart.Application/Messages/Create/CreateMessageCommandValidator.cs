@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 namespace DevStart.Application.Messages.Create
 {
@@ -7,6 +7,7 @@ namespace DevStart.Application.Messages.Create
         public CreateMessageCommandValidator()
         {
             RuleFor(m => m.ReceiverId).NotEmpty();
+            RuleFor(m => m.ReceiverType).IsInEnum();
         }
     }
 }

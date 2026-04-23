@@ -3,6 +3,7 @@ using System;
 using DevStart.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevStart.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260419141651_RefactorNotifications")]
+    partial class RefactorNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -150,17 +153,9 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("receiver_id");
 
-                    b.Property<int>("ReceiverType")
-                        .HasColumnType("integer")
-                        .HasColumnName("receiver_type");
-
                     b.Property<Guid>("SenderId")
                         .HasColumnType("uuid")
                         .HasColumnName("sender_id");
-
-                    b.Property<int>("SenderType")
-                        .HasColumnType("integer")
-                        .HasColumnName("sender_type");
 
                     b.Property<string>("TextContent")
                         .HasColumnType("text")

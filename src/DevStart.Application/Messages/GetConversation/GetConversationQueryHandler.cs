@@ -1,6 +1,8 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Messages.GetById;
+using DevStart.Domain.Messages;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,12 +13,37 @@ namespace DevStart.Application.Messages.GetConversation
     {
         public async Task<Result<List<MessageResponse>>> Handle(GetConversationQuery query, CancellationToken cancellationToken)
         {
-            Guid userId = userContext.UserId;
+            Guid myId;
+            ChatParticipantType mySide;
+
+            if (query.AsStartupId.HasValue)
+            {
+                bool isMember = await context.StartupMembers.AnyAsync(
+                    sm => sm.StartupId == query.AsStartupId.Value && sm.ProfileId == userContext.UserId,
+                    cancellationToken);
+
+                if (!isMember)
+                {
+                    return Result.Failure<List<MessageResponse>>(MessageErrors.Unauthorized);
+                }
+
+                myId = query.AsStartupId.Value;
+                mySide = ChatParticipantType.Startup;
+            }
+            else
+            {
+                myId = userContext.UserId;
+                mySide = ChatParticipantType.User;
+            }
+
+            ChatParticipantType otherType = query.OtherType;
+            Guid otherId = query.OtherId;
 
             List<MessageResponse> messages = await context.Messages
                 .AsNoTracking()
-                .Where(m => (m.SenderId == userId && m.ReceiverId == query.OtherUserId) ||
-                            (m.SenderId == query.OtherUserId && m.ReceiverId == userId))
+                .Where(m =>
+                    (m.SenderType == mySide && m.SenderId == myId && m.ReceiverType == otherType && m.ReceiverId == otherId) ||
+                    (m.SenderType == otherType && m.SenderId == otherId && m.ReceiverType == mySide && m.ReceiverId == myId))
                 .OrderByDescending(m => m.CreatedAt)
                 .Skip((query.Page - 1) * query.PageSize)
                 .Take(query.PageSize)
@@ -24,7 +51,9 @@ namespace DevStart.Application.Messages.GetConversation
                 {
                     Id = m.Id,
                     SenderId = m.SenderId,
+                    SenderType = m.SenderType,
                     ReceiverId = m.ReceiverId,
+                    ReceiverType = m.ReceiverType,
                     TextContent = m.TextContent,
                     MediaIds = m.MediaIds,
                     MetricIds = m.MetricIds,

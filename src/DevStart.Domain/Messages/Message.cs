@@ -1,4 +1,4 @@
-﻿using DevStart.SharedKernel;
+using DevStart.SharedKernel;
 
 namespace DevStart.Domain.Messages
 {
@@ -6,7 +6,9 @@ namespace DevStart.Domain.Messages
     {
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }
+        public ChatParticipantType SenderType { get; set; }
         public Guid ReceiverId { get; set; }
+        public ChatParticipantType ReceiverType { get; set; }
         public string? TextContent { get; set; }
         public List<Guid> MediaIds { get; set; } = [];
         public List<Guid> MetricIds { get; set; } = [];
@@ -15,10 +17,18 @@ namespace DevStart.Domain.Messages
         public DateTime UpdatedAt { get; set; }
         public Message()
         {
-            
+
         }
         public void MarkAsRead() => IsRead = true;
-        public static Message Create(Guid senderId, Guid receiverId, string? textContent, List<Guid>? mediaIds, List<Guid>? metricIds, DateTime createdAt)
+        public static Message Create(
+            Guid senderId,
+            ChatParticipantType senderType,
+            Guid receiverId,
+            ChatParticipantType receiverType,
+            string? textContent,
+            List<Guid>? mediaIds,
+            List<Guid>? metricIds,
+            DateTime createdAt)
             => new()
             {
                 CreatedAt = createdAt,
@@ -28,7 +38,9 @@ namespace DevStart.Domain.Messages
                 MediaIds = mediaIds ?? [],
                 MetricIds = metricIds ?? [],
                 ReceiverId = receiverId,
+                ReceiverType = receiverType,
                 SenderId = senderId,
+                SenderType = senderType,
                 TextContent = textContent,
             };
     }

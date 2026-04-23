@@ -14,10 +14,11 @@ namespace DevStart.WebApi.Endpoints.Messages
             app.MapGet("api/messages/conversations", async (
                 int page,
                 int pageSize,
+                Guid? asStartupId,
                 IQueryHandler<GetConversationsQuery, List<ConversationSummaryResponse>> handler,
                 CancellationToken cancellationToken) =>
             {
-                var query = new GetConversationsQuery(page, pageSize);
+                var query = new GetConversationsQuery(page, pageSize, asStartupId);
                 Result<List<ConversationSummaryResponse>> result = await handler.Handle(query, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })

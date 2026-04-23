@@ -13,7 +13,15 @@ namespace DevStart.Infrastructure.Messages
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.SenderId).HasColumnName("sender_id");
+            builder.Property(x => x.SenderType)
+                .HasConversion<int>()
+                .IsRequired()
+                .HasColumnName("sender_type");
             builder.Property(x => x.ReceiverId).HasColumnName("receiver_id");
+            builder.Property(x => x.ReceiverType)
+                .HasConversion<int>()
+                .IsRequired()
+                .HasColumnName("receiver_type");
             builder.Property(x => x.TextContent).HasColumnName("text_content");
             builder.Property(x => x.IsRead).HasColumnName("is_read");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
