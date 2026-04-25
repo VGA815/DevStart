@@ -1,4 +1,4 @@
-﻿using DevStart.Domain.Startups;
+using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
 
 namespace DevStart.Domain.StartupRoadmapItems
@@ -11,16 +11,17 @@ namespace DevStart.Domain.StartupRoadmapItems
         public string Title { get; set; } = null!;
         public string? Desription { get; set; }
         public RoadmapItemStatus Status { get; set; }
+        public decimal? TargetAmount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime TargetDate { get; set; }
         public StartupRoadmapItem()
         {
-            
+
         }
 
         public static StartupRoadmapItem Create(
             Guid startupId, StartupStage startupStage, string title, string? desription,
-            RoadmapItemStatus status, DateTime createdAt, DateTime targetDate)
+            RoadmapItemStatus status, decimal? targetAmount, DateTime createdAt, DateTime targetDate)
             => new ()
             {
                 Id = Guid.NewGuid(),
@@ -29,6 +30,7 @@ namespace DevStart.Domain.StartupRoadmapItems
                 StartupId = startupId,
                 StartupStage = startupStage,
                 Status = status,
+                TargetAmount = targetAmount,
                 TargetDate = targetDate,
                 Title = title
             };

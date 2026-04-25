@@ -45,5 +45,17 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string MessagesSend                     = "messages::send";
         public const string MessagesRead                     = "messages::read";
         public const string MessagesUpdate                   = "messages::update";
+
+        public const string InvestorProfilesCreate           = "investor_profiles::create";
+        public const string InvestorProfilesUpdate           = "investor_profiles::update";
+        public const string InvestorProfilesRead             = "investor_profiles::read";
+
+        public const string InvestmentApplicationsCreate     = "investment_applications::create";
+        public const string InvestmentApplicationsRespond    = "investment_applications::respond";
+        public const string InvestmentApplicationsWithdraw   = "investment_applications::withdraw";
+        public const string InvestmentApplicationsRead       = "investment_applications::read";
+
+        public const string InvestmentDealsConfirm           = "investment_deals::confirm";
+        public const string InvestmentDealsRead              = "investment_deals::read";
     }
 }

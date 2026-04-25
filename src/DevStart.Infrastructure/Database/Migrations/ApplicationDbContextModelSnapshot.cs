@@ -51,6 +51,184 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.ToTable("email_verification_tokens", "public");
                 });
 
+            modelBuilder.Entity("DevStart.Domain.InvestmentApplications.InvestmentApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("InvestorProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("investor_profile_id");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("message");
+
+                    b.Property<Guid?>("RoadmapItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("roadmap_item_id");
+
+                    b.Property<Guid>("StartupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("startup_id");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_investment_applications");
+
+                    b.HasIndex("RoadmapItemId")
+                        .HasDatabaseName("ix_investment_applications_roadmap_item_id");
+
+                    b.HasIndex("InvestorProfileId", "Status")
+                        .HasDatabaseName("ix_investment_applications_investor_status");
+
+                    b.HasIndex("StartupId", "Status")
+                        .HasDatabaseName("ix_investment_applications_startup_status");
+
+                    b.ToTable("investment_applications", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.InvestmentDeals.InvestmentDeal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<bool>("ConfirmedByInvestor")
+                        .HasColumnType("boolean")
+                        .HasColumnName("confirmed_by_investor");
+
+                    b.Property<bool>("ConfirmedByStartup")
+                        .HasColumnType("boolean")
+                        .HasColumnName("confirmed_by_startup");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("InvestorProfileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("investor_profile_id");
+
+                    b.Property<Guid?>("RoadmapItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("roadmap_item_id");
+
+                    b.Property<Guid>("StartupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("startup_id");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_investment_deals");
+
+                    b.HasIndex("ApplicationId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_investment_deals_application_id");
+
+                    b.HasIndex("InvestorProfileId", "Status")
+                        .HasDatabaseName("ix_investment_deals_investor_status");
+
+                    b.HasIndex("StartupId", "Status")
+                        .HasDatabaseName("ix_investment_deals_startup_status");
+
+                    b.ToTable("investment_deals", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.Investors.InvestorProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("bio");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("display_name");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_public");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("website");
+
+                    b.HasKey("Id")
+                        .HasName("pk_investor_profiles");
+
+                    b.HasIndex("Type")
+                        .HasDatabaseName("ix_investor_profiles_type");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_investor_profiles_user_id");
+
+                    b.ToTable("investor_profiles", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.InviteTokens.InviteToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -498,6 +676,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer")
                         .HasColumnName("status");
+
+                    b.Property<decimal?>("TargetAmount")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("target_amount");
 
                     b.Property<DateTime>("TargetDate")
                         .HasColumnType("timestamp with time zone")

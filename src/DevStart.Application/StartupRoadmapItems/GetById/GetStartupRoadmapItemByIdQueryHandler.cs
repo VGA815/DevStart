@@ -27,6 +27,7 @@ namespace DevStart.Application.StartupRoadmapItems.GetById
                 StartupId = startupRoadmapItem.StartupId,
                 StartupStage = startupRoadmapItem.StartupStage,
                 Status = startupRoadmapItem.Status,
+                TargetAmount = startupRoadmapItem.TargetAmount,
                 TargetDate = startupRoadmapItem.TargetDate,
                 Title = startupRoadmapItem.Title,
             };

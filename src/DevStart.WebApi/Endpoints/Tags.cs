@@ -18,5 +18,8 @@
         public const string Notifications = "Notifications";
         public const string InviteTokens = "InviteTokens";
         public const string Messages = "Messages";
+        public const string InvestorProfiles = "InvestorProfiles";
+        public const string InvestmentApplications = "InvestmentApplications";
+        public const string InvestmentDeals = "InvestmentDeals";
     }
 }

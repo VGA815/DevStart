@@ -18,6 +18,7 @@ namespace DevStart.Infrastructure.StartupRoadmapItems
             builder.Property(x => x.Title).HasColumnName("title").IsRequired();
             builder.Property(x => x.Desription).HasColumnName("description");
             builder.Property(x => x.Status).HasColumnName("status");
+            builder.Property(x => x.TargetAmount).HasColumnName("target_amount").HasColumnType("numeric(18,2)");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.TargetDate).HasColumnName("target_date");
 

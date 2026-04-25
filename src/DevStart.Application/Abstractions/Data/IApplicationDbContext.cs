@@ -1,4 +1,7 @@
 ﻿using DevStart.Domain.EmailVerificationTokens;
+using DevStart.Domain.InvestmentApplications;
+using DevStart.Domain.InvestmentDeals;
+using DevStart.Domain.Investors;
 using DevStart.Domain.InviteTokens;
 using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Messages;
@@ -37,6 +40,9 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<InviteToken> InviteTokens { get; }
         DbSet<Message> Messages { get; }
         DbSet<StartupDocumentFile> StartupDocumentFiles { get; }
+        DbSet<InvestorProfile> InvestorProfiles { get; }
+        DbSet<InvestmentApplication> InvestmentApplications { get; }
+        DbSet<InvestmentDeal> InvestmentDeals { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -10,6 +10,7 @@ namespace DevStart.Application.StartupRoadmapItems.Create
             RuleFor(sri => sri.StartupId).NotEmpty();
             RuleFor(sri => sri.StartupStage).IsInEnum();
             RuleFor(sri => sri.Status).IsInEnum();
+            RuleFor(sri => sri.TargetAmount).GreaterThan(0).When(sri => sri.TargetAmount.HasValue);
         }
     }
 }

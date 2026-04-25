@@ -26,6 +26,7 @@ namespace DevStart.Application.StartupRoadmapItems.GetAllByStartupId
                     Id = sri.Id,
                     StartupStage = sri.StartupStage,
                     Status = sri.Status,
+                    TargetAmount = sri.TargetAmount,
                     TargetDate = sri.TargetDate,
                     Title = sri.Title,
                 })

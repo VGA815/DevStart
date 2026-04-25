@@ -16,7 +16,7 @@ namespace DevStart.Application.Users.Register
     {
         public async Task Handle(UserRegisteredDomainEvent domainEvent, CancellationToken cancellationToken)
         {
-            EmailVerificationToken token = new()
+            EmailVerificationToken token = new() 
             {
                 TokenId = Guid.NewGuid(),
                 UserId = domainEvent.UserId,
@@ -26,7 +26,7 @@ namespace DevStart.Application.Users.Register
 
             context.EmailVerificationTokens.Add(token);
             await context.SaveChangesAsync(cancellationToken);
-
+            
             await emailSender.SendVerification(domainEvent.Email, token.TokenId.ToString());
 
             Notification notification = Notification.Create(

@@ -54,6 +54,18 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.MessagesSend,
                 Permissions.MessagesRead,
                 Permissions.MessagesUpdate,
+
+                Permissions.InvestorProfilesCreate,
+                Permissions.InvestorProfilesUpdate,
+                Permissions.InvestorProfilesRead,
+
+                Permissions.InvestmentApplicationsCreate,
+                Permissions.InvestmentApplicationsRespond,
+                Permissions.InvestmentApplicationsWithdraw,
+                Permissions.InvestmentApplicationsRead,
+
+                Permissions.InvestmentDealsConfirm,
+                Permissions.InvestmentDealsRead,
             },
             [UserSystemRole.Admin] = new HashSet<string>
             {
@@ -100,6 +112,18 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.MessagesSend,
                 Permissions.MessagesRead,
                 Permissions.MessagesUpdate,
+
+                Permissions.InvestorProfilesCreate,
+                Permissions.InvestorProfilesUpdate,
+                Permissions.InvestorProfilesRead,
+
+                Permissions.InvestmentApplicationsCreate,
+                Permissions.InvestmentApplicationsRespond,
+                Permissions.InvestmentApplicationsWithdraw,
+                Permissions.InvestmentApplicationsRead,
+
+                Permissions.InvestmentDealsConfirm,
+                Permissions.InvestmentDealsRead,
             },
         };
 

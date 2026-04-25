@@ -12,6 +12,7 @@ namespace DevStart.Application.StartupRoadmapItems.Update
             RuleFor(x => x.TargetDate).NotEmpty();
             RuleFor(x => x.ItemId).NotEmpty();
             RuleFor(x => x.Status).IsInEnum();
+            RuleFor(x => x.TargetAmount).GreaterThan(0).When(x => x.TargetAmount.HasValue);
         }
     }
 }

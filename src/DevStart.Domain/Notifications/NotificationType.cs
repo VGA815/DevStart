@@ -5,6 +5,11 @@ namespace DevStart.Domain.Notifications
         Welcome = 0,
         EmailVerified = 1,
         MessageReceived = 2,
-        StartupMemberAdded = 3
+        StartupMemberAdded = 3,
+        InvestmentApplicationReceived = 4,
+        InvestmentApplicationAccepted = 5,
+        InvestmentApplicationRejected = 6,
+        InvestmentApplicationWithdrawn = 7,
+        InvestmentDealCompleted = 8
     }
 }

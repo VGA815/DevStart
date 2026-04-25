@@ -1,4 +1,4 @@
-﻿using DevStart.Domain.StartupRoadmapItems;
+using DevStart.Domain.StartupRoadmapItems;
 using DevStart.Domain.Startups;
 
 namespace DevStart.Application.StartupRoadmapItems.GetAllByStartupId
@@ -11,6 +11,7 @@ namespace DevStart.Application.StartupRoadmapItems.GetAllByStartupId
         public string Title { get; init; } = null!;
         public string? Desription { get; init; }
         public RoadmapItemStatus Status { get; init; }
+        public decimal? TargetAmount { get; init; }
         public DateTime CreatedAt { get; init; }
         public DateTime TargetDate { get; init; }
     }

@@ -1,5 +1,8 @@
 ﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Domain.EmailVerificationTokens;
+using DevStart.Domain.InvestmentApplications;
+using DevStart.Domain.InvestmentDeals;
+using DevStart.Domain.Investors;
 using DevStart.Domain.InviteTokens;
 using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Messages;
@@ -59,6 +62,12 @@ namespace DevStart.Infrastructure.Database
         public DbSet<Message> Messages { get; set; }
 
         public DbSet<StartupDocumentFile> StartupDocumentFiles { get; set; }
+
+        public DbSet<InvestorProfile> InvestorProfiles { get; set; }
+
+        public DbSet<InvestmentApplication> InvestmentApplications { get; set; }
+
+        public DbSet<InvestmentDeal> InvestmentDeals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

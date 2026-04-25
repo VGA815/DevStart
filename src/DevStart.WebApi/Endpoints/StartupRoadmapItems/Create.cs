@@ -20,12 +20,13 @@ namespace DevStart.WebApi.Endpoints.StartupRoadmapItems
             [property: JsonPropertyName("title")] string Title,
             [property: JsonPropertyName("status")] RoadmapItemStatus Status,
             [property: JsonPropertyName("description")] string? Description,
+            [property: JsonPropertyName("target_amount")] decimal? TargetAmount,
             [property: JsonPropertyName("target_date")] DateTime TargetDate);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("api/startups/roadmap/items", async (
-                [FromBody] Request request, 
-                ICommandHandler<CreateStartupRoadmapItemCommand, Guid> handler, 
+                [FromBody] Request request,
+                ICommandHandler<CreateStartupRoadmapItemCommand, Guid> handler,
                 CancellationToken cancellationToken) =>
             {
                 var command = new CreateStartupRoadmapItemCommand(
@@ -34,6 +35,7 @@ namespace DevStart.WebApi.Endpoints.StartupRoadmapItems
                     request.Title,
                     request.Description,
                     request.Status,
+                    request.TargetAmount,
                     request.TargetDate);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);

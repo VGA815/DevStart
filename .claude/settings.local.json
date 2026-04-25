@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(head -50 src/DevStart.Domain/*.cs)",
+      "Bash(find src:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -n \"null!\" /c/Users/VGA815/source/repos/DevStart/src/DevStart.Application/**/*.cs)",
+      "Bash(dotnet build:*)",
+      "Bash(find /c/Users/VGA815/source/repos/DevStart -type f -name \"*.cs\" -path \"*/Endpoints/*\" -exec grep -l \"internal static class Permissions\\\\|const string\" {} \\\\;)",
+      "Bash(xargs -I {} bash -c 'echo \"=== {} ===\" && grep -A 2 \"RequireAuthorization\" {}')",
+      "Bash(del \"C:\\\\Users\\\\VGA815\\\\source\\\\repos\\\\DevStart\\\\src\\\\DevStart.Application\\\\Notifications\\\\GetById\\\\NotificationResponse.cs\" \"C:\\\\Users\\\\VGA815\\\\source\\\\repos\\\\DevStart\\\\src\\\\DevStart.Application\\\\Notifications\\\\GetByUserId\\\\NotificationResponse.cs\")"
+    ]
+  }
+}

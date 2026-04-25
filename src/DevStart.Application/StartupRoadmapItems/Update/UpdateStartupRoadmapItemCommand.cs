@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupRoadmapItems;
 using DevStart.Domain.Startups;
 
@@ -12,9 +12,10 @@ namespace DevStart.Application.StartupRoadmapItems.Update
         public string Title { get; set; } = null!;
         public string? Desription { get; set; }
         public RoadmapItemStatus Status { get; set; }
+        public decimal? TargetAmount { get; set; }
         public DateTime TargetDate { get; set; }
 
-        public UpdateStartupRoadmapItemCommand(Guid itemId, Guid startupId, StartupStage startupStage, string title, string? description, RoadmapItemStatus status, DateTime targetDate)
+        public UpdateStartupRoadmapItemCommand(Guid itemId, Guid startupId, StartupStage startupStage, string title, string? description, RoadmapItemStatus status, decimal? targetAmount, DateTime targetDate)
         {
             ItemId = itemId;
             StartupId = startupId;
@@ -22,6 +23,7 @@ namespace DevStart.Application.StartupRoadmapItems.Update
             Title = title;
             Desription = description;
             Status = status;
+            TargetAmount = targetAmount;
             TargetDate = targetDate;
         }
     }

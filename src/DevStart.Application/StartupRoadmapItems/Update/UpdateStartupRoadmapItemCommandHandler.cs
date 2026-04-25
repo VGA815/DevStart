@@ -33,6 +33,7 @@ namespace DevStart.Application.StartupRoadmapItems.Update
             startupRoadmapItem.Desription = command.Desription;
             startupRoadmapItem.Status = command.Status;
             startupRoadmapItem.StartupStage = command.StartupStage;
+            startupRoadmapItem.TargetAmount = command.TargetAmount;
             startupRoadmapItem.TargetDate = command.TargetDate;
 
             startupRoadmapItem.Raise(new StartupRoadmapItemUpdatedDomainEvent(startupRoadmapItem.Id));
