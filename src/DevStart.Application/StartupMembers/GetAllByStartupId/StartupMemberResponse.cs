@@ -8,6 +8,9 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
         public Guid StartupId { get; set; }
         public StartupRole Role { get; set; }
         public bool IsPublic { get; set; }
+        public StartupPosition? Position { get; set; }
+        public string? Bio { get; set; }
+        public int? YearsOfExperience { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

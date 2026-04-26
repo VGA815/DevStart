@@ -10,6 +10,12 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string StartupMembersDelete             = "startup_members::delete";
         public const string StartupMembersChangeRole         = "startup_members::change_role";
         public const string StartupMembersChangeVisibility   = "startup_members::change_visibility";
+        public const string StartupMembersUpdateProfile      = "startup_members::update_profile";
+
+        public const string StartupCompetitorsCreate         = "startup_competitors::create";
+        public const string StartupCompetitorsUpdate         = "startup_competitors::update";
+        public const string StartupCompetitorsDelete         = "startup_competitors::delete";
+        public const string StartupCompetitorsRead           = "startup_competitors::read";
 
         public const string StartupFollowersCreate           = "startup_followers::create";
         public const string StartupFollowersDelete           = "startup_followers::delete";

@@ -16,6 +16,9 @@ namespace DevStart.Application.Startups.GetAll
         public StartupLocation? Location { get; init; }
         public string? BillingEmail { get; init; } = null!;
         public Guid? AvatarId { get; init; }
+        public decimal? Tam { get; init; }
+        public decimal? Sam { get; init; }
+        public decimal? Som { get; init; }
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
     }

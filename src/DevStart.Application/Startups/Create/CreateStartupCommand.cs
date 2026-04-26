@@ -22,9 +22,13 @@ namespace DevStart.Application.Startups.Create
         public List<string> Stack { get; set; } = [];
         public string ProductValueProposition { get; set; } = null!;
         public string ProductDifferentiators { get; set; } = null!;
+        public decimal? Tam { get; set; }
+        public decimal? Sam { get; set; }
+        public decimal? Som { get; set; }
 
         public CreateStartupCommand(Guid userId, string name, string publicEmail, string? description, string? url, bool isStopped, StartupStage stage, List<string>? socialMediaLinks, StartupLocation? location,
-            string? billingEmail, Guid? avatarId, string? shortDescription, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators)
+            string? billingEmail, Guid? avatarId, string? shortDescription, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators,
+            decimal? tam = null, decimal? sam = null, decimal? som = null)
         {
             UserId = userId;
             Name = name;
@@ -43,6 +47,9 @@ namespace DevStart.Application.Startups.Create
             Stack = stack;
             ProductValueProposition = productValueProposition;
             ProductDifferentiators = productDifferentiators;
+            Tam = tam;
+            Sam = sam;
+            Som = som;
         }
     }
 }

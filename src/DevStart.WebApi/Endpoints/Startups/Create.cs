@@ -29,12 +29,15 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("stack")] List<string> Stack,
             [property: JsonPropertyName("product_value_proposition")] string ProductValueProposition,
             [property: JsonPropertyName("product_differentiators")] string ProductDifferentiators,
-            [property: JsonPropertyName("short_description")] string ShortDescription);
+            [property: JsonPropertyName("short_description")] string ShortDescription,
+            [property: JsonPropertyName("tam")] decimal? Tam = null,
+            [property: JsonPropertyName("sam")] decimal? Sam = null,
+            [property: JsonPropertyName("som")] decimal? Som = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("api/startups/", async (
-                [FromBody] Request request, 
-                ICommandHandler<CreateStartupCommand, Guid> handler, 
+                [FromBody] Request request,
+                ICommandHandler<CreateStartupCommand, Guid> handler,
                 CancellationToken cancellationToken) =>
             {
                 var command = new CreateStartupCommand(
@@ -54,7 +57,10 @@ namespace DevStart.WebApi.Endpoints.Startups
                     request.ProductProblemSolution,
                     request.Stack,
                     request.ProductValueProposition,
-                    request.ProductDifferentiators);
+                    request.ProductDifferentiators,
+                    request.Tam,
+                    request.Sam,
+                    request.Som);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
 

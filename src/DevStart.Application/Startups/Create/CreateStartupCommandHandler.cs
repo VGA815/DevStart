@@ -41,7 +41,10 @@ namespace DevStart.Application.Startups.Create
                 command.AvatarId,
                 dateTimeProvider.UtcNow,
                 command.SocialMediaLinks,
-                command.ShortDescription);
+                command.ShortDescription,
+                command.Tam,
+                command.Sam,
+                command.Som);
 
             StartupMember startupMember = StartupMember.Create(
                 command.UserId,

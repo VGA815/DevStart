@@ -18,15 +18,25 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
             [property: JsonPropertyName("profile_id")] Guid ProfileId,
             [property: JsonPropertyName("startup_id")] Guid StartupId,
             [property: JsonPropertyName("role")] StartupRole Role,
-            [property: JsonPropertyName("is_public")] bool IsPublic);
+            [property: JsonPropertyName("is_public")] bool IsPublic,
+            [property: JsonPropertyName("position")] StartupPosition? Position = null,
+            [property: JsonPropertyName("bio")] string? Bio = null,
+            [property: JsonPropertyName("years_of_experience")] int? YearsOfExperience = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("api/startups/members", async (
-                [FromBody] Request request, 
-                ICommandHandler<CreateStartupMemberCommand, Guid> handler, 
+                [FromBody] Request request,
+                ICommandHandler<CreateStartupMemberCommand, Guid> handler,
                 CancellationToken cancellationToken) =>
-            { 
-                var command = new CreateStartupMemberCommand(request.ProfileId, request.StartupId, request.Role, request.IsPublic);
+            {
+                var command = new CreateStartupMemberCommand(
+                    request.ProfileId,
+                    request.StartupId,
+                    request.Role,
+                    request.IsPublic,
+                    request.Position,
+                    request.Bio,
+                    request.YearsOfExperience);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
 

@@ -37,6 +37,9 @@ namespace DevStart.Application.Startups.GetAllByProfileId
                     Stage = s.Stage,
                     UpdatedAt = DateTime.UtcNow,
                     Url = s.Url,
+                    Tam = s.Tam,
+                    Sam = s.Sam,
+                    Som = s.Som,
                 })
                 .ToListAsync(cancellationToken);
 

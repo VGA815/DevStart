@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.Startups;
 
 namespace DevStart.Application.Startups.Update
@@ -17,9 +17,13 @@ namespace DevStart.Application.Startups.Update
         public StartupLocation Location { get; set; }
         public string BillingEmail { get; set; } = null!;
         public Guid? AvatarId { get; set; }
+        public decimal? Tam { get; set; }
+        public decimal? Sam { get; set; }
+        public decimal? Som { get; set; }
 
         public UpdateStartupCommand(Guid startupId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage startupStage,
-            List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId, string? shortDescription)
+            List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId, string? shortDescription,
+            decimal? tam = null, decimal? sam = null, decimal? som = null)
         {
             StartupId = startupId;
             Name = name;
@@ -33,6 +37,9 @@ namespace DevStart.Application.Startups.Update
             Location = location;
             BillingEmail = billingEmail;
             AvatarId = avatarId;
+            Tam = tam;
+            Sam = sam;
+            Som = som;
         }
     }
 }

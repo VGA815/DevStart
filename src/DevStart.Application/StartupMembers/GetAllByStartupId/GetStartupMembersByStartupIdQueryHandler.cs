@@ -28,6 +28,9 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
                     IsPublic = sm.IsPublic,
                     ProfileId = sm.ProfileId,
                     Role = sm.Role,
+                    Position = sm.Position,
+                    Bio = sm.Bio,
+                    YearsOfExperience = sm.YearsOfExperience,
                     UpdatedAt = sm.UpdatedAt,
                 })
                 .ToListAsync(cancellationToken);

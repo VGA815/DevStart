@@ -41,6 +41,9 @@ namespace DevStart.Application.Startups.Update
             startup.Name = command.Name;
             startup.IsStopped = command.IsStopped;
             startup.Stage = command.Stage;
+            startup.Tam = command.Tam;
+            startup.Sam = command.Sam;
+            startup.Som = command.Som;
             startup.UpdatedAt = dateTimeProvider.UtcNow;
 
             startup.Raise(new StartupUpdatedDomainEvent(startup.Id));

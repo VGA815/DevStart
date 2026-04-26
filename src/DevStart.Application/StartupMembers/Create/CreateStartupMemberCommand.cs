@@ -9,13 +9,20 @@ namespace DevStart.Application.StartupMembers.Create
         public Guid StartupId { get; set; }
         public StartupRole Role { get; set; }
         public bool IsPublic { get; set; }
+        public StartupPosition? Position { get; set; }
+        public string? Bio { get; set; }
+        public int? YearsOfExperience { get; set; }
 
-        public CreateStartupMemberCommand(Guid profileId, Guid startupId, StartupRole role, bool isPublic)
+        public CreateStartupMemberCommand(Guid profileId, Guid startupId, StartupRole role, bool isPublic,
+            StartupPosition? position = null, string? bio = null, int? yearsOfExperience = null)
         {
             ProfileId = profileId;
             StartupId = startupId;
             Role = role;
             IsPublic = isPublic;
+            Position = position;
+            Bio = bio;
+            YearsOfExperience = yearsOfExperience;
         }
     }
 }

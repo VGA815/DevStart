@@ -8,6 +8,7 @@ using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Messages;
 using DevStart.Domain.Notifications;
 using DevStart.Domain.Profiles;
+using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupFollowers;
 using DevStart.Domain.StartupInvestors;
@@ -68,6 +69,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<InvestmentApplication> InvestmentApplications { get; set; }
 
         public DbSet<InvestmentDeal> InvestmentDeals { get; set; }
+
+        public DbSet<StartupCompetitor> StartupCompetitors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

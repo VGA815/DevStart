@@ -9,6 +9,9 @@ namespace DevStart.Application.StartupMembers.Create
             RuleFor(x => x.StartupId).NotEmpty();
             RuleFor(x => x.ProfileId).NotEmpty();
             RuleFor(x => x.Role).IsInEnum();
+            RuleFor(x => x.Position).IsInEnum().When(x => x.Position.HasValue);
+            RuleFor(x => x.Bio).MaximumLength(2000).When(x => x.Bio is not null);
+            RuleFor(x => x.YearsOfExperience).GreaterThanOrEqualTo(0).When(x => x.YearsOfExperience.HasValue);
         }
     }
 }

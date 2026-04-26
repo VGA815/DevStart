@@ -29,6 +29,9 @@ namespace DevStart.Application.Startups.GetById
                     Stage = s.Stage,
                     UpdatedAt = s.UpdatedAt,
                     Url = s.Url,
+                    Tam = s.Tam,
+                    Sam = s.Sam,
+                    Som = s.Som,
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 

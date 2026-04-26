@@ -7,6 +7,7 @@ using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Messages;
 using DevStart.Domain.Notifications;
 using DevStart.Domain.Profiles;
+using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupFollowers;
 using DevStart.Domain.StartupInvestors;
@@ -43,6 +44,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<InvestorProfile> InvestorProfiles { get; }
         DbSet<InvestmentApplication> InvestmentApplications { get; }
         DbSet<InvestmentDeal> InvestmentDeals { get; }
+        DbSet<StartupCompetitor> StartupCompetitors { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

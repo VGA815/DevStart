@@ -46,6 +46,9 @@ namespace DevStart.Application.Startups.GetAll
                     Location = s.Location,
                     BillingEmail = s.BillingEmail,
                     AvatarId = s.AvatarId,
+                    Tam = s.Tam,
+                    Sam = s.Sam,
+                    Som = s.Som,
                     CreatedAt = s.CreatedAt,
                     UpdatedAt = s.UpdatedAt
                 })

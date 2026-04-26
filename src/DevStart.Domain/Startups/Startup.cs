@@ -16,13 +16,17 @@ namespace DevStart.Domain.Startups
         public StartupLocation? Location { get; set; }
         public string? BillingEmail { get; set; }
         public Guid? AvatarId { get; set; }
+        public decimal? Tam { get; set; }
+        public decimal? Sam { get; set; }
+        public decimal? Som { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public static Startup Create(
             string name, string publicEmail, string? description,
             string? url, StartupStage startupStage, StartupLocation? location,
             string? billingEmail, Guid? avatarId, DateTime createdAt,
-            List<string>? socialMediaLinks, string? shortDescription)
+            List<string>? socialMediaLinks, string? shortDescription,
+            decimal? tam = null, decimal? sam = null, decimal? som = null)
             => new ()
             {
                 Id = Guid.NewGuid(),
@@ -38,7 +42,10 @@ namespace DevStart.Domain.Startups
                 SocialMediaLinks = socialMediaLinks,
                 Stage = startupStage,
                 UpdatedAt = createdAt,
-                Url = url
+                Url = url,
+                Tam = tam,
+                Sam = sam,
+                Som = som
             };
         public Startup() { }
     }

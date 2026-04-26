@@ -14,6 +14,9 @@ namespace DevStart.Application.Startups.Create
             RuleFor(s => s.ProductProblemSolution).NotEmpty();
             RuleFor(s => s.ProductDifferentiators).NotEmpty();
             RuleFor(s => s.ProductName).NotEmpty();
+            RuleFor(s => s.Tam).GreaterThanOrEqualTo(0).When(s => s.Tam.HasValue);
+            RuleFor(s => s.Sam).GreaterThanOrEqualTo(0).When(s => s.Sam.HasValue);
+            RuleFor(s => s.Som).GreaterThanOrEqualTo(0).When(s => s.Som.HasValue);
         }
     }
 }

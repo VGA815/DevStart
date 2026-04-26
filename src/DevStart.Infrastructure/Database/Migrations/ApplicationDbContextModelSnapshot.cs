@@ -456,6 +456,60 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.ToTable("profiles", "public");
                 });
 
+            modelBuilder.Entity("DevStart.Domain.StartupCompetitors.StartupCompetitor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("StartupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("startup_id");
+
+                    b.Property<string>("StrengthsVsUs")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("strengths_vs_us");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("WeaknessesVsUs")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("weaknesses_vs_us");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("website");
+
+                    b.HasKey("Id")
+                        .HasName("pk_startup_competitors");
+
+                    b.HasIndex("StartupId")
+                        .HasDatabaseName("ix_startup_competitors_startup_id");
+
+                    b.ToTable("startup_competitors", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.StartupDocumentFiles.StartupDocumentFile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -562,6 +616,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("startup_id");
 
+                    b.Property<string>("Bio")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("bio");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -570,6 +629,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_public");
 
+                    b.Property<int?>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer")
                         .HasColumnName("role");
@@ -577,6 +640,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<int?>("YearsOfExperience")
+                        .HasColumnType("integer")
+                        .HasColumnName("years_of_experience");
 
                     b.HasKey("ProfileId", "StartupId")
                         .HasName("pk_startup_members");
@@ -740,6 +807,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("public_email");
 
+                    b.Property<decimal?>("Sam")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("sam");
+
                     b.Property<string>("ShortDescription")
                         .HasColumnType("text")
                         .HasColumnName("short_description");
@@ -748,9 +819,17 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("social_media_links");
 
+                    b.Property<decimal?>("Som")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("som");
+
                     b.Property<int>("Stage")
                         .HasColumnType("integer")
                         .HasColumnName("stage");
+
+                    b.Property<decimal?>("Tam")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("tam");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

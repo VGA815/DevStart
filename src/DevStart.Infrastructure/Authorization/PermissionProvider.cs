@@ -19,6 +19,12 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupMembersDelete,
                 Permissions.StartupMembersChangeRole,
                 Permissions.StartupMembersChangeVisibility,
+                Permissions.StartupMembersUpdateProfile,
+
+                Permissions.StartupCompetitorsCreate,
+                Permissions.StartupCompetitorsUpdate,
+                Permissions.StartupCompetitorsDelete,
+                Permissions.StartupCompetitorsRead,
 
                 Permissions.StartupFollowersCreate,
                 Permissions.StartupFollowersDelete,
@@ -77,6 +83,12 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupMembersDelete,
                 Permissions.StartupMembersChangeRole,
                 Permissions.StartupMembersChangeVisibility,
+                Permissions.StartupMembersUpdateProfile,
+
+                Permissions.StartupCompetitorsCreate,
+                Permissions.StartupCompetitorsUpdate,
+                Permissions.StartupCompetitorsDelete,
+                Permissions.StartupCompetitorsRead,
 
                 Permissions.StartupFollowersCreate,
                 Permissions.StartupFollowersDelete,

@@ -25,12 +25,15 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("location")] StartupLocation StartupLocation,
             [property: JsonPropertyName("billing_email")] string BillingEmail,
             [property: JsonPropertyName("avatar_url")] Guid? AvatarId,
-            [property: JsonPropertyName("short_description")] string? ShortDescription);
+            [property: JsonPropertyName("short_description")] string? ShortDescription,
+            [property: JsonPropertyName("tam")] decimal? Tam = null,
+            [property: JsonPropertyName("sam")] decimal? Sam = null,
+            [property: JsonPropertyName("som")] decimal? Som = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPut("api/startups", async (
-                [FromBody] Request request, 
-                ICommandHandler<UpdateStartupCommand> handler, 
+                [FromBody] Request request,
+                ICommandHandler<UpdateStartupCommand> handler,
                 CancellationToken cancellationToken) =>
             {
                 var command = new UpdateStartupCommand(
@@ -45,7 +48,10 @@ namespace DevStart.WebApi.Endpoints.Startups
                     request.StartupLocation,
                     request.BillingEmail,
                     request.AvatarId,
-                    request.ShortDescription);
+                    request.ShortDescription,
+                    request.Tam,
+                    request.Sam,
+                    request.Som);
 
                 Result result = await handler.Handle(command, cancellationToken);
 
