@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Validation;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,8 @@ namespace DevStart.Application.InvestmentApplications.GetAllByInvestorProfileId
 {
     internal sealed class GetInvestmentApplicationsByInvestorProfileIdQueryHandler(
         IApplicationDbContext context,
-        IUserContext userContext)
+        IUserContext userContext,
+        IDealTermsValidator dealTermsValidator)
         : IQueryHandler<GetInvestmentApplicationsByInvestorProfileIdQuery, List<InvestmentApplicationResponse>>
     {
         public async Task<Result<List<InvestmentApplicationResponse>>> Handle(GetInvestmentApplicationsByInvestorProfileIdQuery query, CancellationToken cancellationToken)
@@ -46,10 +48,26 @@ namespace DevStart.Application.InvestmentApplications.GetAllByInvestorProfileId
                     Amount = a.Amount,
                     Message = a.Message,
                     Status = a.Status,
+                    Instrument = a.Instrument,
+                    ValuationCap = a.ValuationCap,
+                    Discount = a.Discount,
+                    InterestRate = a.InterestRate,
+                    TermMonths = a.TermMonths,
+                    PreMoneyValuation = a.PreMoneyValuation,
+                    LiquidationPreference = a.LiquidationPreference,
+                    ProRataRights = a.ProRataRights,
                     CreatedAt = a.CreatedAt,
                     UpdatedAt = a.UpdatedAt
                 })
                 .ToListAsync(cancellationToken);
+
+            foreach (InvestmentApplicationResponse a in applications)
+            {
+                a.Flags = dealTermsValidator.Validate(new DealTermsInput(
+                    a.Instrument, a.Amount, a.ValuationCap, a.Discount,
+                    a.InterestRate, a.TermMonths, a.PreMoneyValuation,
+                    a.LiquidationPreference, a.ProRataRights));
+            }
 
             return applications;
         }

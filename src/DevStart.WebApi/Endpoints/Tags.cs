@@ -22,5 +22,6 @@
         public const string InvestorProfiles = "InvestorProfiles";
         public const string InvestmentApplications = "InvestmentApplications";
         public const string InvestmentDeals = "InvestmentDeals";
+        public const string DealDocuments = "DealDocuments";
     }
 }

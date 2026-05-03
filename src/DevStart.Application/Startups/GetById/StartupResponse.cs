@@ -19,6 +19,8 @@ namespace DevStart.Application.Startups.GetById
         public decimal? Tam { get; init; }
         public decimal? Sam { get; init; }
         public decimal? Som { get; init; }
+        public decimal? MarketGrowthRate { get; init; }
+        public bool HasPatents { get; init; }
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
     }

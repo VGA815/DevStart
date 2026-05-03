@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Validation;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,8 @@ namespace DevStart.Application.InvestmentDeals.GetAllByInvestorProfileId
 {
     internal sealed class GetInvestmentDealsByInvestorProfileIdQueryHandler(
         IApplicationDbContext context,
-        IUserContext userContext)
+        IUserContext userContext,
+        IDealTermsValidator dealTermsValidator)
         : IQueryHandler<GetInvestmentDealsByInvestorProfileIdQuery, List<InvestmentDealResponse>>
     {
         public async Task<Result<List<InvestmentDealResponse>>> Handle(GetInvestmentDealsByInvestorProfileIdQuery query, CancellationToken cancellationToken)
@@ -48,11 +50,27 @@ namespace DevStart.Application.InvestmentDeals.GetAllByInvestorProfileId
                     ConfirmedByStartup = d.ConfirmedByStartup,
                     ConfirmedByInvestor = d.ConfirmedByInvestor,
                     Status = d.Status,
+                    Instrument = d.Instrument,
+                    ValuationCap = d.ValuationCap,
+                    Discount = d.Discount,
+                    InterestRate = d.InterestRate,
+                    TermMonths = d.TermMonths,
+                    PreMoneyValuation = d.PreMoneyValuation,
+                    LiquidationPreference = d.LiquidationPreference,
+                    ProRataRights = d.ProRataRights,
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
                     CompletedAt = d.CompletedAt
                 })
                 .ToListAsync(cancellationToken);
+
+            foreach (InvestmentDealResponse d in deals)
+            {
+                d.Flags = dealTermsValidator.Validate(new DealTermsInput(
+                    d.Instrument, d.Amount, d.ValuationCap, d.Discount,
+                    d.InterestRate, d.TermMonths, d.PreMoneyValuation,
+                    d.LiquidationPreference, d.ProRataRights));
+            }
 
             return deals;
         }

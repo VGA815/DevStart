@@ -23,6 +23,43 @@ namespace DevStart.Infrastructure.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DevStart.Domain.DealDocuments.DealDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CapTableObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("cap_table_object_key");
+
+                    b.Property<Guid>("DealId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deal_id");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at");
+
+                    b.Property<string>("TermSheetObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("term_sheet_object_key");
+
+                    b.HasKey("Id")
+                        .HasName("pk_deal_documents");
+
+                    b.HasIndex("DealId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_deal_documents_deal_id");
+
+                    b.ToTable("deal_documents", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.EmailVerificationTokens.EmailVerificationToken", b =>
                 {
                     b.Property<Guid>("TokenId")
@@ -66,14 +103,44 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<decimal?>("Discount")
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("discount");
+
+                    b.Property<int>("Instrument")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("instrument");
+
+                    b.Property<decimal?>("InterestRate")
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("interest_rate");
+
                     b.Property<Guid>("InvestorProfileId")
                         .HasColumnType("uuid")
                         .HasColumnName("investor_profile_id");
+
+                    b.Property<decimal>("LiquidationPreference")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(1.0m)
+                        .HasColumnName("liquidation_preference");
 
                     b.Property<string>("Message")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("message");
+
+                    b.Property<decimal?>("PreMoneyValuation")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("pre_money_valuation");
+
+                    b.Property<bool>("ProRataRights")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("pro_rata_rights");
 
                     b.Property<Guid?>("RoadmapItemId")
                         .HasColumnType("uuid")
@@ -87,9 +154,17 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
+                    b.Property<int?>("TermMonths")
+                        .HasColumnType("integer")
+                        .HasColumnName("term_months");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<decimal?>("ValuationCap")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valuation_cap");
 
                     b.HasKey("Id")
                         .HasName("pk_investment_applications");
@@ -137,9 +212,39 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<decimal?>("Discount")
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("discount");
+
+                    b.Property<int>("Instrument")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("instrument");
+
+                    b.Property<decimal?>("InterestRate")
+                        .HasColumnType("numeric(5,4)")
+                        .HasColumnName("interest_rate");
+
                     b.Property<Guid>("InvestorProfileId")
                         .HasColumnType("uuid")
                         .HasColumnName("investor_profile_id");
+
+                    b.Property<decimal>("LiquidationPreference")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(1.0m)
+                        .HasColumnName("liquidation_preference");
+
+                    b.Property<decimal?>("PreMoneyValuation")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("pre_money_valuation");
+
+                    b.Property<bool>("ProRataRights")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("pro_rata_rights");
 
                     b.Property<Guid?>("RoadmapItemId")
                         .HasColumnType("uuid")
@@ -153,9 +258,17 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
+                    b.Property<int?>("TermMonths")
+                        .HasColumnType("integer")
+                        .HasColumnName("term_months");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<decimal?>("ValuationCap")
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valuation_cap");
 
                     b.HasKey("Id")
                         .HasName("pk_investment_deals");
@@ -625,6 +738,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool?>("HasPriorExit")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_prior_exit");
+
                     b.Property<bool>("IsPublic")
                         .HasColumnType("boolean")
                         .HasColumnName("is_public");
@@ -632,6 +749,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.Property<int?>("Position")
                         .HasColumnType("integer")
                         .HasColumnName("position");
+
+                    b.Property<int?>("PreviousStartupsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("previous_startups_count");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer")
@@ -789,6 +910,12 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<bool>("HasPatents")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("has_patents");
+
                     b.Property<bool>("IsStopped")
                         .HasColumnType("boolean")
                         .HasColumnName("is_stopped");
@@ -796,6 +923,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.Property<int?>("Location")
                         .HasColumnType("integer")
                         .HasColumnName("location");
+
+                    b.Property<decimal?>("MarketGrowthRate")
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("market_growth_rate");
 
                     b.Property<string>("Name")
                         .IsRequired()

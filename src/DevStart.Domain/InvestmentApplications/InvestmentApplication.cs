@@ -11,6 +11,14 @@ namespace DevStart.Domain.InvestmentApplications
         public decimal Amount { get; set; }
         public string? Message { get; set; }
         public InvestmentApplicationStatus Status { get; set; }
+        public InvestmentInstrument Instrument { get; set; }
+        public decimal? ValuationCap { get; set; }
+        public decimal? Discount { get; set; }
+        public decimal? InterestRate { get; set; }
+        public int? TermMonths { get; set; }
+        public decimal? PreMoneyValuation { get; set; }
+        public decimal LiquidationPreference { get; set; } = 1.0m;
+        public bool ProRataRights { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -24,7 +32,15 @@ namespace DevStart.Domain.InvestmentApplications
             Guid? roadmapItemId,
             decimal amount,
             string? message,
-            DateTime createdAt)
+            DateTime createdAt,
+            InvestmentInstrument instrument = InvestmentInstrument.Safe,
+            decimal? valuationCap = null,
+            decimal? discount = null,
+            decimal? interestRate = null,
+            int? termMonths = null,
+            decimal? preMoneyValuation = null,
+            decimal liquidationPreference = 1.0m,
+            bool proRataRights = false)
             => new()
             {
                 Id = Guid.NewGuid(),
@@ -34,6 +50,14 @@ namespace DevStart.Domain.InvestmentApplications
                 Amount = amount,
                 Message = message,
                 Status = InvestmentApplicationStatus.Pending,
+                Instrument = instrument,
+                ValuationCap = valuationCap,
+                Discount = discount,
+                InterestRate = interestRate,
+                TermMonths = termMonths,
+                PreMoneyValuation = preMoneyValuation,
+                LiquidationPreference = liquidationPreference,
+                ProRataRights = proRataRights,
                 CreatedAt = createdAt,
                 UpdatedAt = createdAt
             };

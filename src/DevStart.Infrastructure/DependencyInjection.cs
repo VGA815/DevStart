@@ -1,21 +1,29 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.BackgroundJobs;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Notifications;
+using DevStart.Application.DealDocuments.Generation;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.Authorization;
+using DevStart.Infrastructure.BackgroundJobs;
 using DevStart.Infrastructure.Caching;
 using DevStart.Infrastructure.Database;
+using DevStart.Infrastructure.DealDocuments;
+using DevStart.Infrastructure.DealDocuments.Generation;
 using DevStart.Infrastructure.DomainEvents;
 using DevStart.Infrastructure.FileStorage;
 using DevStart.Infrastructure.Notifications;
 using DevStart.Infrastructure.Time;
 using DevStart.SharedKernel;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
@@ -38,7 +46,9 @@ namespace DevStart.Infrastructure
                 .AddAuthenticationInternal(configuration)
                 .AddCentrifugo(configuration)
                 .AddSmtp(configuration)
-                .AddAuthorizationInternal();
+                .AddAuthorizationInternal()
+                .AddBackgroundJobs(configuration)
+                .AddDealDocumentGeneration();
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -149,6 +159,31 @@ namespace DevStart.Infrastructure
 
             return services;
         }
+        private static IServiceCollection AddBackgroundJobs(this IServiceCollection services, IConfiguration configuration)
+        {
+            string? connectionString = configuration.GetConnectionString("Database");
+
+            services.AddHangfire(cfg => cfg
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString!)));
+
+            services.AddHangfireServer();
+
+            services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
+            services.AddScoped<TermSheetGenerationJob>();
+
+            return services;
+        }
+
+        private static IServiceCollection AddDealDocumentGeneration(this IServiceCollection services)
+        {
+            services.AddScoped<ITermSheetGenerator, TermSheetGenerator>();
+            services.AddHostedService<TemplatesSeeder>();
+            return services;
+        }
+
         private static IServiceCollection AddCentrifugo(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<CentrifugoOptions>(

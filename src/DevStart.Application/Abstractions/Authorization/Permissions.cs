@@ -5,6 +5,7 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string StartupsCreate                   = "startups::create";
         public const string StartupsUpdate                   = "startups::update";
         public const string StartupsDelete                   = "startups::delete";
+        public const string StartupsScoreRead                = "startups::score_read";
 
         public const string StartupMembersCreate             = "startup_members::create";
         public const string StartupMembersDelete             = "startup_members::delete";
@@ -63,5 +64,7 @@ namespace DevStart.Application.Abstractions.Authorization
 
         public const string InvestmentDealsConfirm           = "investment_deals::confirm";
         public const string InvestmentDealsRead              = "investment_deals::read";
+
+        public const string DealDocumentsRead                = "deal_documents::read";
     }
 }

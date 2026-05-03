@@ -1,4 +1,5 @@
 using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupCompetitors;
@@ -10,7 +11,8 @@ namespace DevStart.Application.StartupCompetitors.Delete
 {
     internal sealed class DeleteStartupCompetitorCommandHandler(
         IApplicationDbContext context,
-        IUserContext userContext)
+        IUserContext userContext,
+        ICacheService cacheService)
         : ICommandHandler<DeleteStartupCompetitorCommand>
     {
         public async Task<Result> Handle(DeleteStartupCompetitorCommand command, CancellationToken cancellationToken)
@@ -33,9 +35,13 @@ namespace DevStart.Application.StartupCompetitors.Delete
                 return Result.Failure(StartupCompetitorErrors.Unauthorized);
             }
 
+            Guid startupId = competitor.StartupId;
+
             context.StartupCompetitors.Remove(competitor);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(startupId), cancellationToken);
 
             return Result.Success();
         }

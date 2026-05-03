@@ -11,6 +11,8 @@ namespace DevStart.Domain.StartupMembers
         public StartupPosition? Position { get; set; }
         public string? Bio { get; set; }
         public int? YearsOfExperience { get; set; }
+        public bool? HasPriorExit { get; set; }
+        public int? PreviousStartupsCount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public StartupMember()
@@ -19,7 +21,8 @@ namespace DevStart.Domain.StartupMembers
         }
         public static StartupMember Create(
             Guid profileId, Guid startupId, StartupRole role, bool isPublic, DateTime createdAt,
-            StartupPosition? position = null, string? bio = null, int? yearsOfExperience = null)
+            StartupPosition? position = null, string? bio = null, int? yearsOfExperience = null,
+            bool? hasPriorExit = null, int? previousStartupsCount = null)
             => new()
             {
                 ProfileId = profileId,
@@ -30,14 +33,24 @@ namespace DevStart.Domain.StartupMembers
                 UpdatedAt = createdAt,
                 Position = position,
                 Bio = bio,
-                YearsOfExperience = yearsOfExperience
+                YearsOfExperience = yearsOfExperience,
+                HasPriorExit = hasPriorExit,
+                PreviousStartupsCount = previousStartupsCount
             };
 
-        public Result UpdateProfile(StartupPosition? position, string? bio, int? yearsOfExperience, DateTime utcNow)
+        public Result UpdateProfile(
+            StartupPosition? position,
+            string? bio,
+            int? yearsOfExperience,
+            bool? hasPriorExit,
+            int? previousStartupsCount,
+            DateTime utcNow)
         {
             Position = position;
             Bio = bio;
             YearsOfExperience = yearsOfExperience;
+            HasPriorExit = hasPriorExit;
+            PreviousStartupsCount = previousStartupsCount;
             UpdatedAt = utcNow;
             return Result.Success();
         }

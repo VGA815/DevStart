@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Data;
+using DevStart.Domain.DealDocuments;
 using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.InvestmentDeals;
@@ -71,6 +72,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<InvestmentDeal> InvestmentDeals { get; set; }
 
         public DbSet<StartupCompetitor> StartupCompetitors { get; set; }
+
+        public DbSet<DealDocument> DealDocuments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

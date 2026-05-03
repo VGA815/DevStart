@@ -21,7 +21,9 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
             [property: JsonPropertyName("is_public")] bool IsPublic,
             [property: JsonPropertyName("position")] StartupPosition? Position = null,
             [property: JsonPropertyName("bio")] string? Bio = null,
-            [property: JsonPropertyName("years_of_experience")] int? YearsOfExperience = null);
+            [property: JsonPropertyName("years_of_experience")] int? YearsOfExperience = null,
+            [property: JsonPropertyName("has_prior_exit")] bool? HasPriorExit = null,
+            [property: JsonPropertyName("previous_startups_count")] int? PreviousStartupsCount = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("api/startups/members", async (
@@ -36,7 +38,9 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
                     request.IsPublic,
                     request.Position,
                     request.Bio,
-                    request.YearsOfExperience);
+                    request.YearsOfExperience,
+                    request.HasPriorExit,
+                    request.PreviousStartupsCount);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
 

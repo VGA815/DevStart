@@ -12,9 +12,12 @@ namespace DevStart.Application.StartupMembers.Create
         public StartupPosition? Position { get; set; }
         public string? Bio { get; set; }
         public int? YearsOfExperience { get; set; }
+        public bool? HasPriorExit { get; set; }
+        public int? PreviousStartupsCount { get; set; }
 
         public CreateStartupMemberCommand(Guid profileId, Guid startupId, StartupRole role, bool isPublic,
-            StartupPosition? position = null, string? bio = null, int? yearsOfExperience = null)
+            StartupPosition? position = null, string? bio = null, int? yearsOfExperience = null,
+            bool? hasPriorExit = null, int? previousStartupsCount = null)
         {
             ProfileId = profileId;
             StartupId = startupId;
@@ -23,6 +26,8 @@ namespace DevStart.Application.StartupMembers.Create
             Position = position;
             Bio = bio;
             YearsOfExperience = yearsOfExperience;
+            HasPriorExit = hasPriorExit;
+            PreviousStartupsCount = previousStartupsCount;
         }
     }
 }

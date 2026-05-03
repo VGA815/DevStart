@@ -1,4 +1,5 @@
 using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupCompetitors;
@@ -13,7 +14,8 @@ namespace DevStart.Application.StartupCompetitors.Create
     internal sealed class CreateStartupCompetitorCommandHandler(
         IApplicationDbContext context,
         IUserContext userContext,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        ICacheService cacheService)
         : ICommandHandler<CreateStartupCompetitorCommand, Guid>
     {
         public async Task<Result<Guid>> Handle(CreateStartupCompetitorCommand command, CancellationToken cancellationToken)
@@ -50,6 +52,8 @@ namespace DevStart.Application.StartupCompetitors.Create
             context.StartupCompetitors.Add(competitor);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(command.StartupId), cancellationToken);
 
             return competitor.Id;
         }

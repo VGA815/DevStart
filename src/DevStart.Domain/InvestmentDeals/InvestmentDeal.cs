@@ -14,6 +14,14 @@ namespace DevStart.Domain.InvestmentDeals
         public bool ConfirmedByStartup { get; set; }
         public bool ConfirmedByInvestor { get; set; }
         public InvestmentDealStatus Status { get; set; }
+        public InvestmentInstrument Instrument { get; set; }
+        public decimal? ValuationCap { get; set; }
+        public decimal? Discount { get; set; }
+        public decimal? InterestRate { get; set; }
+        public int? TermMonths { get; set; }
+        public decimal? PreMoneyValuation { get; set; }
+        public decimal LiquidationPreference { get; set; } = 1.0m;
+        public bool ProRataRights { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
@@ -34,6 +42,14 @@ namespace DevStart.Domain.InvestmentDeals
                 ConfirmedByStartup = false,
                 ConfirmedByInvestor = false,
                 Status = InvestmentDealStatus.InProgress,
+                Instrument = application.Instrument,
+                ValuationCap = application.ValuationCap,
+                Discount = application.Discount,
+                InterestRate = application.InterestRate,
+                TermMonths = application.TermMonths,
+                PreMoneyValuation = application.PreMoneyValuation,
+                LiquidationPreference = application.LiquidationPreference,
+                ProRataRights = application.ProRataRights,
                 CreatedAt = utcNow,
                 UpdatedAt = utcNow,
                 CompletedAt = null

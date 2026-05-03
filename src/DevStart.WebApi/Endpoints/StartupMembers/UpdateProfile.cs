@@ -16,7 +16,9 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
             [property: JsonPropertyName("startup_id")] Guid StartupId,
             [property: JsonPropertyName("position")] StartupPosition? Position,
             [property: JsonPropertyName("bio")] string? Bio,
-            [property: JsonPropertyName("years_of_experience")] int? YearsOfExperience);
+            [property: JsonPropertyName("years_of_experience")] int? YearsOfExperience,
+            [property: JsonPropertyName("has_prior_exit")] bool? HasPriorExit,
+            [property: JsonPropertyName("previous_startups_count")] int? PreviousStartupsCount);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -29,7 +31,9 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
                     request.StartupId,
                     request.Position,
                     request.Bio,
-                    request.YearsOfExperience);
+                    request.YearsOfExperience,
+                    request.HasPriorExit,
+                    request.PreviousStartupsCount);
 
                 Result result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.NoContent, CustomResults.Problem);

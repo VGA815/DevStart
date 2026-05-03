@@ -1,4 +1,5 @@
 using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -8,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupMetrics.Update
 {
-    internal sealed class UpdateStartupMetricCommandHandler(IApplicationDbContext context, IUserContext userContext)
+    internal sealed class UpdateStartupMetricCommandHandler(
+        IApplicationDbContext context,
+        IUserContext userContext,
+        ICacheService cacheService)
         : ICommandHandler<UpdateStartupMetricCommand>
     {
         public async Task<Result> Handle(UpdateStartupMetricCommand command, CancellationToken cancellationToken)
@@ -35,6 +39,8 @@ namespace DevStart.Application.StartupMetrics.Update
             startupMetric.Raise(new StartupMetricUpdatedDomainEvent(startupMetric.Id));
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(startupMetric.StartupId), cancellationToken);
 
             return Result.Success();
         }

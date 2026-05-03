@@ -44,7 +44,9 @@ namespace DevStart.Application.Startups.Create
                 command.ShortDescription,
                 command.Tam,
                 command.Sam,
-                command.Som);
+                command.Som,
+                command.MarketGrowthRate,
+                command.HasPatents);
 
             StartupMember startupMember = StartupMember.Create(
                 command.UserId,

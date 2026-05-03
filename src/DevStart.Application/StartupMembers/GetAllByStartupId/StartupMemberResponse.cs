@@ -11,6 +11,8 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
         public StartupPosition? Position { get; set; }
         public string? Bio { get; set; }
         public int? YearsOfExperience { get; set; }
+        public bool? HasPriorExit { get; set; }
+        public int? PreviousStartupsCount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

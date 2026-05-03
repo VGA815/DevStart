@@ -10,6 +10,9 @@
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.0" />
     <PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.21" />
+    <PackageReference Include="Hangfire.Core" Version="1.8.21" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.20.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
@@ -38,6 +41,12 @@
   <ItemGroup>
     <ProjectReference Include="..\DevStart.Application\DevStart.Application.csproj" />
     <ProjectReference Include="..\DevStart.SharedKernel\DevStart.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="DealDocuments\Templates\term-sheet-safe.md" />
+    <EmbeddedResource Include="DealDocuments\Templates\term-sheet-convertible.md" />
+    <EmbeddedResource Include="DealDocuments\Templates\term-sheet-priced.md" />
   </ItemGroup>
 
 </Project>

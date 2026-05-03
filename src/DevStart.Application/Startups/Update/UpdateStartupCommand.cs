@@ -20,10 +20,13 @@ namespace DevStart.Application.Startups.Update
         public decimal? Tam { get; set; }
         public decimal? Sam { get; set; }
         public decimal? Som { get; set; }
+        public decimal? MarketGrowthRate { get; set; }
+        public bool HasPatents { get; set; }
 
         public UpdateStartupCommand(Guid startupId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage startupStage,
             List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId, string? shortDescription,
-            decimal? tam = null, decimal? sam = null, decimal? som = null)
+            decimal? tam = null, decimal? sam = null, decimal? som = null,
+            decimal? marketGrowthRate = null, bool hasPatents = false)
         {
             StartupId = startupId;
             Name = name;
@@ -40,6 +43,8 @@ namespace DevStart.Application.Startups.Update
             Tam = tam;
             Sam = sam;
             Som = som;
+            MarketGrowthRate = marketGrowthRate;
+            HasPatents = hasPatents;
         }
     }
 }

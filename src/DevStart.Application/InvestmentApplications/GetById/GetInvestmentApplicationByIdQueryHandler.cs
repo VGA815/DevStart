@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Validation;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.StartupMembers;
 using DevStart.SharedKernel;
@@ -10,7 +11,8 @@ namespace DevStart.Application.InvestmentApplications.GetById
 {
     internal sealed class GetInvestmentApplicationByIdQueryHandler(
         IApplicationDbContext context,
-        IUserContext userContext)
+        IUserContext userContext,
+        IDealTermsValidator dealTermsValidator)
         : IQueryHandler<GetInvestmentApplicationByIdQuery, InvestmentApplicationResponse>
     {
         public async Task<Result<InvestmentApplicationResponse>> Handle(GetInvestmentApplicationByIdQuery query, CancellationToken cancellationToken)
@@ -44,6 +46,17 @@ namespace DevStart.Application.InvestmentApplications.GetById
                 return Result.Failure<InvestmentApplicationResponse>(InvestmentApplicationErrors.Unauthorized);
             }
 
+            IReadOnlyList<DealTermsFlag> flags = dealTermsValidator.Validate(new DealTermsInput(
+                application.Instrument,
+                application.Amount,
+                application.ValuationCap,
+                application.Discount,
+                application.InterestRate,
+                application.TermMonths,
+                application.PreMoneyValuation,
+                application.LiquidationPreference,
+                application.ProRataRights));
+
             return new InvestmentApplicationResponse
             {
                 Id = application.Id,
@@ -53,6 +66,15 @@ namespace DevStart.Application.InvestmentApplications.GetById
                 Amount = application.Amount,
                 Message = application.Message,
                 Status = application.Status,
+                Instrument = application.Instrument,
+                ValuationCap = application.ValuationCap,
+                Discount = application.Discount,
+                InterestRate = application.InterestRate,
+                TermMonths = application.TermMonths,
+                PreMoneyValuation = application.PreMoneyValuation,
+                LiquidationPreference = application.LiquidationPreference,
+                ProRataRights = application.ProRataRights,
+                Flags = flags,
                 CreatedAt = application.CreatedAt,
                 UpdatedAt = application.UpdatedAt
             };

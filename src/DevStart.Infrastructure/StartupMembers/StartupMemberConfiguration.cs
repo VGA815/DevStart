@@ -19,6 +19,8 @@ namespace DevStart.Infrastructure.StartupMembers
             builder.Property(x => x.Position).HasColumnName("position");
             builder.Property(x => x.Bio).HasColumnName("bio").HasMaxLength(2000);
             builder.Property(x => x.YearsOfExperience).HasColumnName("years_of_experience");
+            builder.Property(x => x.HasPriorExit).HasColumnName("has_prior_exit");
+            builder.Property(x => x.PreviousStartupsCount).HasColumnName("previous_startups_count");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
         }

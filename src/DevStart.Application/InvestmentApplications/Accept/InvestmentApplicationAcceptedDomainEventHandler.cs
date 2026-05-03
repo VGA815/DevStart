@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.BackgroundJobs;
 using DevStart.Application.Abstractions.Notifications;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.Notifications;
@@ -7,6 +8,7 @@ namespace DevStart.Application.InvestmentApplications.Accept
 {
     internal sealed class InvestmentApplicationAcceptedDomainEventHandler(
         INotificationService notificationService,
+        IBackgroundJobScheduler backgroundJobScheduler,
         IDateTimeProvider dateTimeProvider) : IDomainEventHandler<InvestmentApplicationAcceptedDomainEvent>
     {
         public async Task Handle(InvestmentApplicationAcceptedDomainEvent domainEvent, CancellationToken cancellationToken)
@@ -20,6 +22,9 @@ namespace DevStart.Application.InvestmentApplications.Accept
                 referenceId: domainEvent.DealId);
 
             await notificationService.PublishAsync(notification, cancellationToken);
+
+            // Schedule background document generation (term sheet + cap table).
+            backgroundJobScheduler.EnqueueTermSheetGeneration(domainEvent.DealId);
         }
     }
 }

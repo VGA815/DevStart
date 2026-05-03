@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -8,7 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupMetrics.Create
 {
-    internal sealed class CreateStartupMetricCommandHandler(IApplicationDbContext context, IUserContext userContext, IDateTimeProvider dateTimeProvider)
+    internal sealed class CreateStartupMetricCommandHandler(
+        IApplicationDbContext context,
+        IUserContext userContext,
+        IDateTimeProvider dateTimeProvider,
+        ICacheService cacheService)
         : ICommandHandler<CreateStartupMetricCommand, Guid>
     {
         public async Task<Result<Guid>> Handle(CreateStartupMetricCommand command, CancellationToken cancellationToken)
@@ -30,6 +35,8 @@ namespace DevStart.Application.StartupMetrics.Create
             context.StartupMetrics.Add(startupMetric);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(command.StartupId), cancellationToken);
 
             return startupMetric.Id;
         }

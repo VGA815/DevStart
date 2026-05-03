@@ -32,7 +32,9 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("short_description")] string ShortDescription,
             [property: JsonPropertyName("tam")] decimal? Tam = null,
             [property: JsonPropertyName("sam")] decimal? Sam = null,
-            [property: JsonPropertyName("som")] decimal? Som = null);
+            [property: JsonPropertyName("som")] decimal? Som = null,
+            [property: JsonPropertyName("market_growth_rate")] decimal? MarketGrowthRate = null,
+            [property: JsonPropertyName("has_patents")] bool HasPatents = false);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("api/startups/", async (
@@ -60,7 +62,9 @@ namespace DevStart.WebApi.Endpoints.Startups
                     request.ProductDifferentiators,
                     request.Tam,
                     request.Sam,
-                    request.Som);
+                    request.Som,
+                    request.MarketGrowthRate,
+                    request.HasPatents);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
 

@@ -31,6 +31,8 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
                     Position = sm.Position,
                     Bio = sm.Bio,
                     YearsOfExperience = sm.YearsOfExperience,
+                    HasPriorExit = sm.HasPriorExit,
+                    PreviousStartupsCount = sm.PreviousStartupsCount,
                     UpdatedAt = sm.UpdatedAt,
                 })
                 .ToListAsync(cancellationToken);

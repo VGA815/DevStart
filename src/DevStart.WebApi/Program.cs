@@ -3,6 +3,7 @@ using DevStart.WebApi;
 using DevStart.WebApi.Extensions;
 using Serilog;
 using DevStart.Infrastructure;
+using Hangfire;
 using System.Reflection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
@@ -30,6 +31,7 @@ app.MapEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerWithUi();
+    app.UseHangfireDashboard("/hangfire");
 
     app.ApplyMigrations();
 }

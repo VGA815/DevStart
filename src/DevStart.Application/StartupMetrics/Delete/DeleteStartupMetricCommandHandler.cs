@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -9,7 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupMetrics.Delete
 {
-    internal sealed class DeleteStartupMetricCommandHandler(IApplicationDbContext context, IUserContext userContext)
+    internal sealed class DeleteStartupMetricCommandHandler(
+        IApplicationDbContext context,
+        IUserContext userContext,
+        ICacheService cacheService)
         : ICommandHandler<DeleteStartupMetricCommand>
     {
         public async Task<Result> Handle(DeleteStartupMetricCommand command, CancellationToken cancellationToken)
@@ -35,9 +39,13 @@ namespace DevStart.Application.StartupMetrics.Delete
                 return Result.Failure(UserErrors.Unauthorized());
             }
 
+            Guid startupId = startupMetric.StartupId;
+
             context.StartupMetrics.Remove(startupMetric);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(startupId), cancellationToken);
 
             return Result.Success();
         }

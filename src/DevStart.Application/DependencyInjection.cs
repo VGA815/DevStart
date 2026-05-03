@@ -1,5 +1,8 @@
 ﻿using DevStart.Application.Abstractions.Behaviors;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Validation;
+using DevStart.Application.DealDocuments.Generation;
+using DevStart.Application.Scoring;
 using DevStart.SharedKernel;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +38,11 @@ namespace DevStart.Application
                 .WithScopedLifetime());
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
+
+            services.AddSingleton<IScoringEngine, ScoringEngine>();
+            services.AddSingleton<IValuationCalculator, ValuationCalculator>();
+            services.AddSingleton<IDealTermsValidator, DealTermsValidator>();
+            services.AddSingleton<ICapTableCalculator, CapTableCalculator>();
 
             return services;
         }

@@ -19,6 +19,8 @@ namespace DevStart.Domain.Startups
         public decimal? Tam { get; set; }
         public decimal? Sam { get; set; }
         public decimal? Som { get; set; }
+        public decimal? MarketGrowthRate { get; set; }
+        public bool HasPatents { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public static Startup Create(
@@ -26,7 +28,8 @@ namespace DevStart.Domain.Startups
             string? url, StartupStage startupStage, StartupLocation? location,
             string? billingEmail, Guid? avatarId, DateTime createdAt,
             List<string>? socialMediaLinks, string? shortDescription,
-            decimal? tam = null, decimal? sam = null, decimal? som = null)
+            decimal? tam = null, decimal? sam = null, decimal? som = null,
+            decimal? marketGrowthRate = null, bool hasPatents = false)
             => new ()
             {
                 Id = Guid.NewGuid(),
@@ -45,7 +48,9 @@ namespace DevStart.Domain.Startups
                 Url = url,
                 Tam = tam,
                 Sam = sam,
-                Som = som
+                Som = som,
+                MarketGrowthRate = marketGrowthRate,
+                HasPatents = hasPatents
             };
         public Startup() { }
     }

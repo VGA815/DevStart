@@ -32,6 +32,8 @@ namespace DevStart.Application.Startups.GetById
                     Tam = s.Tam,
                     Sam = s.Sam,
                     Som = s.Som,
+                    MarketGrowthRate = s.MarketGrowthRate,
+                    HasPatents = s.HasPatents,
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 

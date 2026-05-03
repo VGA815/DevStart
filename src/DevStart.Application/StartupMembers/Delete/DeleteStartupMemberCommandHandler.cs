@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -8,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupMembers.Delete
 {
-    internal sealed class DeleteStartupMemberCommandHandler(IApplicationDbContext context, IUserContext userContext)
+    internal sealed class DeleteStartupMemberCommandHandler(
+        IApplicationDbContext context,
+        IUserContext userContext,
+        ICacheService cacheService)
         : ICommandHandler<DeleteStartupMemberCommand>
     {
         public async Task<Result> Handle(DeleteStartupMemberCommand command, CancellationToken cancellationToken)
@@ -37,6 +41,8 @@ namespace DevStart.Application.StartupMembers.Delete
             context.StartupMembers.Remove(startupMember);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(command.StartupId), cancellationToken);
 
             return Result.Success();
         }

@@ -64,7 +64,15 @@ namespace DevStart.Application.InvestmentApplications.Create
                 command.RoadmapItemId,
                 command.Amount,
                 command.Message,
-                dateTimeProvider.UtcNow);
+                dateTimeProvider.UtcNow,
+                command.Instrument,
+                command.ValuationCap,
+                command.Discount,
+                command.InterestRate,
+                command.TermMonths,
+                command.PreMoneyValuation,
+                command.LiquidationPreference,
+                command.ProRataRights);
 
             application.Raise(new InvestmentApplicationCreatedDomainEvent(
                 application.Id,

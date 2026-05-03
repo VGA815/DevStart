@@ -49,6 +49,8 @@ namespace DevStart.Application.Startups.GetAll
                     Tam = s.Tam,
                     Sam = s.Sam,
                     Som = s.Som,
+                    MarketGrowthRate = s.MarketGrowthRate,
+                    HasPatents = s.HasPatents,
                     CreatedAt = s.CreatedAt,
                     UpdatedAt = s.UpdatedAt
                 })

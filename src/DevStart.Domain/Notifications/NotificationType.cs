@@ -10,6 +10,7 @@ namespace DevStart.Domain.Notifications
         InvestmentApplicationAccepted = 5,
         InvestmentApplicationRejected = 6,
         InvestmentApplicationWithdrawn = 7,
-        InvestmentDealCompleted = 8
+        InvestmentDealCompleted = 8,
+        DealDocumentsReady = 9,
     }
 }

@@ -31,5 +31,37 @@ namespace DevStart.Domain.InvestmentApplications
         public static readonly Error InvestorProfileRequired = Error.Problem(
             "InvestmentApplications.InvestorProfileRequired",
             "You must have an investor profile to create an investment application.");
+
+        public static readonly Error InstrumentRequired = Error.Problem(
+            "InvestmentApplications.InstrumentRequired",
+            "Investment instrument must be specified.");
+
+        public static readonly Error InvalidValuationCap = Error.Problem(
+            "InvestmentApplications.InvalidValuationCap",
+            "ValuationCap must be greater than zero for SAFE and Convertible Loan instruments.");
+
+        public static readonly Error InvalidDiscount = Error.Problem(
+            "InvestmentApplications.InvalidDiscount",
+            "Discount must be between 0 and 0.5 (0–50%).");
+
+        public static readonly Error InvalidInterestRate = Error.Problem(
+            "InvestmentApplications.InvalidInterestRate",
+            "InterestRate must be between 0 and 0.30 (0–30%) and is required for Convertible Loan.");
+
+        public static readonly Error InvalidTermMonths = Error.Problem(
+            "InvestmentApplications.InvalidTermMonths",
+            "TermMonths must be between 6 and 60 and is required for Convertible Loan.");
+
+        public static readonly Error InvalidPreMoneyValuation = Error.Problem(
+            "InvestmentApplications.InvalidPreMoneyValuation",
+            "PreMoneyValuation must be greater than zero and is required for Priced Round.");
+
+        public static readonly Error InvalidLiquidationPreference = Error.Problem(
+            "InvestmentApplications.InvalidLiquidationPreference",
+            "LiquidationPreference must be between 1.0 and 3.0.");
+
+        public static readonly Error InconsistentTerms = Error.Problem(
+            "InvestmentApplications.InconsistentTerms",
+            "Provided deal terms are not consistent with the selected instrument.");
     }
 }

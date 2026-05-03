@@ -1,0 +1,97 @@
+using DevStart.Domain.Startups;
+
+namespace DevStart.Application.Scoring
+{
+    /// <summary>
+    /// Ensemble of stage-specific valuation methods. All values returned in RUB.
+    /// Constants are linear approximations chosen for MVP — not real DCF/Comparable analytics.
+    /// Each individual method takes total_score (0–100) and returns a base valuation; the calculator
+    /// blends them with stage-specific weights and emits a ±25% range as a low/high.
+    /// </summary>
+    internal sealed class ValuationCalculator : IValuationCalculator
+    {
+        private const decimal RangeLowFactor = 0.75m;
+        private const decimal RangeHighFactor = 1.25m;
+
+        public ValuationRange ComputeRange(decimal totalScore, StartupStage stage)
+        {
+            decimal scoreFactor = totalScore / 100m;
+
+            (decimal blended, IReadOnlyList<string> methods) = stage switch
+            {
+                StartupStage.Idea or StartupStage.PreSeed => BlendEarly(scoreFactor),
+                StartupStage.Mvp or StartupStage.Seed => BlendSeed(scoreFactor),
+                StartupStage.SeriesA => BlendSeriesA(scoreFactor),
+                _ => BlendEarly(scoreFactor)
+            };
+
+            decimal low = Math.Round(blended * RangeLowFactor, 0, MidpointRounding.AwayFromZero);
+            decimal high = Math.Round(blended * RangeHighFactor, 0, MidpointRounding.AwayFromZero);
+
+            return new ValuationRange(low, high, methods);
+        }
+
+        // Pre-seed / Idea: Berkus 0.4 + Scorecard 0.4 + Expert 0.2
+        private static (decimal blended, IReadOnlyList<string> methods) BlendEarly(decimal sf)
+        {
+            decimal berkus = Berkus(sf);
+            decimal scorecard = Scorecard(sf);
+            decimal expert = Expert(sf);
+
+            decimal blended = berkus * 0.4m + scorecard * 0.4m + expert * 0.2m;
+            return (blended, new[] { "Berkus", "Scorecard", "Expert" });
+        }
+
+        // Mvp / Seed: Scorecard 0.3 + VC Method 0.3 + Comparable 0.3 + DCF 0.1
+        private static (decimal blended, IReadOnlyList<string> methods) BlendSeed(decimal sf)
+        {
+            decimal scorecard = Scorecard(sf);
+            decimal vc = VcMethod(sf);
+            decimal comparable = Comparable(sf);
+            decimal dcf = Dcf(sf);
+
+            decimal blended = scorecard * 0.3m + vc * 0.3m + comparable * 0.3m + dcf * 0.1m;
+            return (blended, new[] { "Scorecard", "VcMethod", "Comparable", "Dcf" });
+        }
+
+        // Series A: VC Method 0.25 + DCF 0.25 + Comparable 0.30 + First Chicago 0.20
+        private static (decimal blended, IReadOnlyList<string> methods) BlendSeriesA(decimal sf)
+        {
+            decimal vc = VcMethod(sf);
+            decimal dcf = Dcf(sf);
+            decimal comparable = Comparable(sf);
+            decimal firstChicago = FirstChicago(sf);
+
+            decimal blended = vc * 0.25m + dcf * 0.25m + comparable * 0.30m + firstChicago * 0.20m;
+            return (blended, new[] { "VcMethod", "Dcf", "Comparable", "FirstChicago" });
+        }
+
+        // Berkus: 5 elements × ₽45M max each, scaled by score → max ₽225M
+        private static decimal Berkus(decimal sf) => 225_000_000m * sf;
+
+        // Scorecard: median pre-seed valuation in RUB scaled by score, with floor 50%
+        private static decimal Scorecard(decimal sf) => 120_000_000m * (0.5m + sf);
+
+        // Expert opinion: linear ₽30M–₽250M based on score
+        private static decimal Expert(decimal sf) => 30_000_000m + (220_000_000m * sf);
+
+        // VC Method: assume 10× return in 5 years from a target ₽50M slice
+        // → today_val = 50M / 10 × (1 + score) ≈ 5M..10M, scaled up to startup-equivalent
+        private static decimal VcMethod(decimal sf) => 200_000_000m * (0.5m + sf);
+
+        // Comparable: median seed comparable in RUB scaled by score
+        private static decimal Comparable(decimal sf) => 250_000_000m * (0.4m + sf);
+
+        // DCF (simplified): linear ₽100M–₽600M from score
+        private static decimal Dcf(decimal sf) => 100_000_000m + (500_000_000m * sf);
+
+        // First Chicago: weighted scenarios (best 30% / base 50% / worst 20%)
+        private static decimal FirstChicago(decimal sf)
+        {
+            decimal best = 800_000_000m * sf;
+            decimal baseCase = 350_000_000m * (0.5m + sf);
+            decimal worst = 80_000_000m;
+            return best * 0.30m + baseCase * 0.50m + worst * 0.20m;
+        }
+    }
+}

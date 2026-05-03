@@ -40,6 +40,8 @@ namespace DevStart.Application.Startups.GetAllByProfileId
                     Tam = s.Tam,
                     Sam = s.Sam,
                     Som = s.Som,
+                    MarketGrowthRate = s.MarketGrowthRate,
+                    HasPatents = s.HasPatents,
                 })
                 .ToListAsync(cancellationToken);
 

@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -9,7 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupMembers.Create
 {
-    internal sealed class CreateStartupMemberCommandHandler(IApplicationDbContext context, IUserContext userContext, IDateTimeProvider dateTimeProvider)
+    internal sealed class CreateStartupMemberCommandHandler(
+        IApplicationDbContext context,
+        IUserContext userContext,
+        IDateTimeProvider dateTimeProvider,
+        ICacheService cacheService)
         : ICommandHandler<CreateStartupMemberCommand, Guid>
     {
         public async Task<Result<Guid>> Handle(CreateStartupMemberCommand command, CancellationToken cancellationToken)
@@ -53,13 +58,17 @@ namespace DevStart.Application.StartupMembers.Create
                 dateTimeProvider.UtcNow,
                 command.Position,
                 command.Bio,
-                command.YearsOfExperience);
+                command.YearsOfExperience,
+                command.HasPriorExit,
+                command.PreviousStartupsCount);
 
             startupMember.Raise(new StartupMemberCreatedDomainEvent(startupMember.ProfileId, startupMember.StartupId));
 
             context.StartupMembers.Add(startupMember);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(command.StartupId), cancellationToken);
 
             return startupMember.ProfileId;
         }

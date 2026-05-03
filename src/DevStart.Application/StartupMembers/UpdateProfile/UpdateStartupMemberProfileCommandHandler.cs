@@ -1,4 +1,5 @@
 using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -10,7 +11,8 @@ namespace DevStart.Application.StartupMembers.UpdateProfile
     internal sealed class UpdateStartupMemberProfileCommandHandler(
         IApplicationDbContext context,
         IUserContext userContext,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        ICacheService cacheService)
         : ICommandHandler<UpdateStartupMemberProfileCommand>
     {
         public async Task<Result> Handle(UpdateStartupMemberProfileCommand command, CancellationToken cancellationToken)
@@ -29,6 +31,8 @@ namespace DevStart.Application.StartupMembers.UpdateProfile
                 command.Position,
                 command.Bio,
                 command.YearsOfExperience,
+                command.HasPriorExit,
+                command.PreviousStartupsCount,
                 dateTimeProvider.UtcNow);
 
             if (updateResult.IsFailure)
@@ -37,6 +41,8 @@ namespace DevStart.Application.StartupMembers.UpdateProfile
             }
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(command.StartupId), cancellationToken);
 
             return Result.Success();
         }

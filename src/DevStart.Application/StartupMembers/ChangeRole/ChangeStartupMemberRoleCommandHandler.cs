@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -8,7 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupMembers.ChangeRole
 {
-    internal sealed class ChangeStartupMemberRoleCommandHandler(IApplicationDbContext context, IUserContext userContext, IDateTimeProvider dateTimeProvider)
+    internal sealed class ChangeStartupMemberRoleCommandHandler(
+        IApplicationDbContext context,
+        IUserContext userContext,
+        IDateTimeProvider dateTimeProvider,
+        ICacheService cacheService)
         : ICommandHandler<ChangeStartupMemberRoleCommand>
     {
         public async Task<Result> Handle(ChangeStartupMemberRoleCommand command, CancellationToken cancellationToken)
@@ -49,6 +54,8 @@ namespace DevStart.Application.StartupMembers.ChangeRole
             startupMember1.Role = command.Role;
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(command.StartupId), cancellationToken);
 
             return Result.Success();
         }

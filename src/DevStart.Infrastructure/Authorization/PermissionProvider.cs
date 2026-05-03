@@ -14,6 +14,7 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupsCreate,
                 Permissions.StartupsUpdate,
                 Permissions.StartupsDelete,
+                Permissions.StartupsScoreRead,
 
                 Permissions.StartupMembersCreate,
                 Permissions.StartupMembersDelete,
@@ -72,12 +73,15 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.InvestmentDealsConfirm,
                 Permissions.InvestmentDealsRead,
+
+                Permissions.DealDocumentsRead,
             },
             [UserSystemRole.Admin] = new HashSet<string>
             {
                 Permissions.StartupsCreate,
                 Permissions.StartupsUpdate,
                 Permissions.StartupsDelete,
+                Permissions.StartupsScoreRead,
 
                 Permissions.StartupMembersCreate,
                 Permissions.StartupMembersDelete,
@@ -136,6 +140,8 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.InvestmentDealsConfirm,
                 Permissions.InvestmentDealsRead,
+
+                Permissions.DealDocumentsRead,
             },
         };
 

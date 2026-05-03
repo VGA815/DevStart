@@ -27,6 +27,8 @@ namespace DevStart.Infrastructure.Startups
             builder.Property(x => x.Tam).HasColumnName("tam").HasColumnType("numeric(18,2)");
             builder.Property(x => x.Sam).HasColumnName("sam").HasColumnType("numeric(18,2)");
             builder.Property(x => x.Som).HasColumnName("som").HasColumnType("numeric(18,2)");
+            builder.Property(x => x.MarketGrowthRate).HasColumnName("market_growth_rate").HasColumnType("numeric(5,2)");
+            builder.Property(x => x.HasPatents).HasColumnName("has_patents").HasDefaultValue(false);
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 

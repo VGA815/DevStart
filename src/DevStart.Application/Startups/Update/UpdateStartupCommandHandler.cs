@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupMembers;
@@ -9,7 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.Startups.Update
 {
-    internal sealed class UpdateStartupCommandHandler(IApplicationDbContext context, IUserContext userContext, IDateTimeProvider dateTimeProvider)
+    internal sealed class UpdateStartupCommandHandler(
+        IApplicationDbContext context,
+        IUserContext userContext,
+        IDateTimeProvider dateTimeProvider,
+        ICacheService cacheService)
         : ICommandHandler<UpdateStartupCommand>
     {
         public async Task<Result> Handle(UpdateStartupCommand command, CancellationToken cancellationToken)
@@ -44,11 +49,15 @@ namespace DevStart.Application.Startups.Update
             startup.Tam = command.Tam;
             startup.Sam = command.Sam;
             startup.Som = command.Som;
+            startup.MarketGrowthRate = command.MarketGrowthRate;
+            startup.HasPatents = command.HasPatents;
             startup.UpdatedAt = dateTimeProvider.UtcNow;
 
             startup.Raise(new StartupUpdatedDomainEvent(startup.Id));
 
             await context.SaveChangesAsync(cancellationToken);
+
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(startup.Id), cancellationToken);
 
             return Result.Success();
         }
