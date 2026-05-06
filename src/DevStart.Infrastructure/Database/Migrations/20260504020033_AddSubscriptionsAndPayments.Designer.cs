@@ -3,6 +3,7 @@ using System;
 using DevStart.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DevStart.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260504020033_AddSubscriptionsAndPayments")]
+    partial class AddSubscriptionsAndPayments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -542,11 +545,6 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("ConfirmationUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)")
-                        .HasColumnName("confirmation_url");
-
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(3)
@@ -562,6 +560,7 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnName("provider");
 
                     b.Property<string>("ProviderPaymentId")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("provider_payment_id");
@@ -585,8 +584,6 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasDatabaseName("ix_payments_subscription_id");
 
                     b.HasIndex("Provider", "ProviderPaymentId")
-                        .IsUnique()
-                        .HasFilter("provider_payment_id IS NOT NULL")
                         .HasDatabaseName("ix_payments_provider_payment");
 
                     b.HasIndex("UserId", "Status")
@@ -1110,16 +1107,6 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasName("pk_user_preferences");
 
                     b.ToTable("user_preferences", "public");
-                });
-
-            modelBuilder.Entity("DevStart.Domain.Payments.Payment", b =>
-                {
-                    b.HasOne("DevStart.Domain.Subscriptions.Subscription", null)
-                        .WithMany()
-                        .HasForeignKey("SubscriptionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_payments_subscriptions_subscription_id");
                 });
 
             modelBuilder.Entity("DevStart.Domain.Users.User", b =>

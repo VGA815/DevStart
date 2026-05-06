@@ -1,10 +1,12 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.Domain.StartupMembers;
+using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -14,7 +16,8 @@ namespace DevStart.Application.DealDocuments.GetTermSheet
     internal sealed class GetTermSheetQueryHandler(
         IApplicationDbContext context,
         IUserContext userContext,
-        IFileStorage fileStorage)
+        IFileStorage fileStorage,
+        ISubscriptionChecker subscriptionChecker)
         : IQueryHandler<GetTermSheetQuery, TermSheetResponse>
     {
         public async Task<Result<TermSheetResponse>> Handle(GetTermSheetQuery query, CancellationToken cancellationToken)
@@ -38,6 +41,12 @@ namespace DevStart.Application.DealDocuments.GetTermSheet
             if (!isInvestor && !isFounderOrAdmin)
             {
                 return Result.Failure<TermSheetResponse>(DealDocumentErrors.Unauthorized);
+            }
+
+            // Investor side requires Pro to read term sheet; startup-side members do not.
+            if (isInvestor && !await subscriptionChecker.HasActiveProAsync(userId, cancellationToken))
+            {
+                return Result.Failure<TermSheetResponse>(SubscriptionErrors.ProRequired);
             }
 
             DealDocument? doc = await context.DealDocuments

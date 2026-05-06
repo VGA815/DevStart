@@ -1,10 +1,12 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.Domain.StartupMembers;
+using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -14,7 +16,8 @@ namespace DevStart.Application.DealDocuments.GetCapTable
     internal sealed class GetCapTableQueryHandler(
         IApplicationDbContext context,
         IUserContext userContext,
-        IFileStorage fileStorage)
+        IFileStorage fileStorage,
+        ISubscriptionChecker subscriptionChecker)
         : IQueryHandler<GetCapTableQuery, CapTableResult>
     {
         private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -43,6 +46,11 @@ namespace DevStart.Application.DealDocuments.GetCapTable
             if (!isInvestor && !isFounderOrAdmin)
             {
                 return Result.Failure<CapTableResult>(DealDocumentErrors.Unauthorized);
+            }
+
+            if (isInvestor && !await subscriptionChecker.HasActiveProAsync(userId, cancellationToken))
+            {
+                return Result.Failure<CapTableResult>(SubscriptionErrors.ProRequired);
             }
 
             DealDocument? doc = await context.DealDocuments

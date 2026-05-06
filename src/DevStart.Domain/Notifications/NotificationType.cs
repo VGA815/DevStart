@@ -12,5 +12,6 @@ namespace DevStart.Domain.Notifications
         InvestmentApplicationWithdrawn = 7,
         InvestmentDealCompleted = 8,
         DealDocumentsReady = 9,
+        SubscriptionActivated = 10,
     }
 }

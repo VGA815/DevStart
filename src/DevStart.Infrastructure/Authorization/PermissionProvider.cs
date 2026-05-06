@@ -75,6 +75,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.InvestmentDealsRead,
 
                 Permissions.DealDocumentsRead,
+
+                Permissions.SubscriptionsCheckout,
+                Permissions.SubscriptionsRead,
             },
             [UserSystemRole.Admin] = new HashSet<string>
             {
@@ -142,6 +145,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.InvestmentDealsRead,
 
                 Permissions.DealDocumentsRead,
+
+                Permissions.SubscriptionsCheckout,
+                Permissions.SubscriptionsRead,
             },
         };
 

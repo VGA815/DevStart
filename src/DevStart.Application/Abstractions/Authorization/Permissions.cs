@@ -66,5 +66,8 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string InvestmentDealsRead              = "investment_deals::read";
 
         public const string DealDocumentsRead                = "deal_documents::read";
+
+        public const string SubscriptionsCheckout            = "subscriptions::checkout";
+        public const string SubscriptionsRead                = "subscriptions::read";
     }
 }

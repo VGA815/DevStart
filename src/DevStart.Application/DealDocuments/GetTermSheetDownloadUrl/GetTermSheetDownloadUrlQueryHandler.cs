@@ -1,10 +1,12 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.Domain.StartupMembers;
+using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +16,8 @@ namespace DevStart.Application.DealDocuments.GetTermSheetDownloadUrl
         IApplicationDbContext context,
         IUserContext userContext,
         IFileStorage fileStorage,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        ISubscriptionChecker subscriptionChecker)
         : IQueryHandler<GetTermSheetDownloadUrlQuery, TermSheetDownloadUrlResponse>
     {
         private const int ExpirySeconds = 600; // 10 min
@@ -42,6 +45,11 @@ namespace DevStart.Application.DealDocuments.GetTermSheetDownloadUrl
             if (!isInvestor && !isFounderOrAdmin)
             {
                 return Result.Failure<TermSheetDownloadUrlResponse>(DealDocumentErrors.Unauthorized);
+            }
+
+            if (isInvestor && !await subscriptionChecker.HasActiveProAsync(userId, cancellationToken))
+            {
+                return Result.Failure<TermSheetDownloadUrlResponse>(SubscriptionErrors.ProRequired);
             }
 
             DealDocument? doc = await context.DealDocuments

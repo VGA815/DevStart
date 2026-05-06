@@ -2,7 +2,10 @@
 using DevStart.Application.Abstractions.BackgroundJobs;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Notifications;
+using DevStart.Application.Abstractions.Payments;
+using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.DealDocuments.Generation;
+using DevStart.Application.Subscriptions;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
@@ -13,6 +16,8 @@ using DevStart.Infrastructure.DealDocuments.Generation;
 using DevStart.Infrastructure.DomainEvents;
 using DevStart.Infrastructure.FileStorage;
 using DevStart.Infrastructure.Notifications;
+using DevStart.Infrastructure.Payments;
+using DevStart.Infrastructure.Subscriptions;
 using DevStart.Infrastructure.Time;
 using DevStart.SharedKernel;
 using Hangfire;
@@ -48,7 +53,8 @@ namespace DevStart.Infrastructure
                 .AddSmtp(configuration)
                 .AddAuthorizationInternal()
                 .AddBackgroundJobs(configuration)
-                .AddDealDocumentGeneration();
+                .AddDealDocumentGeneration()
+                .AddBilling(configuration);
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -181,6 +187,18 @@ namespace DevStart.Infrastructure
         {
             services.AddScoped<ITermSheetGenerator, TermSheetGenerator>();
             services.AddHostedService<TemplatesSeeder>();
+            return services;
+        }
+
+        private static IServiceCollection AddBilling(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<YooKassaOptions>(configuration.GetSection("YooKassa"));
+            services.Configure<CheckoutOptions>(configuration.GetSection("YooKassa"));
+            services.Configure<PlansOptions>(configuration.GetSection("Plans"));
+
+            services.AddHttpClient<IPaymentProvider, YooKassaPaymentProvider>();
+            services.AddScoped<ISubscriptionChecker, SubscriptionChecker>();
+
             return services;
         }
 

@@ -7,5 +7,6 @@
         Problem = 2,
         NotFound = 3,
         Conflict = 4,
+        Forbidden = 5,
     }
 }

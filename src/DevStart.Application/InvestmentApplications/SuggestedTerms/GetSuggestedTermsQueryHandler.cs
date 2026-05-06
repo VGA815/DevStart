@@ -1,13 +1,21 @@
+using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.Scoring;
 using DevStart.Application.Startups.GetScore;
 using DevStart.Domain.InvestmentApplications;
+using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
+using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.InvestmentApplications.SuggestedTerms
 {
     internal sealed class GetSuggestedTermsQueryHandler(
-        IQueryHandler<GetStartupScoreQuery, ScoreResult> scoreHandler)
+        IQueryHandler<GetStartupScoreQuery, ScoreResult> scoreHandler,
+        IUserContext userContext,
+        ISubscriptionChecker subscriptionChecker,
+        IApplicationDbContext context)
         : IQueryHandler<GetSuggestedTermsQuery, SuggestedTermsResponse>
     {
         // Spec defaults:
@@ -25,6 +33,16 @@ namespace DevStart.Application.InvestmentApplications.SuggestedTerms
             GetSuggestedTermsQuery query,
             CancellationToken cancellationToken)
         {
+            Guid viewerId = userContext.UserId;
+            bool isMember = await context.StartupMembers
+                .AsNoTracking()
+                .AnyAsync(sm => sm.StartupId == query.StartupId && sm.ProfileId == viewerId, cancellationToken);
+
+            if (!isMember && !await subscriptionChecker.HasActiveProAsync(viewerId, cancellationToken))
+            {
+                return Result.Failure<SuggestedTermsResponse>(SubscriptionErrors.ProRequired);
+            }
+
             Result<ScoreResult> scoreResult = await scoreHandler.Handle(
                 new GetStartupScoreQuery(query.StartupId),
                 cancellationToken);

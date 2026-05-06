@@ -1,6 +1,8 @@
 ﻿using DevStart.Domain.DealDocuments;
 using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.InvestmentApplications;
+using DevStart.Domain.Payments;
+using DevStart.Domain.Subscriptions;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.Domain.Investors;
 using DevStart.Domain.InviteTokens;
@@ -47,6 +49,8 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<InvestmentDeal> InvestmentDeals { get; }
         DbSet<StartupCompetitor> StartupCompetitors { get; }
         DbSet<DealDocument> DealDocuments { get; }
+        DbSet<Subscription> Subscriptions { get; }
+        DbSet<Payment> Payments { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

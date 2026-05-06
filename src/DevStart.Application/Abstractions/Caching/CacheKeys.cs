@@ -23,5 +23,7 @@ namespace DevStart.Application.Abstractions.Caching
         public static string StartupRoadmapItem(Guid itemId) => $"{Version}:startup-roadmap-items:{itemId}";
 
         public static string StartupScore(Guid startupId) => $"{Version}:startups:{startupId}:score";
+
+        public static string SubscriptionActiveByUser(Guid userId) => $"{Version}:subscriptions:{userId}:active";
     }
 }
