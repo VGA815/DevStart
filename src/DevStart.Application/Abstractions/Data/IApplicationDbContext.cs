@@ -1,4 +1,6 @@
-﻿using DevStart.Domain.DealDocuments;
+﻿using DevStart.Domain.ConsentDocuments;
+using DevStart.Domain.DealDocuments;
+using DevStart.Domain.UserConsents;
 using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.Payments;
@@ -51,6 +53,8 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<DealDocument> DealDocuments { get; }
         DbSet<Subscription> Subscriptions { get; }
         DbSet<Payment> Payments { get; }
+        DbSet<UserConsent> UserConsents { get; }
+        DbSet<ConsentDocument> ConsentDocuments { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

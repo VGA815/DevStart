@@ -78,6 +78,9 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.SubscriptionsCheckout,
                 Permissions.SubscriptionsRead,
+
+                Permissions.ConsentsRead,
+                Permissions.ConsentsRevoke,
             },
             [UserSystemRole.Admin] = new HashSet<string>
             {
@@ -148,6 +151,12 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.SubscriptionsCheckout,
                 Permissions.SubscriptionsRead,
+
+                Permissions.ConsentsRead,
+                Permissions.ConsentsRevoke,
+
+                Permissions.ConsentDocumentsCreate,
+                Permissions.ConsentDocumentsActivate,
             },
         };
 

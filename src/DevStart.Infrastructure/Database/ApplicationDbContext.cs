@@ -1,5 +1,7 @@
 ﻿using DevStart.Application.Abstractions.Data;
+using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.DealDocuments;
+using DevStart.Domain.UserConsents;
 using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.Payments;
 using DevStart.Domain.Subscriptions;
@@ -80,6 +82,10 @@ namespace DevStart.Infrastructure.Database
         public DbSet<Subscription> Subscriptions { get; set; }
 
         public DbSet<Payment> Payments { get; set; }
+
+        public DbSet<UserConsent> UserConsents { get; set; }
+
+        public DbSet<ConsentDocument> ConsentDocuments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

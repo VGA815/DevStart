@@ -1,6 +1,6 @@
-﻿
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Users.Register;
+using DevStart.Domain.UserConsents;
 using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
 using DevStart.WebApi.Infrastructure;
@@ -10,15 +10,22 @@ namespace DevStart.WebApi.Endpoints.Users
 {
     internal sealed class Register : IEndpoint
     {
+        public sealed record ConsentItemRequest(
+            [property: JsonPropertyName("type")]             ConsentType Type,
+            [property: JsonPropertyName("document_version")] string DocumentVersion,
+            [property: JsonPropertyName("accepted")]         bool Accepted);
+
         public sealed record Request(
-            [property: JsonPropertyName("email")] string Email,
-            [property: JsonPropertyName("username")] string Username,
-            [property: JsonPropertyName("password")] string Password,
-            [property: JsonPropertyName("bio")] string? Bio,
-            [property: JsonPropertyName("name")] string? Name,
-            [property: JsonPropertyName("url")] string? Url,
-            [property: JsonPropertyName("social_media_links")] List<string> SocialMediaLinks,
-            [property: JsonPropertyName("is_public")] bool IsPublic);
+            [property: JsonPropertyName("email")]               string Email,
+            [property: JsonPropertyName("username")]            string Username,
+            [property: JsonPropertyName("password")]            string Password,
+            [property: JsonPropertyName("bio")]                 string? Bio,
+            [property: JsonPropertyName("name")]                string? Name,
+            [property: JsonPropertyName("url")]                 string? Url,
+            [property: JsonPropertyName("social_media_links")]  List<string> SocialMediaLinks,
+            [property: JsonPropertyName("is_public")]           bool IsPublic,
+            [property: JsonPropertyName("consents")]            List<ConsentItemRequest> Consents);
+
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPost("api/users/register", async (
@@ -34,7 +41,10 @@ namespace DevStart.WebApi.Endpoints.Users
                     request.Name,
                     request.Url,
                     request.SocialMediaLinks,
-                    request.IsPublic);
+                    request.IsPublic,
+                    request.Consents
+                        .Select(c => new ConsentItem(c.Type, c.DocumentVersion, c.Accepted))
+                        .ToList());
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
 

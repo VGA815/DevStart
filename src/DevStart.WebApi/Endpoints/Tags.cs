@@ -25,5 +25,7 @@
         public const string DealDocuments = "DealDocuments";
         public const string Subscriptions = "Subscriptions";
         public const string Payments = "Payments";
+        public const string Consents = "Consents";
+        public const string ConsentDocuments = "ConsentDocuments";
     }
 }

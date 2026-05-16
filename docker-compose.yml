@@ -9,6 +9,13 @@ services:
       - 5001:8081
     networks:
       - devstart-net
+    depends_on:
+      - main-db
+      - seq
+      - minio
+      - redis
+      - centrifugo
+      - mailpit
   main-db:
     container_name: main-db
     image: postgres:latest

@@ -27,13 +27,13 @@ builder.Services.AddRateLimiting();
 var app = builder.Build();
 
 app.MapEndpoints();
+app.ApplyMigrations();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwaggerWithUi();
     app.UseHangfireDashboard("/hangfire");
 
-    app.ApplyMigrations();
 }
 
 app.MapHealthChecks("health", new HealthCheckOptions

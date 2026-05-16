@@ -11,6 +11,7 @@ using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
 using DevStart.Infrastructure.Caching;
 using DevStart.Infrastructure.Database;
+using DevStart.Infrastructure.ConsentDocuments;
 using DevStart.Infrastructure.DealDocuments;
 using DevStart.Infrastructure.DealDocuments.Generation;
 using DevStart.Infrastructure.DomainEvents;
@@ -187,6 +188,7 @@ namespace DevStart.Infrastructure
         {
             services.AddScoped<ITermSheetGenerator, TermSheetGenerator>();
             services.AddHostedService<TemplatesSeeder>();
+            services.AddHostedService<ConsentDocumentsSeeder>();
             return services;
         }
 

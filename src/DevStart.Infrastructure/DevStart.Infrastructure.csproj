@@ -47,6 +47,10 @@
     <EmbeddedResource Include="DealDocuments\Templates\term-sheet-safe.md" />
     <EmbeddedResource Include="DealDocuments\Templates\term-sheet-convertible.md" />
     <EmbeddedResource Include="DealDocuments\Templates\term-sheet-priced.md" />
+    <EmbeddedResource Include="ConsentDocuments\Documents\personal-data-processing-v1.0.md" />
+    <EmbeddedResource Include="ConsentDocuments\Documents\privacy-policy-v1.0.md" />
+    <EmbeddedResource Include="ConsentDocuments\Documents\terms-of-service-v1.0.md" />
+    <EmbeddedResource Include="ConsentDocuments\Documents\cookies-v1.0.md" />
   </ItemGroup>
 
 </Project>

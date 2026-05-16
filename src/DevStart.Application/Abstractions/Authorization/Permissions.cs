@@ -69,5 +69,11 @@ namespace DevStart.Application.Abstractions.Authorization
 
         public const string SubscriptionsCheckout            = "subscriptions::checkout";
         public const string SubscriptionsRead                = "subscriptions::read";
+
+        public const string ConsentsRead                     = "consents::read";
+        public const string ConsentsRevoke                   = "consents::revoke";
+
+        public const string ConsentDocumentsCreate           = "consent_documents::create";
+        public const string ConsentDocumentsActivate         = "consent_documents::activate";
     }
 }
