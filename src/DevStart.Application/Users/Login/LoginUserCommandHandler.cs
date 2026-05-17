@@ -30,6 +30,11 @@ namespace DevStart.Application.Users.Login
                 return Result.Failure<TokenPair>(UserErrors.NotFoundByEmail);
             }
 
+            if (!user.IsVerified)
+            {
+                return Result.Failure<TokenPair>(UserErrors.EmailNotVerified);
+            }
+
             string accessToken = tokenProvider.CreateAccessToken(user);
             IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
                 user,

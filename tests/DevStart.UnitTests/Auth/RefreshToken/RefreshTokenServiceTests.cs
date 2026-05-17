@@ -1,5 +1,6 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Domain.RefreshTokens;
+using RefreshTokenEntity = DevStart.Domain.RefreshTokens.RefreshToken;
 using DevStart.Domain.Users;
 using DevStart.Infrastructure.Authentication.RefreshTokens;
 using DevStart.Infrastructure.Database;
@@ -32,7 +33,7 @@ namespace DevStart.UnitTests.Auth.RefreshToken
         {
             IssuedRefreshToken issued = await _sut.IssueAsync(_user, null, null, default);
 
-            Domain.RefreshTokens.RefreshToken stored = await _db.RefreshTokens.SingleAsync();
+            RefreshTokenEntity stored = await _db.RefreshTokens.SingleAsync();
             Assert.NotEqual(issued.RawToken, stored.TokenHash);
             Assert.Equal(RefreshTokenHasher.Hash(issued.RawToken), stored.TokenHash);
             Assert.Equal(_user.Id, stored.UserId);
@@ -51,7 +52,7 @@ namespace DevStart.UnitTests.Auth.RefreshToken
             Assert.True(result.IsSuccess);
             Assert.NotEqual(first.RawToken, result.Value.RawRefreshToken);
 
-            List<Domain.RefreshTokens.RefreshToken> all = await _db.RefreshTokens.OrderBy(x => x.CreatedAt).ToListAsync();
+            List<RefreshTokenEntity> all = await _db.RefreshTokens.OrderBy(x => x.CreatedAt).ToListAsync();
             Assert.Equal(2, all.Count);
             Assert.NotNull(all[0].RevokedAt);
             Assert.Equal(all[1].Id, all[0].ReplacedByTokenId);
@@ -94,7 +95,7 @@ namespace DevStart.UnitTests.Auth.RefreshToken
             Assert.True(reuseAttempt.IsFailure);
             Assert.Equal(RefreshTokenErrors.ReuseDetected, reuseAttempt.Error);
 
-            List<Domain.RefreshTokens.RefreshToken> tokens = await _db.RefreshTokens.ToListAsync();
+            List<RefreshTokenEntity> tokens = await _db.RefreshTokens.ToListAsync();
             Assert.All(tokens, t => Assert.NotNull(t.RevokedAt));
         }
 
@@ -106,7 +107,7 @@ namespace DevStart.UnitTests.Auth.RefreshToken
             Result result = await _sut.RevokeAsync(issued.RawToken, default);
 
             Assert.True(result.IsSuccess);
-            Domain.RefreshTokens.RefreshToken token = await _db.RefreshTokens.SingleAsync();
+            RefreshTokenEntity token = await _db.RefreshTokens.SingleAsync();
             Assert.NotNull(token.RevokedAt);
         }
 
@@ -119,7 +120,7 @@ namespace DevStart.UnitTests.Auth.RefreshToken
 
             await _sut.RevokeAllForUserAsync(_user.Id, default);
 
-            List<Domain.RefreshTokens.RefreshToken> tokens = await _db.RefreshTokens.ToListAsync();
+            List<RefreshTokenEntity> tokens = await _db.RefreshTokens.ToListAsync();
             Assert.Equal(3, tokens.Count);
             Assert.All(tokens, t => Assert.NotNull(t.RevokedAt));
         }

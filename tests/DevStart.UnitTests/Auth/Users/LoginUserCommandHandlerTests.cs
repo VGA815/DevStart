@@ -30,6 +30,7 @@ namespace DevStart.UnitTests.Auth.Users
         {
             string password = "S3cret!";
             User user = User.Create("greta", "greta@example.com", _hasher.Hash(password), _clock.UtcNow);
+            user.IsVerified = true;
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
@@ -54,6 +55,22 @@ namespace DevStart.UnitTests.Auth.Users
 
             Assert.True(result.IsFailure);
             Assert.Equal(UserErrors.NotFoundByEmail, result.Error);
+        }
+
+        [Fact]
+        public async Task UnverifiedEmail_ReturnsEmailNotVerified()
+        {
+            string password = "S3cret!";
+            User user = User.Create("jack", "jack@example.com", _hasher.Hash(password), _clock.UtcNow);
+            // IsVerified is false by default
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+
+            var cmd = new LoginUserCommand(user.Email, password, null, null);
+            Result<TokenPair> result = await _sut.Handle(cmd, default);
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(UserErrors.EmailNotVerified, result.Error);
         }
 
         [Fact]

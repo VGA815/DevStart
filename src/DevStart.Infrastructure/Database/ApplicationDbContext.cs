@@ -5,6 +5,7 @@ using DevStart.Domain.ExternalLogins;
 using DevStart.Domain.RefreshTokens;
 using DevStart.Domain.UserConsents;
 using DevStart.Domain.EmailVerificationTokens;
+using DevStart.Domain.Experts;
 using DevStart.Domain.Payments;
 using DevStart.Domain.Subscriptions;
 using DevStart.Domain.InvestmentApplications;
@@ -72,6 +73,12 @@ namespace DevStart.Infrastructure.Database
         public DbSet<StartupDocumentFile> StartupDocumentFiles { get; set; }
 
         public DbSet<InvestorProfile> InvestorProfiles { get; set; }
+
+        public DbSet<ExpertProfile> ExpertProfiles { get; set; }
+
+        public DbSet<ExpertProfileSpecialization> ExpertProfileSpecializations { get; set; }
+
+        public DbSet<ExpertExperience> ExpertExperiences { get; set; }
 
         public DbSet<InvestmentApplication> InvestmentApplications { get; set; }
 

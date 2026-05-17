@@ -20,6 +20,8 @@
         public const string InviteTokens = "InviteTokens";
         public const string Messages = "Messages";
         public const string InvestorProfiles = "InvestorProfiles";
+        public const string ExpertProfiles = "ExpertProfiles";
+        public const string ExpertExperiences = "ExpertExperiences";
         public const string InvestmentApplications = "InvestmentApplications";
         public const string InvestmentDeals = "InvestmentDeals";
         public const string DealDocuments = "DealDocuments";

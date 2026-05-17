@@ -57,6 +57,15 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string InvestorProfilesUpdate           = "investor_profiles::update";
         public const string InvestorProfilesRead             = "investor_profiles::read";
 
+        public const string ExpertProfilesCreate             = "expert_profiles::create";
+        public const string ExpertProfilesUpdate             = "expert_profiles::update";
+        public const string ExpertProfilesRead               = "expert_profiles::read";
+
+        public const string ExpertExperiencesCreate          = "expert_experiences::create";
+        public const string ExpertExperiencesUpdate          = "expert_experiences::update";
+        public const string ExpertExperiencesDelete          = "expert_experiences::delete";
+        public const string ExpertExperiencesRead            = "expert_experiences::read";
+
         public const string InvestmentApplicationsCreate     = "investment_applications::create";
         public const string InvestmentApplicationsRespond    = "investment_applications::respond";
         public const string InvestmentApplicationsWithdraw   = "investment_applications::withdraw";

@@ -115,8 +115,17 @@ namespace DevStart.Infrastructure
             services.AddSingleton<IPkceGenerator, PkceGenerator>();
             services.AddSingleton<IOAuthStateStore, RedisOAuthStateStore>();
 
-            services.Configure<GoogleOAuthOptions>(configuration.GetSection("OAuth:Google"));
-            services.Configure<GitHubOAuthOptions>(configuration.GetSection("OAuth:GitHub"));
+            //services.AddOptions<GoogleOAuthOptions>()
+            //    .BindConfiguration("OAuth:Google")
+            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientId), "OAuth:Google:ClientId is required")
+            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientSecret), "OAuth:Google:ClientSecret is required")
+            //    .ValidateOnStart();
+
+            //services.AddOptions<GitHubOAuthOptions>()
+            //    .BindConfiguration("OAuth:GitHub")
+            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientId), "OAuth:GitHub:ClientId is required")
+            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientSecret), "OAuth:GitHub:ClientSecret is required")
+            //    .ValidateOnStart();
 
             services.AddHttpClient<GoogleAuthProvider>();
             services.AddHttpClient<GitHubAuthProvider>();
