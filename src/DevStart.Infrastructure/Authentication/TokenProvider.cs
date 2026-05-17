@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Domain.Users;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -10,7 +10,10 @@ namespace DevStart.Infrastructure.Authentication
 {
     internal sealed class TokenProvider(IConfiguration configuration) : ITokenProvider
     {
-        public string Create(User user)
+        public int AccessTokenLifetimeSeconds =>
+            int.Parse(configuration["Jwt:ExpirationInMinutes"]!) * 60;
+
+        public string CreateAccessToken(User user)
         {
             string secretKey = configuration["Jwt:Secret"]!;
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -22,8 +25,9 @@ namespace DevStart.Infrastructure.Authentication
                 Subject = new ClaimsIdentity([
                     new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                     new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     ]),
-                Expires = DateTime.UtcNow.AddMinutes(int.Parse(configuration["Jwt:ExpirationInMinutes"]!)),
+                Expires = DateTime.UtcNow.AddSeconds(AccessTokenLifetimeSeconds),
                 SigningCredentials = credentials,
                 Issuer = configuration["Jwt:Issuer"],
                 Audience = configuration["Jwt:Audience"]
@@ -31,9 +35,7 @@ namespace DevStart.Infrastructure.Authentication
 
             var handler = new JsonWebTokenHandler();
 
-            string token = handler.CreateToken(tokenDescriptor);
-
-            return token;
+            return handler.CreateToken(tokenDescriptor);
         }
     }
 }

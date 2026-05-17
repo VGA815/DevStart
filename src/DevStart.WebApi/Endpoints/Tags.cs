@@ -27,5 +27,6 @@
         public const string Payments = "Payments";
         public const string Consents = "Consents";
         public const string ConsentDocuments = "ConsentDocuments";
+        public const string Auth = "Auth";
     }
 }

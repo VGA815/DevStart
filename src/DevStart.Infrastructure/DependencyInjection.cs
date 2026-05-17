@@ -7,6 +7,8 @@ using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Application.Subscriptions;
 using DevStart.Infrastructure.Authentication;
+using DevStart.Infrastructure.Authentication.OAuth;
+using DevStart.Infrastructure.Authentication.RefreshTokens;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
 using DevStart.Infrastructure.Caching;
@@ -106,6 +108,22 @@ namespace DevStart.Infrastructure
             services.AddScoped<IUserContext, UserContext>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<ITokenProvider, TokenProvider>();
+
+            services.Configure<RefreshTokenOptions>(configuration.GetSection("Jwt:RefreshToken"));
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+            services.AddSingleton<IPkceGenerator, PkceGenerator>();
+            services.AddSingleton<IOAuthStateStore, RedisOAuthStateStore>();
+
+            services.Configure<GoogleOAuthOptions>(configuration.GetSection("OAuth:Google"));
+            services.Configure<GitHubOAuthOptions>(configuration.GetSection("OAuth:GitHub"));
+
+            services.AddHttpClient<GoogleAuthProvider>();
+            services.AddHttpClient<GitHubAuthProvider>();
+
+            services.AddScoped<IExternalAuthProvider>(sp => sp.GetRequiredService<GoogleAuthProvider>());
+            services.AddScoped<IExternalAuthProvider>(sp => sp.GetRequiredService<GitHubAuthProvider>());
+            services.AddScoped<IExternalAuthProviderFactory, ExternalAuthProviderFactory>();
 
             return services;
         }

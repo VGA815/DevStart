@@ -20,4 +20,8 @@
     <ProjectReference Include="..\DevStart.Domain\DevStart.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="DevStart.UnitTests" />
+  </ItemGroup>
+
 </Project>

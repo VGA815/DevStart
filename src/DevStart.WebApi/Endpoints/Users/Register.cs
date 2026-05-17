@@ -22,9 +22,9 @@ namespace DevStart.WebApi.Endpoints.Users
             [property: JsonPropertyName("bio")]                 string? Bio,
             [property: JsonPropertyName("name")]                string? Name,
             [property: JsonPropertyName("url")]                 string? Url,
-            [property: JsonPropertyName("social_media_links")]  List<string> SocialMediaLinks,
+            [property: JsonPropertyName("social_media_links")]  List<string>? SocialMediaLinks,
             [property: JsonPropertyName("is_public")]           bool IsPublic,
-            [property: JsonPropertyName("consents")]            List<ConsentItemRequest> Consents);
+            [property: JsonPropertyName("consents")]            List<ConsentItemRequest>? Consents);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -33,6 +33,12 @@ namespace DevStart.WebApi.Endpoints.Users
                 ICommandHandler<RegisterUserCommand, Guid> handler,
                 CancellationToken cancellationToken) =>
             {
+                List<ConsentItem> consents = request.Consents is null
+                    ? new List<ConsentItem>()
+                    : request.Consents
+                        .Select(c => new ConsentItem(c.Type, c.DocumentVersion, c.Accepted))
+                        .ToList();
+
                 var command = new RegisterUserCommand(
                     request.Email,
                     request.Password,
@@ -40,11 +46,9 @@ namespace DevStart.WebApi.Endpoints.Users
                     request.Bio,
                     request.Name,
                     request.Url,
-                    request.SocialMediaLinks,
+                    request.SocialMediaLinks ?? new List<string>(),
                     request.IsPublic,
-                    request.Consents
-                        .Select(c => new ConsentItem(c.Type, c.DocumentVersion, c.Accepted))
-                        .ToList());
+                    consents);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
 

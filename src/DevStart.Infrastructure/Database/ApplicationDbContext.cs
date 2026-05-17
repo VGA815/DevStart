@@ -1,6 +1,8 @@
 ﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.DealDocuments;
+using DevStart.Domain.ExternalLogins;
+using DevStart.Domain.RefreshTokens;
 using DevStart.Domain.UserConsents;
 using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.Payments;
@@ -86,6 +88,10 @@ namespace DevStart.Infrastructure.Database
         public DbSet<UserConsent> UserConsents { get; set; }
 
         public DbSet<ConsentDocument> ConsentDocuments { get; set; }
+
+        public DbSet<ExternalLogin> ExternalLogins { get; set; }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

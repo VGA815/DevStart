@@ -1,9 +1,11 @@
-﻿using DevStart.Domain.Users;
+using DevStart.Domain.Users;
 
 namespace DevStart.Application.Abstractions.Authentication
 {
     public interface ITokenProvider
     {
-        string Create(User user);
+        string CreateAccessToken(User user);
+
+        int AccessTokenLifetimeSeconds { get; }
     }
 }
