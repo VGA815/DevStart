@@ -30,6 +30,11 @@ namespace DevStart.Application.Users.Login
                 return Result.Failure<string>(UserErrors.NotFoundByEmail);
             }
 
+            if (!user.IsVerified)
+            {
+                return Result.Failure<string>(UserErrors.EmailNotVerified);
+            }
+
             string token = tokenProvider.Create(user);
 
             return token;

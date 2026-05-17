@@ -27,7 +27,14 @@ namespace DevStart.Application.EmailVerificationTokens.VerifyEmail
             {
                 IsSuccessful = true
             };
-            
+
+            if (user.IsVerified)
+            {
+                context.EmailVerificationTokens.Remove(token);
+                await context.SaveChangesAsync(cancellationToken);
+                return emailVerificationResponse;
+            }
+
             user.IsVerified = true;
             context.EmailVerificationTokens.Remove(token);
 

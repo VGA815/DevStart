@@ -14,10 +14,19 @@ namespace DevStart.Application.EmailVerificationTokens.ResendEmailVerification
         public async Task<Result> Handle(ResendEmailVerificationCommand command, CancellationToken cancellationToken)
         {
             User? user = await context.Users.SingleOrDefaultAsync(x => x.Email == command.Email, cancellationToken);
-            if (user == null) 
+            if (user == null)
             {
                 return Result.Failure(UserErrors.NotFoundByEmail);
             }
+
+            if (user.IsVerified)
+            {
+                return Result.Failure(UserErrors.AlreadyVerified);
+            }
+
+            var oldTokens = context.EmailVerificationTokens.Where(t => t.UserId == user.Id);
+            context.EmailVerificationTokens.RemoveRange(oldTokens);
+
             EmailVerificationToken token = new()
             {
                 CreatedAt = dateTimeProvider.UtcNow,

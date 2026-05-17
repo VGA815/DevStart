@@ -22,5 +22,11 @@ namespace DevStart.Domain.Users
         public static readonly Error NotFoundByUsername = Error.NotFound(
             "Users.NotFoundByUsername",
             "The user with the specified username was not found");
+        public static readonly Error EmailNotVerified = Error.Forbidden(
+            "Users.EmailNotVerified",
+            "Email address is not verified. Please check your inbox and verify your email before logging in");
+        public static readonly Error AlreadyVerified = Error.Conflict(
+            "Users.AlreadyVerified",
+            "The email address is already verified");
     }
 }

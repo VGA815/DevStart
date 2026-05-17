@@ -28,6 +28,11 @@ namespace DevStart.Application.Users.Register
                 .When(c => c.Consents is { Count: > 0 })
                 .WithMessage("Consent list must not contain duplicate types");
 
+            // Each consent item must have a non-empty document version
+            RuleForEach(c => c.Consents)
+                .Must(item => !string.IsNullOrWhiteSpace(item.DocumentVersion))
+                .WithMessage((_, item) => $"Document version for consent '{item.Type}' must not be empty");
+
             // Mandatory consents must be accepted
             RuleForEach(c => c.Consents)
                 .Must(item => !ConsentVersions.MandatoryTypes.Contains(item.Type) || item.Accepted)
