@@ -66,6 +66,11 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string ExpertExperiencesDelete          = "expert_experiences::delete";
         public const string ExpertExperiencesRead            = "expert_experiences::read";
 
+        public const string ExpertCollaborationRequestsCreate   = "expert_collaboration_requests::create";
+        public const string ExpertCollaborationRequestsRespond  = "expert_collaboration_requests::respond";
+        public const string ExpertCollaborationRequestsWithdraw = "expert_collaboration_requests::withdraw";
+        public const string ExpertCollaborationRequestsRead     = "expert_collaboration_requests::read";
+
         public const string InvestmentApplicationsCreate     = "investment_applications::create";
         public const string InvestmentApplicationsRespond    = "investment_applications::respond";
         public const string InvestmentApplicationsWithdraw   = "investment_applications::withdraw";

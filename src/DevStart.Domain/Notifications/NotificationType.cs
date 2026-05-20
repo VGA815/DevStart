@@ -13,5 +13,9 @@ namespace DevStart.Domain.Notifications
         InvestmentDealCompleted = 8,
         DealDocumentsReady = 9,
         SubscriptionActivated = 10,
+        ExpertCollaborationRequestReceived = 11,
+        ExpertCollaborationRequestAccepted = 12,
+        ExpertCollaborationRequestRejected = 13,
+        ExpertCollaborationRequestWithdrawn = 14,
     }
 }

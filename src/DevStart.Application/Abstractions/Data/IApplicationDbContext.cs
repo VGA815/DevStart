@@ -4,6 +4,7 @@ using DevStart.Domain.ExternalLogins;
 using DevStart.Domain.RefreshTokens;
 using DevStart.Domain.UserConsents;
 using DevStart.Domain.EmailVerificationTokens;
+using DevStart.Domain.ExpertCollaborationRequests;
 using DevStart.Domain.Experts;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.Payments;
@@ -53,6 +54,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<ExpertProfile> ExpertProfiles { get; }
         DbSet<ExpertProfileSpecialization> ExpertProfileSpecializations { get; }
         DbSet<ExpertExperience> ExpertExperiences { get; }
+        DbSet<ExpertCollaborationRequest> ExpertCollaborationRequests { get; }
         DbSet<InvestmentApplication> InvestmentApplications { get; }
         DbSet<InvestmentDeal> InvestmentDeals { get; }
         DbSet<StartupCompetitor> StartupCompetitors { get; }

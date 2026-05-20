@@ -81,6 +81,20 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.ConsentsRead,
                 Permissions.ConsentsRevoke,
+
+                Permissions.ExpertCollaborationRequestsCreate,
+                Permissions.ExpertCollaborationRequestsRespond,
+                Permissions.ExpertCollaborationRequestsRead,
+                Permissions.ExpertCollaborationRequestsWithdraw,
+
+                Permissions.ExpertExperiencesCreate,
+                Permissions.ExpertExperiencesUpdate,
+                Permissions.ExpertExperiencesDelete,
+                Permissions.ExpertExperiencesRead,
+
+                Permissions.ExpertProfilesCreate,
+                Permissions.ExpertProfilesUpdate,
+                Permissions.ExpertProfilesRead,
             },
             [UserSystemRole.Admin] = new HashSet<string>
             {
@@ -157,6 +171,20 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.ConsentDocumentsCreate,
                 Permissions.ConsentDocumentsActivate,
+
+                Permissions.ExpertCollaborationRequestsCreate,
+                Permissions.ExpertCollaborationRequestsRespond,
+                Permissions.ExpertCollaborationRequestsRead,
+                Permissions.ExpertCollaborationRequestsWithdraw,
+
+                Permissions.ExpertExperiencesCreate,
+                Permissions.ExpertExperiencesUpdate,
+                Permissions.ExpertExperiencesDelete,
+                Permissions.ExpertExperiencesRead,
+
+                Permissions.ExpertProfilesCreate,
+                Permissions.ExpertProfilesUpdate,
+                Permissions.ExpertProfilesRead,
             },
         };
 
