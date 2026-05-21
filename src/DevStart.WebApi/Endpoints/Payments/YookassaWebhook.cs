@@ -2,19 +2,10 @@ using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Payments.Webhooks;
 using DevStart.Infrastructure.Payments;
 using DevStart.SharedKernel;
-using DevStart.WebApi.Infrastructure;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace DevStart.WebApi.Endpoints.Payments
 {
-    /// <summary>
-    /// Anonymous endpoint reachable by YooKassa servers. In production we additionally validate
-    /// the source IP against the allowlist from <see cref="YooKassaOptions.AllowedIps"/>; in
-    /// development the check is skipped.
-    /// </summary>
     internal sealed class YookassaWebhook : IEndpoint
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
@@ -28,7 +19,7 @@ namespace DevStart.WebApi.Endpoints.Payments
             {
                 if (!env.IsDevelopment() && options.Value.VerifyWebhookIp)
                 {
-                    string? remote = GetRemoteIp(request);
+                    string? remote = request.HttpContext.Connection.RemoteIpAddress?.ToString();
                     if (string.IsNullOrEmpty(remote) || !IpAllowList.IsAllowed(remote, options.Value.AllowedIps))
                     {
                         return Results.StatusCode(StatusCodes.Status403Forbidden);
@@ -39,8 +30,8 @@ namespace DevStart.WebApi.Endpoints.Payments
                 string body = await reader.ReadToEndAsync(cancellationToken);
 
                 Result result = await handler.Handle(new HandleYookassaWebhookCommand(body), cancellationToken);
-                // YooKassa retries on non-2xx — return 200 even on logical errors to avoid retry storms,
-                // unless the payload was unparseable (then 400 to signal config error).
+
+
                 if (result.IsSuccess)
                 {
                     return Results.Ok();
@@ -53,19 +44,6 @@ namespace DevStart.WebApi.Endpoints.Payments
             })
                 .AllowAnonymous()
                 .WithTags(Tags.Payments);
-        }
-
-        private static string? GetRemoteIp(HttpRequest request)
-        {
-            string? forwardedFor = request.Headers["X-Forwarded-For"].FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(forwardedFor))
-            {
-                return forwardedFor
-                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                    .FirstOrDefault();
-            }
-
-            return request.HttpContext.Connection.RemoteIpAddress?.ToString();
         }
     }
 

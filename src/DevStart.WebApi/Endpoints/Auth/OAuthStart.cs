@@ -27,7 +27,8 @@ namespace DevStart.WebApi.Endpoints.Auth
                 Result<StartOAuthResponse> result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-            .WithTags(Tags.Auth);
+            .WithTags(Tags.Auth)
+            .RequireRateLimiting("auth");
         }
     }
 }

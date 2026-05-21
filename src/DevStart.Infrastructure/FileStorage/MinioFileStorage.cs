@@ -23,7 +23,7 @@ namespace DevStart.Infrastructure.FileStorage
             _externalMinioClient = (MinioClient)new MinioClient()
                 .WithEndpoint(o.PubEndpoint)
                 .WithCredentials(o.AccessKey, o.SecretKey)
-                .WithSSL(o.UseSsl)
+                .WithSSL(o.PubUseSsl)
                 .Build();
         }
         public async Task UploadAsync(

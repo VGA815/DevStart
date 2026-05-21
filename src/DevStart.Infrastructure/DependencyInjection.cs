@@ -91,13 +91,23 @@ namespace DevStart.Infrastructure
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            string? jwtSecret = configuration["Jwt:Secret"];
+            if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
+            {
+                throw new InvalidOperationException(
+                    "Jwt:Secret is missing or too short. Configure a secret of at least 32 characters (recommended) " +
+                    "for HS256, e.g. via the Jwt__Secret environment variable.");
+            }
+
+            bool requireHttpsMetadata = configuration.GetValue("Jwt:RequireHttpsMetadata", true);
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(o =>
                 {
-                    o.RequireHttpsMetadata = false;
+                    o.RequireHttpsMetadata = requireHttpsMetadata;
                     o.TokenValidationParameters = new TokenValidationParameters
                     {
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]!)),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
                         ValidIssuer = configuration["Jwt:Issuer"],
                         ValidAudience = configuration["Jwt:Audience"],
                         ClockSkew = TimeSpan.Zero,
@@ -115,17 +125,17 @@ namespace DevStart.Infrastructure
             services.AddSingleton<IPkceGenerator, PkceGenerator>();
             services.AddSingleton<IOAuthStateStore, RedisOAuthStateStore>();
 
-            //services.AddOptions<GoogleOAuthOptions>()
-            //    .BindConfiguration("OAuth:Google")
-            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientId), "OAuth:Google:ClientId is required")
-            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientSecret), "OAuth:Google:ClientSecret is required")
-            //    .ValidateOnStart();
+            services.AddOptions<GoogleOAuthOptions>()
+                .Bind(configuration.GetSection("OAuth:Google"))
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ClientId), "OAuth:Google:ClientId is required")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ClientSecret), "OAuth:Google:ClientSecret is required")
+                .ValidateOnStart();
 
-            //services.AddOptions<GitHubOAuthOptions>()
-            //    .BindConfiguration("OAuth:GitHub")
-            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientId), "OAuth:GitHub:ClientId is required")
-            //    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientSecret), "OAuth:GitHub:ClientSecret is required")
-            //    .ValidateOnStart();
+            services.AddOptions<GitHubOAuthOptions>()
+                .Bind(configuration.GetSection("OAuth:GitHub"))
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ClientId), "OAuth:GitHub:ClientId is required")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ClientSecret), "OAuth:GitHub:ClientSecret is required")
+                .ValidateOnStart();
 
             services.AddHttpClient<GoogleAuthProvider>();
             services.AddHttpClient<GitHubAuthProvider>();

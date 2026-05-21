@@ -7,6 +7,7 @@ using Hangfire;
 using System.Reflection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,10 +25,18 @@ builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 
 builder.Services.AddRateLimiting();
 
+builder.Services.AddForwardedHeaders(builder.Configuration);
+
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
 app.MapEndpoints();
-app.ApplyMigrations();
+
+if (app.Configuration.GetValue("Database:RunMigrationsOnStartup", true))
+{
+    app.ApplyMigrations();
+}
 
 if (app.Environment.IsDevelopment())
 {

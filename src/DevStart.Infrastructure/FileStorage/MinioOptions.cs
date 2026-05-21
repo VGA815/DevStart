@@ -8,5 +8,6 @@
         public string Bucket { get; init; } = null!;
         public bool UseSsl { get; init; }
         public string PubEndpoint { get; init; } = null!;
+        public bool PubUseSsl { get; init; }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
+using System.Net;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 
@@ -92,6 +94,58 @@ namespace DevStart.WebApi.Extensions
                             Window = TimeSpan.FromMinutes(1),
                         });
                 });
+
+                options.AddPolicy("auth", httpContext =>
+                {
+                    string partitionKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey,
+                        _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
+                            Window = TimeSpan.FromMinutes(1),
+                        });
+                });
+            });
+
+            return services;
+        }
+
+        internal static IServiceCollection AddForwardedHeaders(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+                string[] knownProxies = configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
+                string[] knownNetworks = configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [];
+
+                if (knownProxies.Length == 0 && knownNetworks.Length == 0)
+                {
+                    return;
+                }
+
+                options.KnownProxies.Clear();
+                options.KnownIPNetworks.Clear();
+
+                foreach (string proxy in knownProxies)
+                {
+                    if (IPAddress.TryParse(proxy, out IPAddress? ip))
+                    {
+                        options.KnownProxies.Add(ip);
+                    }
+                }
+
+                foreach (string network in knownNetworks)
+                {
+                    if (System.Net.IPNetwork.TryParse(network, out System.Net.IPNetwork parsed))
+                    {
+                        options.KnownIPNetworks.Add(parsed);
+                    }
+                }
             });
 
             return services;

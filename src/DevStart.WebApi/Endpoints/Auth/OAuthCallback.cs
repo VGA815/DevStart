@@ -34,7 +34,8 @@ namespace DevStart.WebApi.Endpoints.Auth
                 Result<TokenPair> result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
-            .WithTags(Tags.Auth);
+            .WithTags(Tags.Auth)
+            .RequireRateLimiting("auth");
         }
     }
 }

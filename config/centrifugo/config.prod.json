@@ -1,0 +1,21 @@
+{
+  "allowed_origins": [
+    "https://app.example.com"
+  ],
+  "health": {
+    "enabled": true
+  },
+  "debug": {
+    "enabled": false
+  },
+  "admin": true,
+  "namespaces": [
+    {
+      "name": "notifications",
+      "presence": false,
+      "history_size": 50,
+      "history_ttl": "24h",
+      "allow_subscribe_for_client": true
+    }
+  ]
+}
