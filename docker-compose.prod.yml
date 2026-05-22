@@ -153,6 +153,19 @@ services:
     networks:
       - devstart-net
 
+  frontend:
+    image: devstart-client:latest
+    build:
+      context: ../devstart-client
+      args:
+        API_URL: /api
+        WS_URL: wss://${DOMAIN}/connection/websocket
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - devstart-net
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -160,6 +173,7 @@ services:
       - devstart.webapi
       - centrifugo
       - minio
+      - frontend
     ports:
       - "80:80"
       - "443:443"

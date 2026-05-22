@@ -1,6 +1,6 @@
 {
   "allowed_origins": [
-    "https://app.example.com"
+    "https://example.com"
   ],
   "health": {
     "enabled": true

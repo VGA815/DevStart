@@ -3,7 +3,7 @@
 #
 # Run ONCE on the production host, AFTER you have:
 #   1. Filled .env (DOMAIN and LETSENCRYPT_EMAIL at minimum).
-#   2. Replaced `api.example.com` in config/nginx/nginx.prod.conf with the SAME domain as DOMAIN.
+#   2. Replaced `example.com` in config/nginx/nginx.prod.conf with the SAME domain as DOMAIN.
 #   3. Pointed DNS for $DOMAIN at this host (ports 80/443 reachable from the internet).
 #
 # Usage:  ./init-letsencrypt.sh
@@ -12,10 +12,20 @@ set -eu
 COMPOSE="docker compose -f docker-compose.prod.yml"
 RSA_KEY_SIZE=4096
 
+# Read DOMAIN / LETSENCRYPT_EMAIL from .env WITHOUT executing it. A .env is not a shell
+# script: `. ./.env` would choke on a pasted secret containing $, #, spaces or quotes.
 if [ -f .env ]; then
-  # shellcheck disable=SC1091
-  . ./.env
+  while IFS= read -r _line || [ -n "$_line" ]; do
+    case "$_line" in
+      DOMAIN=*)            DOMAIN=${_line#DOMAIN=} ;;
+      LETSENCRYPT_EMAIL=*) LETSENCRYPT_EMAIL=${_line#LETSENCRYPT_EMAIL=} ;;
+    esac
+  done < .env
 fi
+
+# Tolerate CRLF .env files edited on Windows.
+DOMAIN=$(printf '%s' "${DOMAIN:-}" | tr -d '\r')
+LETSENCRYPT_EMAIL=$(printf '%s' "${LETSENCRYPT_EMAIL:-}" | tr -d '\r')
 
 : "${DOMAIN:?Set DOMAIN in .env}"
 : "${LETSENCRYPT_EMAIL:?Set LETSENCRYPT_EMAIL in .env}"
