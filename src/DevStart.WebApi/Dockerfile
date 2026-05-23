@@ -2,6 +2,13 @@
 
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+# Npgsql probes for GSSAPI/Kerberos (libgssapi_krb5.so.2) while negotiating auth; the slim
+# runtime image doesn't ship it, which logs "Cannot load library libgssapi_krb5.so.2".
+# We use username/password auth (so it's harmless), but install the lib to silence it.
+# Installed as root, before dropping to the non-root app user.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
