@@ -47,6 +47,12 @@ namespace DevStart.Infrastructure.ConsentDocuments
                 ConsentVersions.Cookies,
                 "Политика использования Cookie"
             ),
+            (
+                "ConsentDocuments.Documents.offer-agreement-v1.0.md",
+                ConsentType.PublicOffer,
+                ConsentVersions.PublicOffer,
+                "Публичная оферта"
+            ),
         ];
 
         public async Task StartAsync(CancellationToken cancellationToken)

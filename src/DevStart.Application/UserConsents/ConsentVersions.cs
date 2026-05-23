@@ -8,6 +8,7 @@ namespace DevStart.Application.UserConsents
         public const string PrivacyPolicy          = "1.0";
         public const string TermsOfService         = "1.0";
         public const string Cookies                = "1.0";
+        public const string PublicOffer            = "1.0";
 
         public static string GetCurrentVersion(ConsentType type) => type switch
         {
@@ -15,6 +16,7 @@ namespace DevStart.Application.UserConsents
             ConsentType.PrivacyPolicy          => PrivacyPolicy,
             ConsentType.TermsOfService         => TermsOfService,
             ConsentType.Cookies                => Cookies,
+            ConsentType.PublicOffer            => PublicOffer,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
 
@@ -22,7 +24,8 @@ namespace DevStart.Application.UserConsents
         {
             ConsentType.PersonalDataProcessing,
             ConsentType.PrivacyPolicy,
-            ConsentType.TermsOfService
+            ConsentType.TermsOfService,
+            ConsentType.PublicOffer
         };
     }
 }

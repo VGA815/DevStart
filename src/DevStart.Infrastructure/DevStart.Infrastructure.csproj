@@ -56,6 +56,7 @@
     <EmbeddedResource Include="ConsentDocuments\Documents\privacy-policy-v1.0.md" />
     <EmbeddedResource Include="ConsentDocuments\Documents\terms-of-service-v1.0.md" />
     <EmbeddedResource Include="ConsentDocuments\Documents\cookies-v1.0.md" />
+    <EmbeddedResource Include="ConsentDocuments\Documents\offer-agreement-v1.0.md" />
   </ItemGroup>
 
 </Project>
