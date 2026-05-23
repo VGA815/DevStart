@@ -24,7 +24,8 @@ namespace DevStart.WebApi.Endpoints.Consents
                     personal_data_processing = versionMap.GetValueOrDefault(ConsentType.PersonalDataProcessing),
                     privacy_policy           = versionMap.GetValueOrDefault(ConsentType.PrivacyPolicy),
                     terms_of_service         = versionMap.GetValueOrDefault(ConsentType.TermsOfService),
-                    cookies                  = versionMap.GetValueOrDefault(ConsentType.Cookies)
+                    cookies                  = versionMap.GetValueOrDefault(ConsentType.Cookies),
+                    public_offer             = versionMap.GetValueOrDefault(ConsentType.PublicOffer),
                 };
 
                 return Results.Ok(response);
