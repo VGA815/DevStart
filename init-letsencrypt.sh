@@ -32,33 +32,61 @@ LETSENCRYPT_EMAIL=$(printf '%s' "${LETSENCRYPT_EMAIL:-}" | tr -d '\r')
 
 CERT_PATH="/etc/letsencrypt/live/$DOMAIN"
 
-echo "### 1/5 Creating a temporary self-signed certificate for $DOMAIN ..."
-$COMPOSE run --rm --entrypoint "\
-  sh -c 'mkdir -p $CERT_PATH && \
-  openssl req -x509 -nodes -newkey rsa:$RSA_KEY_SIZE -days 1 \
-    -keyout $CERT_PATH/privkey.pem \
-    -out $CERT_PATH/fullchain.pem \
-    -subj /CN=localhost'" certbot
+# (Re)create a 1-day self-signed cert so nginx can BOOT and serve :80. Without a cert
+# file at this path nginx crash-loops ("[emerg] cannot load certificate"), nothing
+# listens on :80, and the ACME challenge can't be served — which Let's Encrypt reports
+# as "connection refused". So nginx must never be left without a cert here.
+make_dummy() {
+  $COMPOSE run --rm --entrypoint sh certbot -c \
+    "mkdir -p '$CERT_PATH' && openssl req -x509 -nodes -newkey rsa:$RSA_KEY_SIZE -days 1 \
+       -keyout '$CERT_PATH/privkey.pem' -out '$CERT_PATH/fullchain.pem' -subj /CN=localhost"
+}
 
-echo "### 2/5 Starting nginx (serves the ACME challenge on :80) ..."
-$COMPOSE up -d nginx
+echo "### 1/6 Temporary self-signed certificate for $DOMAIN ..."
+make_dummy
 
-echo "### 3/5 Removing the temporary certificate ..."
-$COMPOSE run --rm --entrypoint "\
-  rm -rf /etc/letsencrypt/live/$DOMAIN \
-         /etc/letsencrypt/archive/$DOMAIN \
-         /etc/letsencrypt/renewal/$DOMAIN.conf" certbot
+echo "### 2/6 Starting nginx ..."
+$COMPOSE up -d --force-recreate nginx
 
-echo "### 4/5 Requesting the real Let's Encrypt certificate for $DOMAIN ..."
-$COMPOSE run --rm --entrypoint "\
-  certbot certonly --webroot -w /var/www/certbot \
-    --email $LETSENCRYPT_EMAIL \
-    -d $DOMAIN \
-    --rsa-key-size $RSA_KEY_SIZE \
-    --agree-tos --no-eff-email --force-renewal" certbot
+echo "### 3/6 Waiting until nginx serves the ACME challenge on :80 ..."
+$COMPOSE run --rm --entrypoint sh certbot -c \
+  'mkdir -p /var/www/certbot/.well-known/acme-challenge && echo ok > /var/www/certbot/.well-known/acme-challenge/_probe'
+if command -v curl >/dev/null 2>&1; then
+  i=0
+  until curl -fsS "http://localhost/.well-known/acme-challenge/_probe" >/dev/null 2>&1; do
+    i=$((i + 1))
+    if [ "$i" -ge 15 ]; then
+      echo "ERROR: nginx is not serving http://localhost/.well-known/... on :80 (crash-looping?)." >&2
+      echo "       Inspect:  docker ps --filter name=nginx   and   docker logs <nginx container>" >&2
+      exit 1
+    fi
+    sleep 2
+  done
+  echo "    OK on :80 locally."
+else
+  echo "    (curl not found — skipping local self-check)"
+fi
+echo "    Ensure http://$DOMAIN/ is also reachable from the INTERNET on :80"
+echo "    (DNS -> this host; ports 80/443 open in any cloud/provider firewall)."
 
-echo "### 5/5 Reloading nginx with the real certificate ..."
-$COMPOSE exec nginx nginx -s reload
+echo "### 4/6 Removing the temporary certificate (so certbot writes a clean lineage) ..."
+$COMPOSE run --rm --entrypoint sh certbot -c \
+  "rm -rf '/etc/letsencrypt/live/$DOMAIN' '/etc/letsencrypt/archive/$DOMAIN' '/etc/letsencrypt/renewal/$DOMAIN.conf'"
 
-echo "### Done. Bring up the full stack with:"
-echo "    $COMPOSE up -d"
+echo "### 5/6 Requesting the real Let's Encrypt certificate for $DOMAIN ..."
+if $COMPOSE run --rm --entrypoint certbot certbot \
+     certonly --webroot -w /var/www/certbot \
+       --email "$LETSENCRYPT_EMAIL" -d "$DOMAIN" \
+       --rsa-key-size "$RSA_KEY_SIZE" --agree-tos --no-eff-email --force-renewal; then
+  echo "### 6/6 Reloading nginx with the real certificate ..."
+  $COMPOSE exec nginx nginx -s reload
+  echo "### Done. Bring up the full stack with:"
+  echo "    $COMPOSE up -d"
+else
+  echo "ERROR: certbot failed (see its output above). Restoring a self-signed cert so nginx" >&2
+  echo "       keeps serving instead of crash-looping; fix the cause, then re-run this script." >&2
+  make_dummy
+  $COMPOSE up -d --force-recreate nginx
+  echo "       Most common cause: http://$DOMAIN/ not reachable from the internet on :80." >&2
+  exit 1
+fi
