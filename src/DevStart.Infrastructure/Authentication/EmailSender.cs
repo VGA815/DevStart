@@ -27,5 +27,17 @@ namespace DevStart.Infrastructure.Authentication
                 .Body($"To verify your email address <a href='{BuildVerificationLink(token)}'>click here</a>", isHtml: true)
                 .SendAsync();
         }
+
+        public async Task SendSubscriptionExpiring(string email, DateTime expiresAt)
+        {
+            await _fluentEmail
+                .To(email)
+                .Subject("Ваша подписка DevStart Pro скоро истечёт")
+                .Body(
+                    $"Подписка DevStart Pro истекает {expiresAt:yyyy-MM-dd}. " +
+                    "Чтобы сохранить доступ к платным возможностям, продлите подписку в личном кабинете.",
+                    isHtml: true)
+                .SendAsync();
+        }
     }
 }

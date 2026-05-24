@@ -28,6 +28,10 @@ namespace DevStart.Infrastructure.Payments
             builder.Property(x => x.Amount)
                 .HasColumnName("amount")
                 .HasColumnType("numeric(10,2)");
+            builder.Property(x => x.RefundedAmount)
+                .HasColumnName("refunded_amount")
+                .HasColumnType("numeric(10,2)")
+                .HasDefaultValue(0m);
             builder.Property(x => x.Currency)
                 .HasColumnName("currency")
                 .HasMaxLength(3)
@@ -45,6 +49,7 @@ namespace DevStart.Infrastructure.Payments
                 .HasFilter("provider_payment_id IS NOT NULL")
                 .HasDatabaseName("ix_payments_provider_payment");
             builder.HasIndex(x => new { x.UserId, x.Status }).HasDatabaseName("ix_payments_user_status");
+            builder.HasIndex(x => new { x.Status, x.CreatedAt }).HasDatabaseName("ix_payments_status_created");
 
             builder.HasOne<DevStart.Domain.Subscriptions.Subscription>()
                 .WithMany()

@@ -26,11 +26,14 @@ namespace DevStart.Infrastructure.Subscriptions
             builder.Property(x => x.ExpiresAt).HasColumnName("expires_at");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+            builder.Property(x => x.RenewalReminderSentAt).HasColumnName("renewal_reminder_sent_at");
 
             builder.HasIndex(x => new { x.UserId, x.Status })
                 .HasDatabaseName("ix_subscriptions_user_status");
             builder.HasIndex(x => x.ExpiresAt)
                 .HasDatabaseName("ix_subscriptions_expires_at");
+            builder.HasIndex(x => new { x.Status, x.ExpiresAt })
+                .HasDatabaseName("ix_subscriptions_status_expires");
         }
     }
 }

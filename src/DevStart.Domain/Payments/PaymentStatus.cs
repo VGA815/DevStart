@@ -6,5 +6,6 @@ namespace DevStart.Domain.Payments
         Succeeded = 1,
         Cancelled = 2,
         Failed = 3,
+        Refunded = 4,
     }
 }

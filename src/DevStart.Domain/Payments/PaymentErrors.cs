@@ -27,5 +27,17 @@ namespace DevStart.Domain.Payments
         public static readonly Error IdempotencyConflict = Error.Conflict(
             "Payments.IdempotencyConflict",
             "Payment with the same idempotency key already exists.");
+
+        public static readonly Error CustomerEmailMissing = Error.Problem(
+            "Payments.CustomerEmailMissing",
+            "A customer email is required to issue a receipt (54-FZ/NPD). The account has no email address.");
+
+        public static readonly Error NotRefundable = Error.Conflict(
+            "Payments.NotRefundable",
+            "Only a succeeded payment can be refunded.");
+
+        public static Error RefundAmountInvalid(decimal max) => Error.Problem(
+            "Payments.RefundAmountInvalid",
+            $"Refund amount must be greater than zero and not exceed the refundable balance ({max}).");
     }
 }

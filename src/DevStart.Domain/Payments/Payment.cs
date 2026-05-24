@@ -11,6 +11,7 @@ namespace DevStart.Domain.Payments
         public string? ProviderPaymentId { get; set; }
         public string? ConfirmationUrl { get; set; }
         public decimal Amount { get; set; }
+        public decimal RefundedAmount { get; set; }
         public string Currency { get; set; } = "RUB";
         public PaymentStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -34,6 +35,7 @@ namespace DevStart.Domain.Payments
                 ProviderPaymentId = null,
                 ConfirmationUrl = null,
                 Amount = amount,
+                RefundedAmount = 0m,
                 Currency = currency,
                 Status = PaymentStatus.Pending,
                 CreatedAt = utcNow,
@@ -48,7 +50,7 @@ namespace DevStart.Domain.Payments
 
         public Result MarkSucceeded(DateTime paidAt)
         {
-            if (Status == PaymentStatus.Succeeded)
+            if (Status is PaymentStatus.Succeeded or PaymentStatus.Refunded)
             {
                 return Result.Success();
             }
@@ -81,5 +83,32 @@ namespace DevStart.Domain.Payments
             Status = PaymentStatus.Failed;
             return Result.Success();
         }
+
+        /// <summary>
+        /// Records the total amount refunded for this payment (cumulative, as reported by the
+        /// provider). When the full amount has been refunded the payment becomes <see cref="PaymentStatus.Refunded"/>.
+        /// Refunds only apply to a captured (Succeeded/Refunded) payment; otherwise this is a no-op.
+        /// </summary>
+        public Result MarkRefunded(decimal totalRefundedAmount, DateTime utcNow)
+        {
+            if (totalRefundedAmount < 0m)
+            {
+                return Result.Failure(PaymentErrors.ProviderError("Refunded amount cannot be negative."));
+            }
+            if (Status is not (PaymentStatus.Succeeded or PaymentStatus.Refunded))
+            {
+                return Result.Success();
+            }
+
+            RefundedAmount = totalRefundedAmount;
+            if (totalRefundedAmount >= Amount && Status != PaymentStatus.Refunded)
+            {
+                Status = PaymentStatus.Refunded;
+                Raise(new PaymentRefundedDomainEvent(Id, UserId, SubscriptionId, totalRefundedAmount));
+            }
+            return Result.Success();
+        }
+
+        public bool IsFullyRefunded => RefundedAmount >= Amount && Amount > 0m;
     }
 }

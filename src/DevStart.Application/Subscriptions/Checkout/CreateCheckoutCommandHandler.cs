@@ -1,4 +1,3 @@
-using System.Linq;
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
@@ -29,6 +28,16 @@ namespace DevStart.Application.Subscriptions.Checkout
             PlanOptions planConfig = plansOptions.Value.Pro;
             string returnUrl = checkoutOptions.Value.ReturnUrl;
 
+            // The customer email is required to register the 54-FZ/NPD receipt ("Чеки от ЮKassa").
+            string? customerEmail = await context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.Email)
+                .SingleOrDefaultAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(customerEmail))
+            {
+                return Result.Failure<CheckoutResponse>(PaymentErrors.CustomerEmailMissing);
+            }
+
             // 1. Already-active guard
             bool hasActive = await context.Subscriptions
                 .AnyAsync(
@@ -42,7 +51,7 @@ namespace DevStart.Application.Subscriptions.Checkout
                 return Result.Failure<CheckoutResponse>(SubscriptionErrors.AlreadyActive);
             }
 
-            // 2. Reuse existing Pending payment+subscription if user retries the checkout flow.
+            // 2. Reuse an existing Pending payment+subscription if the user retries checkout.
             Payment? pendingPayment = await context.Payments
                 .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending)
                 .OrderByDescending(p => p.CreatedAt)
@@ -63,6 +72,7 @@ namespace DevStart.Application.Subscriptions.Checkout
                 subscription = existing;
                 payment = pendingPayment;
 
+                // The provider payment was already created on a previous attempt — reuse it.
                 if (!string.IsNullOrWhiteSpace(payment.ProviderPaymentId)
                     && !string.IsNullOrWhiteSpace(payment.ConfirmationUrl))
                 {
@@ -73,22 +83,6 @@ namespace DevStart.Application.Subscriptions.Checkout
                         ConfirmationUrl = payment.ConfirmationUrl,
                     };
                 }
-
-                CreatedPayment created = await paymentProvider.CreatePaymentAsync(
-                    amount: planConfig.Price,
-                    currency: planConfig.Currency,
-                    description: planConfig.Description,
-                    returnUrl: returnUrl,
-                    idempotenceKey: payment.Id.ToString(),
-                    ct: cancellationToken);
-                payment.AssignProviderPayment(created.ProviderPaymentId, created.ConfirmationUrl);
-                await context.SaveChangesAsync(cancellationToken);
-                return new CheckoutResponse
-                {
-                    SubscriptionId = subscription.Id,
-                    PaymentId = payment.Id,
-                    ConfirmationUrl = created.ConfirmationUrl,
-                };
             }
             else
             {
@@ -106,27 +100,29 @@ namespace DevStart.Application.Subscriptions.Checkout
                 await context.SaveChangesAsync(cancellationToken);
             }
 
-            async Task<CreatedPayment> CreateProviderPaymentAsync(Payment paymentToUse)
-            {
-                return await paymentProvider.CreatePaymentAsync(
-                    amount: planConfig.Price,
-                    currency: planConfig.Currency,
-                    description: planConfig.Description,
-                    returnUrl: returnUrl,
-                    idempotenceKey: paymentToUse.Id.ToString(),
-                    ct: cancellationToken);
-            }
+            // The payment id doubles as the idempotence key so retries never create a duplicate
+            // charge in YooKassa.
+            var input = new CreatePaymentInput(
+                Amount: planConfig.Price,
+                Currency: planConfig.Currency,
+                Description: planConfig.Description,
+                ReturnUrl: returnUrl,
+                IdempotenceKey: payment.Id.ToString(),
+                CustomerEmail: customerEmail,
+                PaymentId: payment.Id,
+                SubscriptionId: subscription.Id,
+                UserId: userId);
 
-            CreatedPayment createdPayment = await CreateProviderPaymentAsync(payment);
+            CreatedPayment created = await paymentProvider.CreatePaymentAsync(input, cancellationToken);
 
-            payment.AssignProviderPayment(createdPayment.ProviderPaymentId, createdPayment.ConfirmationUrl);
+            payment.AssignProviderPayment(created.ProviderPaymentId, created.ConfirmationUrl);
             await context.SaveChangesAsync(cancellationToken);
 
             return new CheckoutResponse
             {
                 SubscriptionId = subscription.Id,
                 PaymentId = payment.Id,
-                ConfirmationUrl = createdPayment.ConfirmationUrl,
+                ConfirmationUrl = created.ConfirmationUrl,
             };
         }
     }

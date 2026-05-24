@@ -231,12 +231,30 @@ namespace DevStart.Infrastructure
 
         private static IServiceCollection AddBilling(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<YooKassaOptions>(configuration.GetSection("YooKassa"));
-            services.Configure<CheckoutOptions>(configuration.GetSection("YooKassa"));
-            services.Configure<PlansOptions>(configuration.GetSection("Plans"));
+            services.AddOptions<YooKassaOptions>()
+                .Bind(configuration.GetSection("YooKassa"))
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ShopId), "YooKassa:ShopId is required")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.SecretKey), "YooKassa:SecretKey is required")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ReturnUrl), "YooKassa:ReturnUrl is required")
+                .Validate(o => Uri.TryCreate(o.ApiUrl, UriKind.Absolute, out _), "YooKassa:ApiUrl must be an absolute URL")
+                .ValidateOnStart();
 
-            services.AddHttpClient<IPaymentProvider, YooKassaPaymentProvider>();
+            services.Configure<CheckoutOptions>(configuration.GetSection("YooKassa"));
+            services.Configure<YooKassaReceiptOptions>(configuration.GetSection("YooKassa:Receipt"));
+            services.Configure<PlansOptions>(configuration.GetSection("Plans"));
+            services.Configure<BillingMaintenanceOptions>(configuration.GetSection("Billing"));
+
+            services.AddTransient<YooKassaResilienceHandler>();
+            services.AddHttpClient<IPaymentProvider, YooKassaPaymentProvider>(client =>
+                    client.Timeout = TimeSpan.FromSeconds(60))
+                .AddHttpMessageHandler<YooKassaResilienceHandler>();
+
             services.AddScoped<ISubscriptionChecker, SubscriptionChecker>();
+
+            // Recurring billing jobs (reconciliation of stuck payments + renewal reminders/expiry).
+            services.AddScoped<PaymentReconciliationJob>();
+            services.AddScoped<SubscriptionMaintenanceJob>();
+            services.AddHostedService<RecurringJobsRegistrar>();
 
             return services;
         }

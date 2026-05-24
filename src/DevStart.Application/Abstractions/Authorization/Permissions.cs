@@ -84,6 +84,8 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string SubscriptionsCheckout            = "subscriptions::checkout";
         public const string SubscriptionsRead                = "subscriptions::read";
 
+        public const string PaymentsRefund                   = "payments::refund";
+
         public const string ConsentsRead                     = "consents::read";
         public const string ConsentsRevoke                   = "consents::revoke";
 

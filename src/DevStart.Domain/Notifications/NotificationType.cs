@@ -17,5 +17,8 @@ namespace DevStart.Domain.Notifications
         ExpertCollaborationRequestAccepted = 12,
         ExpertCollaborationRequestRejected = 13,
         ExpertCollaborationRequestWithdrawn = 14,
+        SubscriptionExpiringSoon = 15,
+        SubscriptionExpired = 16,
+        PaymentRefunded = 17,
     }
 }

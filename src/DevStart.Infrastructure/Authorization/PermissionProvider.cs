@@ -169,6 +169,8 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.ConsentsRead,
                 Permissions.ConsentsRevoke,
 
+                Permissions.PaymentsRefund,
+
                 Permissions.ConsentDocumentsCreate,
                 Permissions.ConsentDocumentsActivate,
 

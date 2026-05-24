@@ -121,6 +121,7 @@ public sealed class RegisterUserCommandValidatorTests
                 new ConsentItem(ConsentType.PersonalDataProcessing, ConsentVersions.GetCurrentVersion(ConsentType.PersonalDataProcessing), true),
                 new ConsentItem(ConsentType.PrivacyPolicy, ConsentVersions.GetCurrentVersion(ConsentType.PrivacyPolicy), true),
                 new ConsentItem(ConsentType.TermsOfService, ConsentVersions.GetCurrentVersion(ConsentType.TermsOfService), true),
+                new ConsentItem(ConsentType.PublicOffer, ConsentVersions.GetCurrentVersion(ConsentType.PublicOffer), true),
                 new ConsentItem(ConsentType.Cookies, ConsentVersions.GetCurrentVersion(ConsentType.Cookies), false)
             ]);
 }
