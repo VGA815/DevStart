@@ -28,7 +28,7 @@ namespace DevStart.Application.StartupDocumentFiles.Upload
             }
 
             Guid fileId = Guid.NewGuid();
-            var objectKey = $"/startups/{command.StartupId}/{fileId}";
+            var objectKey = $"startups/{command.StartupId}/{fileId}";
 
             await fileStorage.UploadAsync(objectKey, command.FileStream, command.Bucket, command.ContentType, cancellationToken);
 

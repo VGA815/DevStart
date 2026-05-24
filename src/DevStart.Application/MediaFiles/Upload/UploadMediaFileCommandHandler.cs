@@ -25,7 +25,7 @@ namespace DevStart.Application.MediaFiles.Upload
 
             Guid fileId = Guid.NewGuid();
 
-            var objectKey = $"/users/{userContext.UserId}/{fileId}.webp";
+            var objectKey = $"users/{userContext.UserId}/{fileId}.webp";
 
             await fileStorage.UploadAsync(
                 objectKey,
