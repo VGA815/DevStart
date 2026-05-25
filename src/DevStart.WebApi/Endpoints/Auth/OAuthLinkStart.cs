@@ -5,14 +5,12 @@ using DevStart.Domain.ExternalLogins;
 using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
 using DevStart.WebApi.Infrastructure;
-using System.Text.Json.Serialization;
 
 namespace DevStart.WebApi.Endpoints.Auth
 {
     internal sealed class OAuthLinkStart : IEndpoint
     {
-        public sealed record Request(
-            [property: JsonPropertyName("redirect_uri")] string? RedirectUri);
+        public sealed record Request(string? RedirectUri);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
