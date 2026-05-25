@@ -24,6 +24,16 @@ namespace DevStart.Application.EmailVerificationTokens.ResendEmailVerification
                 return Result.Failure(UserErrors.AlreadyVerified);
             }
 
+            // Throttle resends to avoid email-bombing: refuse if a token was issued < 60s ago.
+            EmailVerificationToken? latest = await context.EmailVerificationTokens
+                .Where(t => t.UserId == user.Id)
+                .OrderByDescending(t => t.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (latest is not null && latest.CreatedAt > dateTimeProvider.UtcNow - TimeSpan.FromSeconds(60))
+            {
+                return Result.Failure(EmailVerificationTokenErrors.ResendTooSoon);
+            }
+
             var oldTokens = context.EmailVerificationTokens.Where(t => t.UserId == user.Id);
             context.EmailVerificationTokens.RemoveRange(oldTokens);
 

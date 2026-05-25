@@ -55,6 +55,8 @@ services:
       YooKassa__SecretKey: "${YOOKASSA_SECRET_KEY}"
       YooKassa__ReturnUrl: "${YOOKASSA_RETURN_URL}"
 
+      Frontend__BaseUrl: "${FRONTEND_BASE_URL}"
+
       ForwardedHeaders__KnownNetworks__0: "${FORWARDED_KNOWN_NETWORKS}"
 
     expose:

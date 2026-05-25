@@ -12,6 +12,7 @@ namespace DevStart.Domain.Profiles
         public bool IsAvailableForHire { get; set; }
         public bool IsPublic { get; set; }
         public Guid? AvatarId { get; set; }
+        public int ViewCount { get; set; }
 
         public static Profile Create(
             Guid userId,

@@ -4,6 +4,7 @@ using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Notifications;
 using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Abstractions.Subscriptions;
+using DevStart.Application.Configuration;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Application.Subscriptions;
 using DevStart.Infrastructure.Authentication;
@@ -116,6 +117,9 @@ namespace DevStart.Infrastructure
 
             services.AddHttpContextAccessor();
             services.AddScoped<IUserContext, UserContext>();
+
+            // Base URL of the SPA — used to redirect email-verification clicks to a friendly page.
+            services.Configure<FrontendOptions>(configuration.GetSection("Frontend"));
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<ITokenProvider, TokenProvider>();
 

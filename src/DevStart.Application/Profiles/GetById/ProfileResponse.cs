@@ -10,5 +10,6 @@
         public bool IsPublic { get; set; }
         public bool IsAvailableForHire { get; set; }
         public Guid? AvatarId { get; set; }
+        public int ViewCount { get; set; }
     }
 }

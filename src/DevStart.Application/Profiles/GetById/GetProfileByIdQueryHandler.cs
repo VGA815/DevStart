@@ -26,6 +26,7 @@ namespace DevStart.Application.Profiles.GetById
                     Name = p.Name,
                     SocialMediaLinks = p.SocialMediaLinks,
                     Url = p.Url,
+                    ViewCount = p.ViewCount,
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 
