@@ -28,5 +28,11 @@ namespace DevStart.Domain.Users
         public static readonly Error AlreadyVerified = Error.Conflict(
             "Users.AlreadyVerified",
             "The email address is already verified");
+        public static readonly Error InvalidCurrentPassword = Error.Problem(
+            "Users.InvalidCurrentPassword",
+            "The current password is incorrect");
+        public static readonly Error PasswordNotSet = Error.Conflict(
+            "Users.PasswordNotSet",
+            "This account has no password set (it uses an external login). Use the password reset flow to set one.");
     }
 }

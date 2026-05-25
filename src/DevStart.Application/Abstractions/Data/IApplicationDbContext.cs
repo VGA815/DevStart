@@ -15,6 +15,7 @@ using DevStart.Domain.InviteTokens;
 using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Messages;
 using DevStart.Domain.Notifications;
+using DevStart.Domain.PasswordResetTokens;
 using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupDocumentFiles;
@@ -46,6 +47,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<Profile> Profiles { get; }
         DbSet<MediaFile> MediaFiles { get; }
         DbSet<EmailVerificationToken> EmailVerificationTokens { get; }
+        DbSet<PasswordResetToken> PasswordResetTokens { get; }
         DbSet<Notification> Notifications { get; }
         DbSet<InviteToken> InviteTokens { get; }
         DbSet<Message> Messages { get; }

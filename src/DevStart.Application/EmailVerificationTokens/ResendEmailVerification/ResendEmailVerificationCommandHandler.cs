@@ -14,24 +14,23 @@ namespace DevStart.Application.EmailVerificationTokens.ResendEmailVerification
         public async Task<Result> Handle(ResendEmailVerificationCommand command, CancellationToken cancellationToken)
         {
             User? user = await context.Users.SingleOrDefaultAsync(x => x.Email == command.Email, cancellationToken);
-            if (user == null)
+
+            // Enumeration-safe: always succeed regardless of whether the email exists or is already
+            // verified, so callers can't probe which addresses are registered. Only send a fresh
+            // token for an unverified user that isn't currently being throttled.
+            if (user is null || user.IsVerified)
             {
-                return Result.Failure(UserErrors.NotFoundByEmail);
+                return Result.Success();
             }
 
-            if (user.IsVerified)
-            {
-                return Result.Failure(UserErrors.AlreadyVerified);
-            }
-
-            // Throttle resends to avoid email-bombing: refuse if a token was issued < 60s ago.
+            // Throttle resends to avoid email-bombing: skip silently if a token was issued < 60s ago.
             EmailVerificationToken? latest = await context.EmailVerificationTokens
                 .Where(t => t.UserId == user.Id)
                 .OrderByDescending(t => t.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken);
             if (latest is not null && latest.CreatedAt > dateTimeProvider.UtcNow - TimeSpan.FromSeconds(60))
             {
-                return Result.Failure(EmailVerificationTokenErrors.ResendTooSoon);
+                return Result.Success();
             }
 
             var oldTokens = context.EmailVerificationTokens.Where(t => t.UserId == user.Id);

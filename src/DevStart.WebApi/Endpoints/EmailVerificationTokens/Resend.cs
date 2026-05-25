@@ -4,7 +4,6 @@ using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
 using DevStart.WebApi.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using Minio.DataModel.Tags;
 
 namespace DevStart.WebApi.Endpoints.EmailVerificationTokens
 {
@@ -23,7 +22,8 @@ namespace DevStart.WebApi.Endpoints.EmailVerificationTokens
 
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
-                .WithTags(Tags.EmailVerification);
+                .WithTags(Tags.EmailVerification)
+                .RequireRateLimiting("auth");
         }
     }
 }
