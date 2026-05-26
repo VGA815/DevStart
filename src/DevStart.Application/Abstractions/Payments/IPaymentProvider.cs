@@ -5,6 +5,13 @@ namespace DevStart.Application.Abstractions.Payments
     public sealed record CreatedPayment(string ProviderPaymentId, string ConfirmationUrl);
 
     /// <summary>
+    /// Result of creating a refund. <see cref="Succeeded"/> is <c>true</c> when the provider already
+    /// reports the refund as completed, so the caller can reflect it locally immediately instead of
+    /// waiting for the <c>refund.succeeded</c> webhook.
+    /// </summary>
+    public sealed record CreatedRefund(string RefundId, bool Succeeded);
+
+    /// <summary>
     /// Input for creating a one-time payment. Carries the data required to register a 54-FZ/NPD
     /// receipt (<see cref="CustomerEmail"/>) and internal identifiers attached as provider metadata
     /// so a webhook or reconciliation pass can always be mapped back to our records.
@@ -75,9 +82,10 @@ namespace DevStart.Application.Abstractions.Payments
         Task<ProviderPaymentSnapshot?> GetPaymentAsync(string providerPaymentId, CancellationToken ct);
 
         /// <summary>
-        /// Creates a refund for a captured payment and returns the provider's refund id.
+        /// Creates a refund for a captured payment and returns the provider's refund id together with
+        /// whether the refund is already completed.
         /// </summary>
-        Task<string> CreateRefundAsync(CreateRefundInput input, CancellationToken ct);
+        Task<CreatedRefund> CreateRefundAsync(CreateRefundInput input, CancellationToken ct);
 
         /// <summary>
         /// Parses a provider webhook body. Returns <c>null</c> when the payload is malformed.

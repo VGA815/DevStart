@@ -51,6 +51,13 @@ namespace DevStart.Infrastructure.Payments
             builder.HasIndex(x => new { x.UserId, x.Status }).HasDatabaseName("ix_payments_user_status");
             builder.HasIndex(x => new { x.Status, x.CreatedAt }).HasDatabaseName("ix_payments_status_created");
 
+            // At most one in-flight (Pending = 0) payment per user, so a concurrent/double-clicked
+            // checkout cannot create a second payment and charge the user twice.
+            builder.HasIndex(x => x.UserId)
+                .IsUnique()
+                .HasFilter("status = 0")
+                .HasDatabaseName("ux_payments_user_pending");
+
             builder.HasOne<DevStart.Domain.Subscriptions.Subscription>()
                 .WithMany()
                 .HasForeignKey(x => x.SubscriptionId)

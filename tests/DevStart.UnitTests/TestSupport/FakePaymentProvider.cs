@@ -7,6 +7,7 @@ namespace DevStart.UnitTests.TestSupport
         public ProviderPaymentSnapshot? SnapshotToReturn { get; set; }
         public CreatedPayment CreatedToReturn { get; set; } = new("provider-pay-1", "https://pay.example/redirect");
         public string RefundIdToReturn { get; set; } = "refund-1";
+        public bool RefundSucceededToReturn { get; set; } = true;
         public PaymentWebhookEvent? WebhookToReturn { get; set; }
 
         public CreatePaymentInput? LastCreateInput { get; private set; }
@@ -25,10 +26,10 @@ namespace DevStart.UnitTests.TestSupport
             return Task.FromResult(SnapshotToReturn);
         }
 
-        public Task<string> CreateRefundAsync(CreateRefundInput input, CancellationToken ct)
+        public Task<CreatedRefund> CreateRefundAsync(CreateRefundInput input, CancellationToken ct)
         {
             LastRefundInput = input;
-            return Task.FromResult(RefundIdToReturn);
+            return Task.FromResult(new CreatedRefund(RefundIdToReturn, RefundSucceededToReturn));
         }
 
         public PaymentWebhookEvent? ParseWebhook(string body) => WebhookToReturn;

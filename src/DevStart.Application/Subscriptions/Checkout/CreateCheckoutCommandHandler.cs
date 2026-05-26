@@ -2,6 +2,7 @@ using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Payments;
+using DevStart.Application.Payments.Sync;
 using DevStart.Domain.Payments;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
@@ -16,9 +17,13 @@ namespace DevStart.Application.Subscriptions.Checkout
         IDateTimeProvider dateTimeProvider,
         IPaymentProvider paymentProvider,
         IOptions<PlansOptions> plansOptions,
-        IOptions<CheckoutOptions> checkoutOptions)
+        IOptions<CheckoutOptions> checkoutOptions,
+        ICommandHandler<SyncPaymentStatusCommand> syncHandler)
         : ICommandHandler<CreateCheckoutCommand, CheckoutResponse>
     {
+        // A confirmation link older than this may have expired at the provider; re-confirm before reuse.
+        private static readonly TimeSpan StaleCheckoutLinkAfter = TimeSpan.FromMinutes(30);
+
         public async Task<Result<CheckoutResponse>> Handle(
             CreateCheckoutCommand command,
             CancellationToken cancellationToken)
@@ -56,6 +61,25 @@ namespace DevStart.Application.Subscriptions.Checkout
                 .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending)
                 .OrderByDescending(p => p.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken);
+
+            // If a prior checkout link is old enough to have expired at the provider, re-confirm it
+            // before reusing. If it actually succeeded, the user is now Pro — block a second charge.
+            // If it was cancelled/expired, discard it so a fresh payment can be created below.
+            if (pendingPayment is not null
+                && !string.IsNullOrWhiteSpace(pendingPayment.ProviderPaymentId)
+                && pendingPayment.CreatedAt < utcNow - StaleCheckoutLinkAfter)
+            {
+                await syncHandler.Handle(
+                    new SyncPaymentStatusCommand(pendingPayment.ProviderPaymentId!), cancellationToken);
+                if (pendingPayment.Status == PaymentStatus.Succeeded)
+                {
+                    return Result.Failure<CheckoutResponse>(SubscriptionErrors.AlreadyActive);
+                }
+                if (pendingPayment.Status != PaymentStatus.Pending)
+                {
+                    pendingPayment = null;
+                }
+            }
 
             Subscription subscription;
             Payment payment;
@@ -97,7 +121,46 @@ namespace DevStart.Application.Subscriptions.Checkout
 
                 context.Subscriptions.Add(subscription);
                 context.Payments.Add(payment);
-                await context.SaveChangesAsync(cancellationToken);
+                try
+                {
+                    await context.SaveChangesAsync(cancellationToken);
+                }
+                catch (DbUpdateException)
+                {
+                    // Lost a concurrent checkout race: the DB rejected our duplicate pending payment
+                    // (unique index ux_payments_user_pending). Discard ours and reuse the winner so the
+                    // user is never charged twice.
+                    context.Payments.Remove(payment);
+                    context.Subscriptions.Remove(subscription);
+
+                    Payment? winner = await context.Payments
+                        .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .FirstOrDefaultAsync(cancellationToken);
+                    Subscription? winnerSubscription = winner is null
+                        ? null
+                        : await context.Subscriptions
+                            .SingleOrDefaultAsync(s => s.Id == winner.SubscriptionId, cancellationToken);
+                    if (winner is null || winnerSubscription is null)
+                    {
+                        throw;
+                    }
+
+                    subscription = winnerSubscription;
+                    payment = winner;
+                    if (!string.IsNullOrWhiteSpace(payment.ProviderPaymentId)
+                        && !string.IsNullOrWhiteSpace(payment.ConfirmationUrl))
+                    {
+                        return new CheckoutResponse
+                        {
+                            SubscriptionId = subscription.Id,
+                            PaymentId = payment.Id,
+                            ConfirmationUrl = payment.ConfirmationUrl,
+                        };
+                    }
+                    // Otherwise fall through and (idempotently) create the provider payment for the
+                    // reused record — the IdempotenceKey is payment.Id, so YooKassa won't double-charge.
+                }
             }
 
             // The payment id doubles as the idempotence key so retries never create a duplicate

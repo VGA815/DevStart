@@ -14,6 +14,8 @@ namespace DevStart.Infrastructure.Subscriptions
     {
         private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
+        private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
+
         public async Task<bool> HasActiveProAsync(Guid userId, CancellationToken ct)
         {
             string key = CacheKeys.SubscriptionActiveByUser(userId);
@@ -24,16 +26,25 @@ namespace DevStart.Infrastructure.Subscriptions
             }
 
             DateTime utcNow = dateTimeProvider.UtcNow;
-            bool hasActive = await context.Subscriptions
+            DateTime? activeUntil = await context.Subscriptions
                 .AsNoTracking()
-                .AnyAsync(
-                    s => s.UserId == userId
-                      && s.Plan == SubscriptionPlan.Pro
-                      && s.Status == SubscriptionStatus.Active
-                      && s.ExpiresAt > utcNow,
-                    ct);
+                .Where(s => s.UserId == userId
+                         && s.Plan == SubscriptionPlan.Pro
+                         && s.Status == SubscriptionStatus.Active
+                         && s.ExpiresAt > utcNow)
+                .MaxAsync(s => (DateTime?)s.ExpiresAt, ct);
 
-            await cacheService.SetAsync<bool?>(key, hasActive, CacheTtl, ct);
+            bool hasActive = activeUntil.HasValue;
+
+            // Never let a cached "true" outlive the subscription: clamp the TTL to the remaining term so
+            // access is re-checked against the DB the moment it ends, not up to CacheTtl later.
+            TimeSpan ttl = hasActive
+                ? Min(activeUntil!.Value - utcNow, CacheTtl)
+                : CacheTtl;
+            if (ttl > TimeSpan.Zero)
+            {
+                await cacheService.SetAsync<bool?>(key, hasActive, ttl, ct);
+            }
             return hasActive;
         }
     }

@@ -3,6 +3,7 @@ using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.Subscriptions;
+using DevStart.Domain.StartupMetrics;
 using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -31,8 +32,18 @@ namespace DevStart.Application.StartupMetrics.GetAllByStartupId
             bool canSeePremium = isMember
                 || await subscriptionChecker.HasActiveProAsync(viewerId, cancellationToken);
 
-            List<StartupMetricResponse> startupMetricResponses = await context.StartupMetrics
-                .Where(sm => sm.StartupId == query.StartupId)
+            IQueryable<StartupMetric> metricsQuery = context.StartupMetrics
+                .Where(sm => sm.StartupId == query.StartupId);
+
+            // Filter premium MetricType rows in the query (not after fetching) so they are never loaded
+            // for viewers without access.
+            if (!canSeePremium)
+            {
+                MetricType[] premiumTypes = [.. PremiumMetrics.Types];
+                metricsQuery = metricsQuery.Where(sm => !premiumTypes.Contains(sm.MetricType));
+            }
+
+            List<StartupMetricResponse> startupMetricResponses = await metricsQuery
                 .Select(sm => new StartupMetricResponse
                 {
                     CreatedAt = sm.CreatedAt,
@@ -42,13 +53,6 @@ namespace DevStart.Application.StartupMetrics.GetAllByStartupId
                     Value = sm.Value,
                 })
                 .ToListAsync(cancellationToken);
-
-            if (!canSeePremium)
-            {
-                startupMetricResponses = startupMetricResponses
-                    .Where(m => !PremiumMetrics.IsPremium(m.MetricType))
-                    .ToList();
-            }
 
             return startupMetricResponses;
         }

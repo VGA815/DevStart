@@ -12,6 +12,12 @@ namespace DevStart.Infrastructure.Payments
         /// <summary>Stop reconciling payments older than this (treated as abandoned).</summary>
         public int ReconcileMaxAgeHours { get; set; } = 72;
 
+        /// <summary>
+        /// Also re-sync captured (Succeeded) payments paid within this many hours so a missed or
+        /// out-of-band <c>refund.succeeded</c> event is still reflected locally.
+        /// </summary>
+        public int RefundReconcileWindowHours { get; set; } = 72;
+
         /// <summary>How many days before expiry to send the renewal reminder.</summary>
         public int ReminderDaysBefore { get; set; } = 3;
     }

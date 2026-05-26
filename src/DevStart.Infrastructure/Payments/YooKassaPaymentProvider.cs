@@ -113,7 +113,7 @@ namespace DevStart.Infrastructure.Payments
                 parsed.ReceiptRegistration);
         }
 
-        public async Task<string> CreateRefundAsync(CreateRefundInput input, CancellationToken ct)
+        public async Task<CreatedRefund> CreateRefundAsync(CreateRefundInput input, CancellationToken ct)
         {
             var payload = new YooKassaCreateRefundRequest
             {
@@ -130,7 +130,7 @@ namespace DevStart.Infrastructure.Payments
                 throw new InvalidOperationException("YooKassa returned a refund without an id.");
             }
 
-            return parsed.Id;
+            return new CreatedRefund(parsed.Id, parsed.Status == "succeeded");
         }
 
         public PaymentWebhookEvent? ParseWebhook(string body)

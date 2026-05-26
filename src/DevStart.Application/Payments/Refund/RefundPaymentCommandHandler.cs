@@ -3,6 +3,7 @@ using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
+using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ namespace DevStart.Application.Payments.Refund
     internal sealed class RefundPaymentCommandHandler(
         IApplicationDbContext context,
         IPaymentProvider paymentProvider,
+        IDateTimeProvider dateTimeProvider,
         IOptions<PlansOptions> plansOptions,
         ILogger<RefundPaymentCommandHandler> logger)
         : ICommandHandler<RefundPaymentCommand>
@@ -57,13 +59,29 @@ namespace DevStart.Application.Payments.Refund
                 CustomerEmail: customerEmail,
                 IdempotenceKey: $"refund:{payment.Id}:{amountKey}");
 
-            string refundId = await paymentProvider.CreateRefundAsync(input, cancellationToken);
+            CreatedRefund refund = await paymentProvider.CreateRefundAsync(input, cancellationToken);
 
             logger.LogInformation(
                 "Initiated YooKassa refund {RefundId} for payment {PaymentId} ({Amount} {Currency}).",
-                refundId, payment.Id, amountKey, payment.Currency);
+                refund.RefundId, payment.Id, amountKey, payment.Currency);
 
-            // The local payment/subscription are updated when the refund.succeeded webhook arrives.
+            // When the provider already reports the refund as completed, reflect it locally now instead
+            // of relying solely on the refund.succeeded webhook (which may be missed). The webhook /
+            // reconciliation pass re-reads the authoritative refunded amount and is idempotent with this.
+            if (refund.Succeeded)
+            {
+                DateTime utcNow = dateTimeProvider.UtcNow;
+                decimal newTotal = payment.RefundedAmount + amount;
+                payment.MarkRefunded(newTotal, utcNow);
+                if (newTotal >= payment.Amount)
+                {
+                    Subscription? subscription = await context.Subscriptions
+                        .SingleOrDefaultAsync(s => s.Id == payment.SubscriptionId, cancellationToken);
+                    subscription?.MarkCancelled(utcNow);
+                }
+                await context.SaveChangesAsync(cancellationToken);
+            }
+
             return Result.Success();
         }
     }

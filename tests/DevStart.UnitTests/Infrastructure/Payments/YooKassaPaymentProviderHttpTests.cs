@@ -92,9 +92,10 @@ public sealed class YooKassaPaymentProviderHttpTests
         var input = new CreateRefundInput(
             "pay-1", 990m, "RUB", "Возврат — DevStart Pro", "buyer@example.com", "refund:pay-1:990.00");
 
-        string refundId = await provider.CreateRefundAsync(input, CancellationToken.None);
+        CreatedRefund refund = await provider.CreateRefundAsync(input, CancellationToken.None);
 
-        refundId.ShouldBe("ref-1");
+        refund.RefundId.ShouldBe("ref-1");
+        refund.Succeeded.ShouldBeTrue();
         string body = handler.LastRequestBody.ShouldNotBeNull();
         body.ShouldContain("\"payment_id\":\"pay-1\"");
         body.ShouldContain("\"receipt\"");
