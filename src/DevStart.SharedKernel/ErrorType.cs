@@ -8,5 +8,6 @@
         NotFound = 3,
         Conflict = 4,
         Forbidden = 5,
+        ServiceUnavailable = 6,
     }
 }

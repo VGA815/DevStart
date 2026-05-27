@@ -21,9 +21,30 @@ namespace DevStart.Infrastructure.Authentication
 
         public bool Verify(string password, string passwordHash)
         {
-            string[] parts = passwordHash.Split("-");
-            byte[] hash = Convert.FromHexString(parts[0]);
-            byte[] salt = Convert.FromHexString(parts[1]);
+            if (string.IsNullOrEmpty(passwordHash))
+            {
+                return false;
+            }
+
+            string[] parts = passwordHash.Split('-');
+            if (parts.Length != 2)
+            {
+                return false;
+            }
+
+            byte[] hash;
+            byte[] salt;
+            try
+            {
+                hash = Convert.FromHexString(parts[0]);
+                salt = Convert.FromHexString(parts[1]);
+            }
+            catch (FormatException)
+            {
+                // A malformed stored hash must not surface as an unhandled 500 — treat it as a failed
+                // verification (the account simply can't authenticate until the hash is reset).
+                return false;
+            }
 
             byte[] inputHash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, Algorithm, HashSize);
 

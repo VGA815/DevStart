@@ -11,5 +11,9 @@ namespace DevStart.Domain.DealDocuments
         public static readonly Error Unauthorized = Error.Problem(
             "DealDocuments.Unauthorized",
             "You are not allowed to access this deal document.");
+
+        public static readonly Error StorageUnavailable = Error.ServiceUnavailable(
+            "DealDocuments.StorageUnavailable",
+            "The file storage service is temporarily unavailable. Please try again later.");
     }
 }

@@ -59,7 +59,19 @@ namespace DevStart.Application.Payments.Refund
                 CustomerEmail: customerEmail,
                 IdempotenceKey: $"refund:{payment.Id}:{amountKey}");
 
-            CreatedRefund refund = await paymentProvider.CreateRefundAsync(input, cancellationToken);
+            CreatedRefund refund;
+            try
+            {
+                refund = await paymentProvider.CreateRefundAsync(input, cancellationToken);
+            }
+            catch (PaymentProviderException ex)
+            {
+                logger.LogError(ex, "Failed to create YooKassa refund for payment {PaymentId}", payment.Id);
+                return Result.Failure(
+                    ex.IsTransient
+                        ? PaymentErrors.ProviderUnavailable(ex.Message)
+                        : PaymentErrors.ProviderError(ex.Message));
+            }
 
             logger.LogInformation(
                 "Initiated YooKassa refund {RefundId} for payment {PaymentId} ({Amount} {Currency}).",

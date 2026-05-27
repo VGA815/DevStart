@@ -7,6 +7,7 @@ using DevStart.Infrastructure.Database;
 using DevStart.SharedKernel;
 using DevStart.UnitTests.TestSupport;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace DevStart.UnitTests.Application.Users
 {
@@ -20,7 +21,8 @@ namespace DevStart.UnitTests.Application.Users
 
         public ForgotPasswordCommandHandlerTests()
         {
-            _sut = new ForgotPasswordCommandHandler(_db, _email, _clock);
+            _sut = new ForgotPasswordCommandHandler(
+                _db, _email, _clock, NullLogger<ForgotPasswordCommandHandler>.Instance);
         }
 
         [Fact]
@@ -40,6 +42,22 @@ namespace DevStart.UnitTests.Application.Users
             var sent = Assert.Single(_email.PasswordResets);
             Assert.Equal(user.Email, sent.Email);
             Assert.Equal(token.TokenId.ToString(), sent.Token);
+        }
+
+        [Fact]
+        public async Task ExistingUser_EmailDeliveryThrows_StillSucceedsAndKeepsToken()
+        {
+            User user = User.Create("kate", "kate@example.com", _hasher.Hash("S3cret!xx"), _clock.UtcNow);
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+
+            _email.PasswordResetException = new InvalidOperationException("smtp down");
+
+            Result result = await _sut.Handle(new ForgotPasswordCommand(user.Email), default);
+
+            // Enumeration-safe: must mirror the unknown-email path's success even when delivery fails.
+            Assert.True(result.IsSuccess);
+            Assert.True(await _db.PasswordResetTokens.AnyAsync(t => t.UserId == user.Id));
         }
 
         [Fact]

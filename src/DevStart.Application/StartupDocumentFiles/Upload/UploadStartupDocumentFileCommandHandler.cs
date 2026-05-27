@@ -30,7 +30,14 @@ namespace DevStart.Application.StartupDocumentFiles.Upload
             Guid fileId = Guid.NewGuid();
             var objectKey = $"startups/{command.StartupId}/{fileId}";
 
-            await fileStorage.UploadAsync(objectKey, command.FileStream, command.Bucket, command.ContentType, cancellationToken);
+            try
+            {
+                await fileStorage.UploadAsync(objectKey, command.FileStream, command.Bucket, command.ContentType, cancellationToken);
+            }
+            catch (FileStorageException)
+            {
+                return Result.Failure<Guid>(StartupDocumentFileErrors.StorageUnavailable);
+            }
 
             StartupDocumentFile startupDocumentFile = StartupDocumentFile.Create(
                 fileId,

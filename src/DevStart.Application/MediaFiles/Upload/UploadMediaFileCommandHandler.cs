@@ -27,12 +27,19 @@ namespace DevStart.Application.MediaFiles.Upload
 
             var objectKey = $"users/{userContext.UserId}/{fileId}.webp";
 
-            await fileStorage.UploadAsync(
-                objectKey,
-                command.FileStream,
-                command.Bucket,
-                command.ContentType,
-                cancellationToken);
+            try
+            {
+                await fileStorage.UploadAsync(
+                    objectKey,
+                    command.FileStream,
+                    command.Bucket,
+                    command.ContentType,
+                    cancellationToken);
+            }
+            catch (FileStorageException)
+            {
+                return Result.Failure<Guid>(MediaFileErrors.StorageUnavailable);
+            }
 
             MediaFile mediaFile = new MediaFile()
             {

@@ -18,7 +18,16 @@ namespace DevStart.Application.StartupDocumentFiles.GetById
                 return Result.Failure<StartupDocumentFileResponse>(StartupDocumentFileErrors.NotFound(query.StartupDocumentFileId));
             }
 
-            string presignedUrl = await fileStorage.GetPresignedUrl(startupDocumentFile.ObjectName, startupDocumentFile.Bucket, query.Expires, cancellationToken);
+            string presignedUrl;
+            try
+            {
+                presignedUrl = await fileStorage.GetPresignedUrl(startupDocumentFile.ObjectName, startupDocumentFile.Bucket, query.Expires, cancellationToken);
+            }
+            catch (FileStorageException ex)
+            {
+                return Result.Failure<StartupDocumentFileResponse>(
+                    ex.NotFound ? StartupDocumentFileErrors.NotFound(query.StartupDocumentFileId) : StartupDocumentFileErrors.StorageUnavailable);
+            }
 
             StartupDocumentFileResponse startup = new()
             {

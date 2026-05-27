@@ -10,5 +10,8 @@ namespace DevStart.Domain.MediaFiles
         public static readonly Error NotFoundByUploaderId = Error.NotFound(
             "MediaFiles.NotFoundByUploaderId",
             "The media file with specified uploaderId was not found");
+        public static readonly Error StorageUnavailable = Error.ServiceUnavailable(
+            "MediaFiles.StorageUnavailable",
+            "The file storage service is temporarily unavailable. Please try again later.");
     }
 }

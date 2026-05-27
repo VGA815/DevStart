@@ -8,6 +8,7 @@ using DevStart.Infrastructure.Database;
 using DevStart.SharedKernel;
 using DevStart.UnitTests.TestSupport;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace DevStart.UnitTests.Auth.OAuth
@@ -31,7 +32,8 @@ namespace DevStart.UnitTests.Auth.OAuth
                 new FakeExternalAuthProviderFactory(_provider),
                 new StubTokenProvider(),
                 refreshSvc,
-                _clock);
+                _clock,
+                NullLogger<HandleOAuthCallbackCommandHandler>.Instance);
         }
 
         private async Task<string> SaveStateAsync(Guid? linkUserId = null)

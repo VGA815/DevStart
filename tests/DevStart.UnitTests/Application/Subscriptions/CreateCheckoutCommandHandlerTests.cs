@@ -41,7 +41,8 @@ public sealed class CreateCheckoutCommandHandlerTests
         _db.SaveChanges();
 
         _sut = new CreateCheckoutCommandHandler(
-            _db, new TestUserContext(_userId), clock, _provider, plans, checkout, sync);
+            _db, new TestUserContext(_userId), clock, _provider, plans, checkout, sync,
+            NullLogger<CreateCheckoutCommandHandler>.Instance);
     }
 
     private async Task<(Subscription, Payment)> SeedPendingAsync(DateTime createdAt, string providerId, string url)
@@ -84,6 +85,30 @@ public sealed class CreateCheckoutCommandHandlerTests
         _provider.LastCreateInput.ShouldNotBeNull();
         _db.Payments.Count(p => p.Status == PaymentStatus.Cancelled).ShouldBe(1);
         _db.Payments.Count(p => p.Status == PaymentStatus.Pending).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task ProviderThrowsTransient_ReturnsProviderUnavailable()
+    {
+        _provider.CreatePaymentException = new PaymentProviderException("provider down", isTransient: true);
+
+        Result<CheckoutResponse> result = await _sut.Handle(new CreateCheckoutCommand(), CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("Payments.ProviderUnavailable");
+        result.Error.Type.ShouldBe(ErrorType.ServiceUnavailable);
+        _provider.LastCreateInput.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task ProviderThrowsNonTransient_ReturnsProviderError()
+    {
+        _provider.CreatePaymentException = new PaymentProviderException("rejected", isTransient: false);
+
+        Result<CheckoutResponse> result = await _sut.Handle(new CreateCheckoutCommand(), CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("Payments.ProviderError");
     }
 
     [Fact]

@@ -25,10 +25,19 @@ namespace DevStart.Application.MediaFiles.Delete
                 return Result.Failure(UserErrors.Unauthorized());
             }
 
-            await fileStorage.DeleteAsync(
-                mediaFile.ObjectName,
-                mediaFile.Bucket,
-                cancellationToken);
+            try
+            {
+                await fileStorage.DeleteAsync(
+                    mediaFile.ObjectName,
+                    mediaFile.Bucket,
+                    cancellationToken);
+            }
+            catch (FileStorageException ex) when (!ex.NotFound)
+            {
+                // The object could not be removed (storage outage). Keep the DB record so the delete can
+                // be retried — don't orphan it. A missing object (NotFound) falls through as success.
+                return Result.Failure(MediaFileErrors.StorageUnavailable);
+            }
 
             context.MediaFiles.Remove(mediaFile);
             await context.SaveChangesAsync(cancellationToken);

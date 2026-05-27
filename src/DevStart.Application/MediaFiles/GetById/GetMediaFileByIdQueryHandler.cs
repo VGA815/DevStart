@@ -19,7 +19,16 @@ namespace DevStart.Application.MediaFiles.GetById
                 return Result.Failure<MediaFileResponse>(MediaFileErrors.NotFound(query.FileId));
             }
 
-            string presignedUrl = await fileStorage.GetPresignedUrl(mediaFile.ObjectName, mediaFile.Bucket, query.Expires, cancellationToken);
+            string presignedUrl;
+            try
+            {
+                presignedUrl = await fileStorage.GetPresignedUrl(mediaFile.ObjectName, mediaFile.Bucket, query.Expires, cancellationToken);
+            }
+            catch (FileStorageException ex)
+            {
+                return Result.Failure<MediaFileResponse>(
+                    ex.NotFound ? MediaFileErrors.NotFound(query.FileId) : MediaFileErrors.StorageUnavailable);
+            }
 
             MediaFileResponse response = new MediaFileResponse()
             {

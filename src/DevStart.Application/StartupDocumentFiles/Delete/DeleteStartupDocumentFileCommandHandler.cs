@@ -28,10 +28,18 @@ namespace DevStart.Application.StartupDocumentFiles.Delete
                 return Result.Failure(UserErrors.Unauthorized());
             }
 
-            await fileStorage.DeleteAsync(
-                startupDocumentFile.ObjectName,
-                startupDocumentFile.Bucket,
-                cancellationToken);
+            try
+            {
+                await fileStorage.DeleteAsync(
+                    startupDocumentFile.ObjectName,
+                    startupDocumentFile.Bucket,
+                    cancellationToken);
+            }
+            catch (FileStorageException ex) when (!ex.NotFound)
+            {
+                // Keep the DB record so the delete can be retried; a missing object falls through.
+                return Result.Failure(StartupDocumentFileErrors.StorageUnavailable);
+            }
 
             context.StartupDocumentFiles.Remove(startupDocumentFile);
             await context.SaveChangesAsync(cancellationToken);

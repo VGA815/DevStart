@@ -1,5 +1,6 @@
 using DevStart.Application.Abstractions.Payments;
 using DevStart.Domain.Payments;
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Globalization;
@@ -75,7 +76,8 @@ namespace DevStart.Infrastructure.Payments
                 parsed.Confirmation is null ||
                 string.IsNullOrWhiteSpace(parsed.Confirmation.ConfirmationUrl))
             {
-                throw new InvalidOperationException("YooKassa returned a payment without a confirmation URL.");
+                throw new PaymentProviderException(
+                    "YooKassa returned a payment without a confirmation URL.", isTransient: false);
             }
 
             return new CreatedPayment(parsed.Id, parsed.Confirmation.ConfirmationUrl);
@@ -83,19 +85,42 @@ namespace DevStart.Infrastructure.Payments
 
         public async Task<ProviderPaymentSnapshot?> GetPaymentAsync(string providerPaymentId, CancellationToken ct)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"/v3/payments/{providerPaymentId}");
-            using HttpResponseMessage response = await _http.SendAsync(request, ct);
-            string body = await response.Content.ReadAsStringAsync(ct);
-
-            if (!response.IsSuccessStatusCode)
+            string body;
+            HttpStatusCode statusCode;
+            try
             {
-                _logger.LogWarning(
-                    "YooKassa get payment {ProviderPaymentId} failed: {StatusCode} {Body}",
-                    providerPaymentId, (int)response.StatusCode, body);
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"/v3/payments/{providerPaymentId}");
+                using HttpResponseMessage response = await _http.SendAsync(request, ct);
+                body = await response.Content.ReadAsStringAsync(ct);
+                statusCode = response.StatusCode;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
+            {
+                // Transient transport failure. The contract is to return null so the caller (webhook /
+                // reconciliation pass) retries later rather than surfacing a 500.
+                _logger.LogWarning(ex, "YooKassa get payment {ProviderPaymentId} transport failure", providerPaymentId);
                 return null;
             }
 
-            YooKassaPaymentResponse? parsed = JsonSerializer.Deserialize<YooKassaPaymentResponse>(body, SerializerOptions);
+            if (statusCode is not (>= HttpStatusCode.OK and < HttpStatusCode.MultipleChoices))
+            {
+                _logger.LogWarning(
+                    "YooKassa get payment {ProviderPaymentId} failed: {StatusCode} {Body}",
+                    providerPaymentId, (int)statusCode, body);
+                return null;
+            }
+
+            YooKassaPaymentResponse? parsed;
+            try
+            {
+                parsed = JsonSerializer.Deserialize<YooKassaPaymentResponse>(body, SerializerOptions);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "YooKassa get payment {ProviderPaymentId} returned an unparseable body", providerPaymentId);
+                return null;
+            }
+
             if (parsed is null || string.IsNullOrWhiteSpace(parsed.Id))
             {
                 return null;
@@ -127,7 +152,8 @@ namespace DevStart.Infrastructure.Payments
 
             if (string.IsNullOrWhiteSpace(parsed.Id))
             {
-                throw new InvalidOperationException("YooKassa returned a refund without an id.");
+                throw new PaymentProviderException(
+                    "YooKassa returned a refund without an id.", isTransient: false);
             }
 
             return new CreatedRefund(parsed.Id, parsed.Status == "succeeded");
@@ -203,29 +229,57 @@ namespace DevStart.Infrastructure.Payments
             string idempotenceKey,
             CancellationToken ct)
         {
-            using var request = new HttpRequestMessage(method, path)
+            string body;
+            HttpStatusCode statusCode;
+            try
             {
-                // Serialize by the runtime type — `payload` is statically `object`, so the generic
-                // JsonContent.Create<object> overload would emit an empty body.
-                Content = JsonContent.Create(payload, payload.GetType(), options: SerializerOptions),
-            };
-            request.Headers.Add("Idempotence-Key", idempotenceKey);
+                using var request = new HttpRequestMessage(method, path)
+                {
+                    // Serialize by the runtime type — `payload` is statically `object`, so the generic
+                    // JsonContent.Create<object> overload would emit an empty body.
+                    Content = JsonContent.Create(payload, payload.GetType(), options: SerializerOptions),
+                };
+                request.Headers.Add("Idempotence-Key", idempotenceKey);
 
-            using HttpResponseMessage response = await _http.SendAsync(request, ct);
-            string body = await response.Content.ReadAsStringAsync(ct);
+                using HttpResponseMessage response = await _http.SendAsync(request, ct);
+                body = await response.Content.ReadAsStringAsync(ct);
+                statusCode = response.StatusCode;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !ct.IsCancellationRequested)
+            {
+                // Network/timeout failure reaching YooKassa — retryable, surfaced to the user as 503.
+                _logger.LogWarning(ex, "YooKassa {Method} {Path} transport failure", method, path);
+                throw new PaymentProviderException(
+                    "Could not reach the payment provider.", isTransient: true, ex);
+            }
 
-            if (!response.IsSuccessStatusCode)
+            if (statusCode is not (>= HttpStatusCode.OK and < HttpStatusCode.MultipleChoices))
             {
                 _logger.LogWarning(
                     "YooKassa {Method} {Path} failed: {StatusCode} {Body}",
-                    method, path, (int)response.StatusCode, body);
-                throw new InvalidOperationException($"YooKassa returned {(int)response.StatusCode}: {body}");
+                    method, path, (int)statusCode, body);
+                // 5xx from the provider is transient (retryable); 4xx is a definitive rejection.
+                bool isTransient = (int)statusCode >= 500;
+                throw new PaymentProviderException(
+                    $"YooKassa returned {(int)statusCode}.", isTransient);
             }
 
-            T? parsed = JsonSerializer.Deserialize<T>(body, SerializerOptions);
+            T? parsed;
+            try
+            {
+                parsed = JsonSerializer.Deserialize<T>(body, SerializerOptions);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "YooKassa {Method} {Path} returned an unparseable body", method, path);
+                throw new PaymentProviderException(
+                    "The payment provider returned an unexpected response.", isTransient: false, ex);
+            }
+
             if (parsed is null)
             {
-                throw new InvalidOperationException($"YooKassa returned an unexpected payload: {body}");
+                throw new PaymentProviderException(
+                    "The payment provider returned an empty response.", isTransient: false);
             }
             return parsed;
         }

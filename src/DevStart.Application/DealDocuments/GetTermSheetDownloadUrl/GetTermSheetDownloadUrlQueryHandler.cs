@@ -60,11 +60,20 @@ namespace DevStart.Application.DealDocuments.GetTermSheetDownloadUrl
                 return Result.Failure<TermSheetDownloadUrlResponse>(DealDocumentErrors.NotFound(query.DealId));
             }
 
-            string url = await fileStorage.GetPresignedUrl(
-                doc.TermSheetObjectKey,
-                DealDocumentBuckets.DealDocuments,
-                ExpirySeconds,
-                cancellationToken);
+            string url;
+            try
+            {
+                url = await fileStorage.GetPresignedUrl(
+                    doc.TermSheetObjectKey,
+                    DealDocumentBuckets.DealDocuments,
+                    ExpirySeconds,
+                    cancellationToken);
+            }
+            catch (FileStorageException ex)
+            {
+                return Result.Failure<TermSheetDownloadUrlResponse>(
+                    ex.NotFound ? DealDocumentErrors.NotFound(query.DealId) : DealDocumentErrors.StorageUnavailable);
+            }
 
             return new TermSheetDownloadUrlResponse
             {

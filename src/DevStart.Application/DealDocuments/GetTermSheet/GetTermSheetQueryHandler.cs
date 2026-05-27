@@ -57,12 +57,21 @@ namespace DevStart.Application.DealDocuments.GetTermSheet
                 return Result.Failure<TermSheetResponse>(DealDocumentErrors.NotFound(query.DealId));
             }
 
-            using Stream stream = await fileStorage.DownloadAsync(
-                doc.TermSheetObjectKey,
-                DealDocumentBuckets.DealDocuments,
-                cancellationToken);
-            using var reader = new StreamReader(stream, Encoding.UTF8);
-            string markdown = await reader.ReadToEndAsync(cancellationToken);
+            string markdown;
+            try
+            {
+                using Stream stream = await fileStorage.DownloadAsync(
+                    doc.TermSheetObjectKey,
+                    DealDocumentBuckets.DealDocuments,
+                    cancellationToken);
+                using var reader = new StreamReader(stream, Encoding.UTF8);
+                markdown = await reader.ReadToEndAsync(cancellationToken);
+            }
+            catch (FileStorageException ex)
+            {
+                return Result.Failure<TermSheetResponse>(
+                    ex.NotFound ? DealDocumentErrors.NotFound(query.DealId) : DealDocumentErrors.StorageUnavailable);
+            }
 
             return new TermSheetResponse
             {

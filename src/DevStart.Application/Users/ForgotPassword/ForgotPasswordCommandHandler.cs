@@ -5,13 +5,15 @@ using DevStart.Domain.PasswordResetTokens;
 using DevStart.Domain.Users;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DevStart.Application.Users.ForgotPassword
 {
     internal sealed class ForgotPasswordCommandHandler(
         IApplicationDbContext context,
         IEmailSender emailSender,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        ILogger<ForgotPasswordCommandHandler> logger)
         : ICommandHandler<ForgotPasswordCommand>
     {
         public async Task<Result> Handle(ForgotPasswordCommand command, CancellationToken cancellationToken)
@@ -47,7 +49,19 @@ namespace DevStart.Application.Users.ForgotPassword
             context.PasswordResetTokens.Add(token);
 
             await context.SaveChangesAsync(cancellationToken);
-            await emailSender.SendPasswordReset(user.Email, token.TokenId.ToString());
+
+            // Defense-in-depth for the enumeration-safe contract: a registered email must return the same
+            // success as an unregistered one, so a transient email-delivery failure must never surface
+            // (which would let an attacker distinguish accounts via 500 vs 200). The user can retry.
+            try
+            {
+                await emailSender.SendPasswordReset(user.Email, token.TokenId.ToString());
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send password-reset email");
+            }
+
             return Result.Success();
         }
     }

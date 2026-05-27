@@ -7,6 +7,7 @@ using DevStart.Domain.UserPreferences;
 using DevStart.Domain.Users;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DevStart.Application.Auth.OAuth.Callback
 {
@@ -16,7 +17,8 @@ namespace DevStart.Application.Auth.OAuth.Callback
         IExternalAuthProviderFactory providerFactory,
         ITokenProvider tokenProvider,
         IRefreshTokenService refreshTokenService,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        ILogger<HandleOAuthCallbackCommandHandler> logger)
         : ICommandHandler<HandleOAuthCallbackCommand, TokenPair>
     {
         public async Task<Result<TokenPair>> Handle(
@@ -40,8 +42,15 @@ namespace DevStart.Application.Auth.OAuth.Callback
                     state.RedirectUri,
                     cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
+                // Preserve genuine cancellation; otherwise log the underlying provider failure (token
+                // exchange / JWT validation / network) so it's diagnosable, then return a generic error.
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                logger.LogWarning(ex, "OAuth code exchange failed for provider {Provider}", command.Provider);
                 return Result.Failure<TokenPair>(ExternalLoginErrors.ProviderError);
             }
 

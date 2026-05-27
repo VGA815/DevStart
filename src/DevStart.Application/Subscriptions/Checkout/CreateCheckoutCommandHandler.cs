@@ -7,6 +7,7 @@ using DevStart.Domain.Payments;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace DevStart.Application.Subscriptions.Checkout
@@ -18,7 +19,8 @@ namespace DevStart.Application.Subscriptions.Checkout
         IPaymentProvider paymentProvider,
         IOptions<PlansOptions> plansOptions,
         IOptions<CheckoutOptions> checkoutOptions,
-        ICommandHandler<SyncPaymentStatusCommand> syncHandler)
+        ICommandHandler<SyncPaymentStatusCommand> syncHandler,
+        ILogger<CreateCheckoutCommandHandler> logger)
         : ICommandHandler<CreateCheckoutCommand, CheckoutResponse>
     {
         // A confirmation link older than this may have expired at the provider; re-confirm before reuse.
@@ -176,7 +178,21 @@ namespace DevStart.Application.Subscriptions.Checkout
                 SubscriptionId: subscription.Id,
                 UserId: userId);
 
-            CreatedPayment created = await paymentProvider.CreatePaymentAsync(input, cancellationToken);
+            CreatedPayment created;
+            try
+            {
+                created = await paymentProvider.CreatePaymentAsync(input, cancellationToken);
+            }
+            catch (PaymentProviderException ex)
+            {
+                // The pending payment/subscription stays persisted; its id is the idempotence key, so a
+                // retry reuses it and never double-charges. Surface a clean 503/400 instead of a 500.
+                logger.LogError(ex, "Failed to create YooKassa payment for payment {PaymentId}", payment.Id);
+                return Result.Failure<CheckoutResponse>(
+                    ex.IsTransient
+                        ? PaymentErrors.ProviderUnavailable(ex.Message)
+                        : PaymentErrors.ProviderError(ex.Message));
+            }
 
             payment.AssignProviderPayment(created.ProviderPaymentId, created.ConfirmationUrl);
             await context.SaveChangesAsync(cancellationToken);

@@ -30,5 +30,7 @@
             new(code, description, ErrorType.Forbidden);
         public static Error Validation(string code, string description) =>
             new(code, description, ErrorType.Validation);
+        public static Error ServiceUnavailable(string code, string description) =>
+            new(code, description, ErrorType.ServiceUnavailable);
     }
 }

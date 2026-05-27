@@ -16,6 +16,10 @@ namespace DevStart.Domain.Payments
             "Payments.ProviderError",
             $"Payment provider returned an error: {message}");
 
+        public static Error ProviderUnavailable(string message) => Error.ServiceUnavailable(
+            "Payments.ProviderUnavailable",
+            $"The payment provider is temporarily unavailable: {message}");
+
         public static readonly Error WebhookSignatureInvalid = Error.Problem(
             "Payments.WebhookSignatureInvalid",
             "Webhook payload signature or origin is invalid.");

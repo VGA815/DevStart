@@ -86,5 +86,23 @@ namespace DevStart.UnitTests.Auth.Users
             Assert.True(result.IsFailure);
             Assert.Equal(UserErrors.NotFoundByEmail, result.Error);
         }
+
+        [Fact]
+        public async Task UnknownEmail_StillInvokesVerify_ToEqualizeTiming()
+        {
+            // No user is seeded. The verifier must still run (against a dummy hash) so the response time
+            // doesn't reveal whether the email is registered — and the result mirrors a wrong password.
+            var recordingHasher = new RecordingPasswordHasher();
+            var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
+            var sut = new LoginUserCommandHandler(
+                _db, recordingHasher, new StubTokenProvider(), new RefreshTokenService(_db, _clock, refreshOptions));
+
+            var cmd = new LoginUserCommand("nobody@example.com", "whatever", null, null);
+            Result<TokenPair> result = await sut.Handle(cmd, default);
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(UserErrors.NotFoundByEmail, result.Error);
+            Assert.Equal(1, recordingHasher.VerifyCallCount);
+        }
     }
 }

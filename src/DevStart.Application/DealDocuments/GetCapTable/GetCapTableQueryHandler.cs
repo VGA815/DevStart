@@ -61,13 +61,27 @@ namespace DevStart.Application.DealDocuments.GetCapTable
                 return Result.Failure<CapTableResult>(DealDocumentErrors.NotFound(query.DealId));
             }
 
-            using Stream stream = await fileStorage.DownloadAsync(
-                doc.CapTableObjectKey,
-                DealDocumentBuckets.DealDocuments,
-                cancellationToken);
+            CapTableResult? capTable;
+            try
+            {
+                using Stream stream = await fileStorage.DownloadAsync(
+                    doc.CapTableObjectKey,
+                    DealDocumentBuckets.DealDocuments,
+                    cancellationToken);
 
-            CapTableResult? capTable = await JsonSerializer.DeserializeAsync<CapTableResult>(
-                stream, SerializerOptions, cancellationToken);
+                capTable = await JsonSerializer.DeserializeAsync<CapTableResult>(
+                    stream, SerializerOptions, cancellationToken);
+            }
+            catch (FileStorageException ex)
+            {
+                return Result.Failure<CapTableResult>(
+                    ex.NotFound ? DealDocumentErrors.NotFound(query.DealId) : DealDocumentErrors.StorageUnavailable);
+            }
+            catch (JsonException)
+            {
+                return Result.Failure<CapTableResult>(DealDocumentErrors.NotFound(query.DealId));
+            }
+
             if (capTable is null)
             {
                 return Result.Failure<CapTableResult>(DealDocumentErrors.NotFound(query.DealId));

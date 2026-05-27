@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Payments.Refund;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
@@ -92,6 +93,32 @@ public sealed class RefundPaymentCommandHandlerTests
         payment.Status.ShouldBe(PaymentStatus.Succeeded);
         payment.RefundedAmount.ShouldBe(0m);
         subscription.Status.ShouldBe(SubscriptionStatus.Active);
+    }
+
+    [Fact]
+    public async Task ProviderThrowsTransient_ReturnsProviderUnavailable()
+    {
+        (_, Payment payment) = await SeedAsync();
+        _provider.CreateRefundException = new PaymentProviderException("provider down", isTransient: true);
+
+        Result result = await _sut.Handle(new RefundPaymentCommand(payment.Id, null), CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("Payments.ProviderUnavailable");
+        payment.Status.ShouldBe(PaymentStatus.Succeeded);
+        payment.RefundedAmount.ShouldBe(0m);
+    }
+
+    [Fact]
+    public async Task ProviderThrowsNonTransient_ReturnsProviderError()
+    {
+        (_, Payment payment) = await SeedAsync();
+        _provider.CreateRefundException = new PaymentProviderException("rejected", isTransient: false);
+
+        Result result = await _sut.Handle(new RefundPaymentCommand(payment.Id, null), CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("Payments.ProviderError");
     }
 
     [Fact]

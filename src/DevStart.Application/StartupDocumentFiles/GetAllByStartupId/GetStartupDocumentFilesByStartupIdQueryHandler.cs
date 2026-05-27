@@ -23,27 +23,35 @@ namespace DevStart.Application.StartupDocumentFiles.GetAllByStartupId
                 .Where(f => f.StartupId == query.StartupId)
                 .ToListAsync(cancellationToken);
 
-            StartupDocumentFileResponse[] responses = await Task.WhenAll(
-                files.Select(async f =>
-                {
-                    string presignedUrl = await fileStorage.GetPresignedUrl(
-                        f.ObjectName,
-                        f.Bucket,
-                        PresignedUrlExpirySeconds,
-                        cancellationToken);
-
-                    return new StartupDocumentFileResponse
+            StartupDocumentFileResponse[] responses;
+            try
+            {
+                responses = await Task.WhenAll(
+                    files.Select(async f =>
                     {
-                        Id = f.Id,
-                        StartupId = f.StartupId,
-                        UploaderId = f.UploaderId,
-                        DocumentName = f.DocumentName,
-                        DocumentType = f.DocumentType,
-                        FileSize = f.FileSize,
-                        PresignedUrl = presignedUrl,
-                        UploadDate = f.UploadDate
-                    };
-                }));
+                        string presignedUrl = await fileStorage.GetPresignedUrl(
+                            f.ObjectName,
+                            f.Bucket,
+                            PresignedUrlExpirySeconds,
+                            cancellationToken);
+
+                        return new StartupDocumentFileResponse
+                        {
+                            Id = f.Id,
+                            StartupId = f.StartupId,
+                            UploaderId = f.UploaderId,
+                            DocumentName = f.DocumentName,
+                            DocumentType = f.DocumentType,
+                            FileSize = f.FileSize,
+                            PresignedUrl = presignedUrl,
+                            UploadDate = f.UploadDate
+                        };
+                    }));
+            }
+            catch (FileStorageException)
+            {
+                return Result.Failure<List<StartupDocumentFileResponse>>(StartupDocumentFileErrors.StorageUnavailable);
+            }
 
             return responses.ToList();
         }

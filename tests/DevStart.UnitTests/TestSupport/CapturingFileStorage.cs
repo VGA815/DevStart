@@ -6,6 +6,13 @@ internal sealed class CapturingFileStorage : IFileStorage
 {
     public List<UploadCall> Uploads { get; } = [];
 
+    // When set, the corresponding operation throws instead of succeeding — used to simulate a storage
+    // outage (or a missing object) so handlers can be verified to translate it into a Result.
+    public Exception? UploadException { get; set; }
+    public Exception? DownloadException { get; set; }
+    public Exception? DeleteException { get; set; }
+    public Exception? PresignException { get; set; }
+
     public Task UploadAsync(
         string objectKey,
         Stream data,
@@ -13,6 +20,11 @@ internal sealed class CapturingFileStorage : IFileStorage
         string contentType,
         CancellationToken cancellationToken)
     {
+        if (UploadException is not null)
+        {
+            throw UploadException;
+        }
+
         Uploads.Add(new UploadCall(objectKey, bucket, contentType, data.Length));
 
         return Task.CompletedTask;
@@ -22,20 +34,26 @@ internal sealed class CapturingFileStorage : IFileStorage
         string objectName,
         string bucket,
         CancellationToken cancellationToken) =>
-        Task.FromResult<Stream>(new MemoryStream());
+        DownloadException is not null
+            ? throw DownloadException
+            : Task.FromResult<Stream>(new MemoryStream());
 
     public Task DeleteAsync(
         string objectKey,
         string bucket,
         CancellationToken cancellationToken) =>
-        Task.CompletedTask;
+        DeleteException is not null
+            ? throw DeleteException
+            : Task.CompletedTask;
 
     public Task<string> GetPresignedUrl(
         string objectKey,
         string bucket,
         int expirySeconds,
         CancellationToken cancellationToken) =>
-        Task.FromResult($"https://example.com/{bucket}/{objectKey}?expires={expirySeconds}");
+        PresignException is not null
+            ? throw PresignException
+            : Task.FromResult($"https://example.com/{bucket}/{objectKey}?expires={expirySeconds}");
 
     internal sealed record UploadCall(string ObjectKey, string Bucket, string ContentType, long Size);
 }

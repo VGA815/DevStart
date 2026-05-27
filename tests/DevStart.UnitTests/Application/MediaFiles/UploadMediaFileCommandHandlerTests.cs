@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Data;
 using DevStart.Application.MediaFiles.Upload;
 using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Users;
@@ -50,5 +51,38 @@ public sealed class UploadMediaFileCommandHandlerTests
         mediaFile.ObjectName.ShouldBe(upload.ObjectKey);
         mediaFile.Bucket.ShouldBe("avatars");
         mediaFile.UploadDate.ShouldBe(utcNow);
+    }
+
+    [Fact]
+    public async Task Handle_StorageUnavailable_ReturnsStorageUnavailableAndPersistsNothing()
+    {
+        Guid userId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        DateTime utcNow = new(2026, 5, 24, 12, 0, 0, DateTimeKind.Utc);
+
+        await using var context = InMemoryDbContextFactory.Create();
+        User user = User.Create("user", "user@example.com", "hash", utcNow);
+        user.Id = userId;
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var fileStorage = new CapturingFileStorage
+        {
+            UploadException = new FileStorageException("storage down", notFound: false)
+        };
+        var handler = new UploadMediaFileCommandHandler(
+            context,
+            new TestUserContext(userId),
+            fileStorage,
+            new FixedDateTimeProvider { UtcNow = utcNow });
+
+        var command = new UploadMediaFileCommand(
+            userId, new MemoryStream([1, 2, 3]), "image/webp", 3, "avatars");
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe(MediaFileErrors.StorageUnavailable);
+        // The media-file row must not be persisted when the object never landed in storage.
+        context.MediaFiles.Any().ShouldBeFalse();
     }
 }

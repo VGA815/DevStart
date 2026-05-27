@@ -10,5 +10,8 @@ namespace DevStart.Domain.StartupDocumentFiles
         public static readonly Error NotFoundByStartupId = Error.NotFound(
             "StartupDocumentFiles.NotFoundByStartupId",
             "The startup document file with the specified startupId was not found");
+        public static readonly Error StorageUnavailable = Error.ServiceUnavailable(
+            "StartupDocumentFiles.StorageUnavailable",
+            "The file storage service is temporarily unavailable. Please try again later.");
     }
 }
