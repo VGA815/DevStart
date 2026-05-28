@@ -80,7 +80,28 @@ namespace DevStart.Application.ExpertCollaborationRequests.Create
                 request.CollaborationType));
 
             context.ExpertCollaborationRequests.Add(request);
-            await context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException)
+            {
+                context.ExpertCollaborationRequests.Remove(request);
+
+                bool duplicatePendingRequestExists = await context.ExpertCollaborationRequests
+                    .AsNoTracking()
+                    .AnyAsync(r => r.ExpertProfileId == userId
+                                && r.StartupId == command.StartupId
+                                && r.Status == ExpertCollaborationRequestStatus.Pending,
+                              cancellationToken);
+
+                if (duplicatePendingRequestExists)
+                {
+                    return Result.Failure<Guid>(ExpertCollaborationRequestErrors.AlreadyExistsForStartup);
+                }
+
+                throw;
+            }
 
             return request.Id;
         }

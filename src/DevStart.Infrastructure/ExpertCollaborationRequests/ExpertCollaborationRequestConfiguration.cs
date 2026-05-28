@@ -33,6 +33,10 @@ namespace DevStart.Infrastructure.ExpertCollaborationRequests
                 .HasDatabaseName("ix_expert_collaboration_requests_startup_status");
             builder.HasIndex(x => new { x.ExpertProfileId, x.Status })
                 .HasDatabaseName("ix_expert_collaboration_requests_expert_status");
+            builder.HasIndex(x => new { x.ExpertProfileId, x.StartupId })
+                .IsUnique()
+                .HasFilter("status = 0")
+                .HasDatabaseName("ux_expert_collaboration_requests_expert_startup_pending");
         }
     }
 }
