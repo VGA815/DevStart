@@ -6,8 +6,6 @@
 
 **DevStart** is a platform that helps early-stage startups raise investment and assemble their teams. This repository is the backend — a containerized REST API and the supporting services that run it.
 
-> **Architecture & contributor conventions live in [CLAUDE.md](CLAUDE.md)** — Clean Architecture, CQRS, layering, and domain rules.
-
 ## Features
 
 - **Startups** — profiles with members, products, metrics, roadmap, competitors, followers, and documents, plus a computed startup score
@@ -124,7 +122,7 @@ Run the architecture tests after moving types between projects — a failure mea
 
 ## Architecture
 
-Clean Architecture with CQRS across four layers (`WebApi → Application → Domain`, with `Infrastructure` and a shared `SharedKernel`). Handlers return a `Result` / `Result<T>` railway type, and endpoints self-register via `IEndpoint`. Full details and conventions are in **[CLAUDE.md](CLAUDE.md)**.
+Clean Architecture with CQRS across four layers (`WebApi → Application → Domain`, with `Infrastructure` and a shared `SharedKernel`). Handlers return a `Result` / `Result<T>` railway type, and endpoints self-register via `IEndpoint`.
 
 ## Contributing & license
 
