@@ -1,4 +1,5 @@
-﻿using DevStart.SharedKernel;
+using DevStart.Domain.Profiles;
+using DevStart.SharedKernel;
 
 namespace DevStart.Domain.StartupMembers
 {
@@ -9,19 +10,23 @@ namespace DevStart.Domain.StartupMembers
         public StartupRole Role { get; set; }
         public bool IsPublic { get; set; }
         public StartupPosition? Position { get; set; }
-        public string? Bio { get; set; }
         public int? YearsOfExperience { get; set; }
         public bool? HasPriorExit { get; set; }
         public int? PreviousStartupsCount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        // Personal data (name, bio, links) lives on the shared Profile, referenced by ProfileId (= UserId).
+        // StartupMember only carries membership-scoped data (role, position, experience, in-team visibility).
+        public Profile Profile { get; set; } = null!;
+
         public StartupMember()
         {
 
         }
         public static StartupMember Create(
             Guid profileId, Guid startupId, StartupRole role, bool isPublic, DateTime createdAt,
-            StartupPosition? position = null, string? bio = null, int? yearsOfExperience = null,
+            StartupPosition? position = null, int? yearsOfExperience = null,
             bool? hasPriorExit = null, int? previousStartupsCount = null)
             => new()
             {
@@ -32,7 +37,6 @@ namespace DevStart.Domain.StartupMembers
                 StartupId = startupId,
                 UpdatedAt = createdAt,
                 Position = position,
-                Bio = bio,
                 YearsOfExperience = yearsOfExperience,
                 HasPriorExit = hasPriorExit,
                 PreviousStartupsCount = previousStartupsCount
@@ -40,14 +44,12 @@ namespace DevStart.Domain.StartupMembers
 
         public Result UpdateProfile(
             StartupPosition? position,
-            string? bio,
             int? yearsOfExperience,
             bool? hasPriorExit,
             int? previousStartupsCount,
             DateTime utcNow)
         {
             Position = position;
-            Bio = bio;
             YearsOfExperience = yearsOfExperience;
             HasPriorExit = hasPriorExit;
             PreviousStartupsCount = previousStartupsCount;

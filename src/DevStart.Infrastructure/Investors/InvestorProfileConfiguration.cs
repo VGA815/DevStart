@@ -1,4 +1,5 @@
 using DevStart.Domain.Investors;
+using DevStart.Domain.Profiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,15 +19,17 @@ namespace DevStart.Infrastructure.Investors
                 .HasConversion<int>()
                 .IsRequired()
                 .HasColumnName("type");
-            builder.Property(x => x.DisplayName).HasMaxLength(200).IsRequired().HasColumnName("display_name");
-            builder.Property(x => x.Bio).HasMaxLength(2000).HasColumnName("bio");
-            builder.Property(x => x.Website).HasMaxLength(500).HasColumnName("website");
-            builder.Property(x => x.IsPublic).HasColumnName("is_public");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
             builder.HasIndex(x => x.UserId).IsUnique().HasDatabaseName("ix_investor_profiles_user_id");
             builder.HasIndex(x => x.Type).HasDatabaseName("ix_investor_profiles_type");
+
+            // Personal data lives on the shared Profile, referenced by UserId (1:1).
+            builder.HasOne(x => x.Profile)
+                .WithOne()
+                .HasForeignKey<InvestorProfile>(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

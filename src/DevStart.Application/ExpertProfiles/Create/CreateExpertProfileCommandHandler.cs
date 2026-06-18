@@ -2,6 +2,7 @@ using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.Experts;
+using DevStart.Domain.Profiles;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,17 +26,17 @@ namespace DevStart.Application.ExpertProfiles.Create
                 return Result.Failure<Guid>(ExpertProfileErrors.AlreadyExists(userId));
             }
 
-            ExpertProfile expertProfile = ExpertProfile.Create(
-                userId,
-                command.DisplayName,
-                command.Bio,
-                command.Website,
-                command.IsPublic,
-                command.LinkedInUrl,
-                command.TwitterUrl,
-                command.GitHubUrl,
-                command.TelegramUrl,
-                dateTimeProvider.UtcNow);
+            // Personal data (name, bio, links) lives on the shared Profile; require it before becoming an expert.
+            Profile? profile = await context.Profiles
+                .AsNoTracking()
+                .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+
+            if (profile is null || string.IsNullOrWhiteSpace(profile.Name))
+            {
+                return Result.Failure<Guid>(ExpertProfileErrors.ProfileNameRequired);
+            }
+
+            ExpertProfile expertProfile = ExpertProfile.Create(userId, dateTimeProvider.UtcNow);
 
             context.ExpertProfiles.Add(expertProfile);
 

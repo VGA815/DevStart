@@ -7,14 +7,6 @@ namespace DevStart.Application.Scoring
 {
     internal sealed class ScoringEngine : IScoringEngine
     {
-        // Weights from the spec:
-        // Score = Team × 0.30 + Market × 0.25 + Product × 0.15 + Traction × 0.15 + Competition × 0.10
-        private const decimal TeamWeight = 0.30m;
-        private const decimal MarketWeight = 0.25m;
-        private const decimal ProductWeight = 0.15m;
-        private const decimal TractionWeight = 0.15m;
-        private const decimal CompetitionWeight = 0.10m;
-
         public ScoreResult Compute(ScoringInputs inputs, DateTime calculatedAt)
         {
             decimal team = ComputeTeamScore(inputs.Members);
@@ -23,12 +15,14 @@ namespace DevStart.Application.Scoring
             decimal traction = ComputeTractionScore(inputs.LatestMetrics);
             decimal competition = ComputeCompetitionScore(inputs.CompetitorsCount);
 
+            ScoreWeights w = WeightsFor(inputs.Stage);
+
             decimal total = Round2(
-                team * TeamWeight +
-                market * MarketWeight +
-                product * ProductWeight +
-                traction * TractionWeight +
-                competition * CompetitionWeight);
+                team * w.Team +
+                market * w.Market +
+                product * w.Product +
+                traction * w.Traction +
+                competition * w.Competition);
 
             return new ScoreResult(
                 TotalScore: total,
@@ -43,8 +37,23 @@ namespace DevStart.Application.Scoring
                 CalculatedAt: calculatedAt);
         }
 
+        // Stage-aware weights: team/product matter most early, traction/market most later.
+        // Each stage's weights sum to 1.00 (guarded by ScoringEngineTests). Proposed defaults — tunable.
+        internal readonly record struct ScoreWeights(
+            decimal Team, decimal Market, decimal Product, decimal Traction, decimal Competition);
+
+        internal static ScoreWeights WeightsFor(StartupStage stage) => stage switch
+        {
+            StartupStage.Idea or StartupStage.PreSeed => new(0.35m, 0.25m, 0.20m, 0.10m, 0.10m),
+            StartupStage.Mvp or StartupStage.Seed => new(0.25m, 0.25m, 0.15m, 0.25m, 0.10m),
+            StartupStage.SeriesA => new(0.20m, 0.25m, 0.10m, 0.35m, 0.10m),
+            _ => new(0.35m, 0.25m, 0.20m, 0.10m, 0.10m)
+        };
+
         // Spec: highest founder tier base, +15 if CEO+CTO+CMO present.
         // No experience = 30, Industry = 60, Serial = 80, Serial with exit = 90.
+        // Experience is taken from founders; if a team has no one flagged Founder, fall back to the
+        // highest tier among all members so a founder-less team isn't unfairly capped at NoExperience.
         private static decimal ComputeTeamScore(IReadOnlyList<MemberInput> members)
         {
             if (members.Count == 0)
@@ -52,13 +61,15 @@ namespace DevStart.Application.Scoring
                 return 0m;
             }
 
-            FounderExperienceTier highest = FounderExperienceTier.NoExperience;
-            foreach (MemberInput m in members)
+            IEnumerable<MemberInput> experiencePool = members.Where(m => m.Role == StartupRole.Founder);
+            if (!experiencePool.Any())
             {
-                if (m.Role != StartupRole.Founder)
-                {
-                    continue;
-                }
+                experiencePool = members;
+            }
+
+            FounderExperienceTier highest = FounderExperienceTier.NoExperience;
+            foreach (MemberInput m in experiencePool)
+            {
                 FounderExperienceTier tier = ClassifyFounder(m);
                 if ((int)tier > (int)highest)
                 {
@@ -75,6 +86,7 @@ namespace DevStart.Application.Scoring
                 _ => 30m
             };
 
+            // Completeness bonus is role-agnostic: it rewards C-suite coverage regardless of Founder flag.
             bool hasCeo = members.Any(m => m.Position == StartupPosition.CEO);
             bool hasCto = members.Any(m => m.Position == StartupPosition.CTO);
             bool hasCmo = members.Any(m => m.Position == StartupPosition.CMO);
@@ -105,7 +117,8 @@ namespace DevStart.Application.Scoring
         }
 
         // Spec: Sub1B=20, 1-10B=60, 10B+=90, plus CAGR bump (+10 / +25).
-        // Treat Tam as USD when classifying tiers (spec ranges are in $).
+        // NOTE: Tam is interpreted as USD here — the tier ranges ($1B / $10B) are dollar figures.
+        // Valuation output (IValuationCalculator) is in RUB; the two are deliberately different currencies.
         private static decimal ComputeMarketScore(decimal? tam, decimal? cagr)
         {
             if (tam is null || tam <= 0)
@@ -170,14 +183,17 @@ namespace DevStart.Application.Scoring
 
         // Spec:
         // - No revenue but MAU > 0: 35
+        // - MRR > 0, declining (MoM < 0): 25
         // - MRR > 0, MoM 0–10%: 50
         // - MRR > 0, MoM 10–20%: 70
-        // - MRR > ₽1M with MoM > 10%: 80
-        // - MRR > ₽4M with MoM > 20%: 95
+        // - MRR >= ₽1M with MoM >= 10%: 80
+        // - MRR >= ₽4M with MoM >= 20%: 95
+        // Only the dedicated Mrr/Mau/MomGrowth metric types feed traction — by design there is no
+        // Revenue->Mrr / Users->Mau fallback. Negative MRR/MAU are treated as 0 (dirty input guard).
         private static decimal ComputeTractionScore(IReadOnlyDictionary<MetricType, decimal> latest)
         {
-            decimal mrr = latest.TryGetValue(MetricType.Mrr, out decimal m) ? m : 0m;
-            decimal mau = latest.TryGetValue(MetricType.Mau, out decimal a) ? a : 0m;
+            decimal mrr = latest.TryGetValue(MetricType.Mrr, out decimal m) ? Math.Max(0m, m) : 0m;
+            decimal mau = latest.TryGetValue(MetricType.Mau, out decimal a) ? Math.Max(0m, a) : 0m;
             decimal mom = latest.TryGetValue(MetricType.MomGrowth, out decimal g) ? g : 0m;
 
             if (mrr <= 0)
@@ -196,6 +212,10 @@ namespace DevStart.Application.Scoring
             if (mom >= 10m)
             {
                 return 70m;
+            }
+            if (mom < 0m)
+            {
+                return 25m;
             }
             return 50m;
         }

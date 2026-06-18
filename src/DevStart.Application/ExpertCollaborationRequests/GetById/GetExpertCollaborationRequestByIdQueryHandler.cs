@@ -1,8 +1,8 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Startups;
 using DevStart.Domain.ExpertCollaborationRequests;
-using DevStart.Domain.StartupMembers;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +10,8 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetById
 {
     internal sealed class GetExpertCollaborationRequestByIdQueryHandler(
         IApplicationDbContext context,
-        IUserContext userContext)
+        IUserContext userContext,
+        IStartupAuthorizationService authorization)
         : IQueryHandler<GetExpertCollaborationRequestByIdQuery, ExpertCollaborationRequestResponse>
     {
         public async Task<Result<ExpertCollaborationRequestResponse>> Handle(GetExpertCollaborationRequestByIdQuery query, CancellationToken cancellationToken)
@@ -27,28 +28,17 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetById
 
             Guid userId = userContext.UserId;
             bool isExpert = request.ExpertProfileId == userId;
-            bool isFounderOrAdmin = false;
 
-            if (!isExpert)
-            {
-                isFounderOrAdmin = await context.StartupMembers
-                    .AsNoTracking()
-                    .AnyAsync(sm => sm.StartupId == request.StartupId
-                                 && sm.ProfileId == userId
-                                 && (sm.Role == StartupRole.Founder || sm.Role == StartupRole.Administration),
-                              cancellationToken);
-            }
-
-            if (!isExpert && !isFounderOrAdmin)
+            if (!isExpert && !await authorization.IsFounderOrAdminAsync(userId, request.StartupId, cancellationToken))
             {
                 return Result.Failure<ExpertCollaborationRequestResponse>(
                     ExpertCollaborationRequestErrors.Unauthorized);
             }
 
-            string expertDisplayName = await context.ExpertProfiles
+            string expertDisplayName = await context.Profiles
                 .AsNoTracking()
-                .Where(ep => ep.Id == request.ExpertProfileId)
-                .Select(ep => ep.DisplayName)
+                .Where(p => p.UserId == request.ExpertProfileId)
+                .Select(p => p.Name)
                 .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
 
             string startupName = await context.Startups

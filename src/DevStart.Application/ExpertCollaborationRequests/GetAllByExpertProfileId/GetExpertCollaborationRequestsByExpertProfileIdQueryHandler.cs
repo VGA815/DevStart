@@ -29,9 +29,9 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetAllByExpertProfile
                 {
                     Id = r.Id,
                     ExpertProfileId = r.ExpertProfileId,
-                    ExpertDisplayName = context.ExpertProfiles
-                        .Where(ep => ep.Id == r.ExpertProfileId)
-                        .Select(ep => ep.DisplayName)
+                    ExpertDisplayName = context.Profiles
+                        .Where(p => p.UserId == r.ExpertProfileId)
+                        .Select(p => p.Name)
                         .FirstOrDefault() ?? string.Empty,
                     StartupId = r.StartupId,
                     StartupName = context.Startups

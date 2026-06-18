@@ -25,16 +25,7 @@ namespace DevStart.Application.ExpertProfiles.Update
                 return Result.Failure(ExpertProfileErrors.NotFound(userId));
             }
 
-            expertProfile.Update(
-                command.DisplayName,
-                command.Bio,
-                command.Website,
-                command.IsPublic,
-                command.LinkedInUrl,
-                command.TwitterUrl,
-                command.GitHubUrl,
-                command.TelegramUrl,
-                dateTimeProvider.UtcNow);
+            expertProfile.Touch(dateTimeProvider.UtcNow);
 
             List<ExpertProfileSpecialization> existingSpecializations = await context.ExpertProfileSpecializations
                 .Where(s => s.ExpertProfileId == expertProfile.Id)

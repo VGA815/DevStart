@@ -1,4 +1,4 @@
-﻿using DevStart.Domain.Profiles;
+using DevStart.Domain.Profiles;
 using DevStart.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -20,6 +20,10 @@ namespace DevStart.Infrastructure.Profiles
             builder.Property(x => x.IsAvailableForHire).HasColumnName("is_available_for_hire");
             builder.Property(x => x.IsPublic).HasColumnName("is_public");
             builder.Property(x => x.AvatarId).HasColumnName("avatar_id");
+            builder.Property(x => x.LinkedInUrl).HasMaxLength(500).HasColumnName("linkedin_url");
+            builder.Property(x => x.TwitterUrl).HasMaxLength(500).HasColumnName("twitter_url");
+            builder.Property(x => x.GitHubUrl).HasMaxLength(500).HasColumnName("github_url");
+            builder.Property(x => x.TelegramUrl).HasMaxLength(500).HasColumnName("telegram_url");
 
             builder.Property(x => x.SocialMediaLinks)
                 .HasColumnName("social_media_links")

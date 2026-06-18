@@ -15,7 +15,6 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
         public sealed record Request(
             [property: JsonPropertyName("startup_id")] Guid StartupId,
             [property: JsonPropertyName("position")] StartupPosition? Position,
-            [property: JsonPropertyName("bio")] string? Bio,
             [property: JsonPropertyName("years_of_experience")] int? YearsOfExperience,
             [property: JsonPropertyName("has_prior_exit")] bool? HasPriorExit,
             [property: JsonPropertyName("previous_startups_count")] int? PreviousStartupsCount);
@@ -30,7 +29,6 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
                 var command = new UpdateStartupMemberProfileCommand(
                     request.StartupId,
                     request.Position,
-                    request.Bio,
                     request.YearsOfExperience,
                     request.HasPriorExit,
                     request.PreviousStartupsCount);

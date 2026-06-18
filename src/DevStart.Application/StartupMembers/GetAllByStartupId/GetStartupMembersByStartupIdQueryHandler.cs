@@ -1,4 +1,3 @@
-﻿using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.Startups;
@@ -17,8 +16,6 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
                 return Result.Failure<List<StartupMemberResponse>>(StartupErrors.NotFound(query.StartupId));
             }
 
-            //bool isMember = await context.StartupMembers.AnyAsync(sm => sm.ProfileId == userContext.UserId && sm.StartupId == query.StartupId, cancellationToken);
-
             List<StartupMemberResponse> startupMemberResponses = await context.StartupMembers
                 .Where(sm => sm.StartupId == query.StartupId && sm.IsPublic)
                 .Select(sm => new StartupMemberResponse
@@ -29,7 +26,8 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
                     ProfileId = sm.ProfileId,
                     Role = sm.Role,
                     Position = sm.Position,
-                    Bio = sm.Bio,
+                    Name = sm.Profile.Name,
+                    Bio = sm.Profile.Bio,
                     YearsOfExperience = sm.YearsOfExperience,
                     HasPriorExit = sm.HasPriorExit,
                     PreviousStartupsCount = sm.PreviousStartupsCount,
@@ -38,8 +36,6 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
                 .ToListAsync(cancellationToken);
 
             return startupMemberResponses;
-
-
         }
     }
 }

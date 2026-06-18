@@ -26,6 +26,10 @@ namespace DevStart.Application.Profiles.GetById
                     Name = p.Name,
                     SocialMediaLinks = p.SocialMediaLinks,
                     Url = p.Url,
+                    LinkedInUrl = p.LinkedInUrl,
+                    TwitterUrl = p.TwitterUrl,
+                    GitHubUrl = p.GitHubUrl,
+                    TelegramUrl = p.TelegramUrl,
                     ViewCount = p.ViewCount,
                 })
                 .SingleOrDefaultAsync(cancellationToken);

@@ -57,10 +57,10 @@ namespace DevStart.Application.InvestmentDeals.GetById
                 .Select(s => s.Name)
                 .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
 
-            string investorDisplayName = await context.InvestorProfiles
+            string investorDisplayName = await context.Profiles
                 .AsNoTracking()
-                .Where(ip => ip.Id == deal.InvestorProfileId)
-                .Select(ip => ip.DisplayName)
+                .Where(p => p.UserId == deal.InvestorProfileId)
+                .Select(p => p.Name)
                 .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
 
             string? roadmapItemTitle = deal.RoadmapItemId.HasValue

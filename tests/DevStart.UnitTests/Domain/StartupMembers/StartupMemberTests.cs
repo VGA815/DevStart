@@ -19,7 +19,6 @@ public sealed class StartupMemberTests
             isPublic: true,
             createdAt,
             StartupPosition.CEO,
-            "Founder bio",
             yearsOfExperience: 7,
             hasPriorExit: true,
             previousStartupsCount: 2);
@@ -29,7 +28,6 @@ public sealed class StartupMemberTests
         member.Role.ShouldBe(StartupRole.Founder);
         member.IsPublic.ShouldBeTrue();
         member.Position.ShouldBe(StartupPosition.CEO);
-        member.Bio.ShouldBe("Founder bio");
         member.YearsOfExperience.ShouldBe(7);
         member.HasPriorExit.ShouldBe(true);
         member.PreviousStartupsCount.ShouldBe(2);
@@ -50,7 +48,6 @@ public sealed class StartupMemberTests
 
         var result = member.UpdateProfile(
             StartupPosition.CTO,
-            "Updated bio",
             yearsOfExperience: 5,
             hasPriorExit: false,
             previousStartupsCount: 1,
@@ -58,7 +55,6 @@ public sealed class StartupMemberTests
 
         result.IsSuccess.ShouldBeTrue();
         member.Position.ShouldBe(StartupPosition.CTO);
-        member.Bio.ShouldBe("Updated bio");
         member.YearsOfExperience.ShouldBe(5);
         member.HasPriorExit.ShouldBe(false);
         member.PreviousStartupsCount.ShouldBe(1);

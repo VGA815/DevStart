@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Messaging;
 
 namespace DevStart.Application.Profiles.Update
 {
@@ -12,8 +12,13 @@ namespace DevStart.Application.Profiles.Update
         public bool IsPublic { get; set; }
         public bool IsAvailableForHire { get; set; }
         public List<string> SocialMediaLinks { get; set; } = [];
+        public string? LinkedInUrl { get; set; }
+        public string? TwitterUrl { get; set; }
+        public string? GitHubUrl { get; set; }
+        public string? TelegramUrl { get; set; }
 
-        public UpdateProfileCommand(Guid userId, string? url, string name, Guid? avatarId, string? bio, bool isPublic, bool isAvailableForHire, List<string> socialMediaLinks)
+        public UpdateProfileCommand(Guid userId, string? url, string name, Guid? avatarId, string? bio, bool isPublic, bool isAvailableForHire, List<string> socialMediaLinks,
+            string? linkedInUrl = null, string? twitterUrl = null, string? gitHubUrl = null, string? telegramUrl = null)
         {
             UserId = userId;
             Url = url;
@@ -23,6 +28,10 @@ namespace DevStart.Application.Profiles.Update
             IsPublic = isPublic;
             IsAvailableForHire = isAvailableForHire;
             SocialMediaLinks = socialMediaLinks;
+            LinkedInUrl = linkedInUrl;
+            TwitterUrl = twitterUrl;
+            GitHubUrl = gitHubUrl;
+            TelegramUrl = telegramUrl;
         }
     }
 }

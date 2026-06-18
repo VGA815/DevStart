@@ -27,10 +27,6 @@ namespace DevStart.Application.InvestorProfiles.Update
 
             investorProfile.Update(
                 command.Type,
-                command.DisplayName,
-                command.Bio,
-                command.Website,
-                command.IsPublic,
                 dateTimeProvider.UtcNow);
 
             await context.SaveChangesAsync(cancellationToken);

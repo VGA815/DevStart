@@ -7,17 +7,15 @@ namespace DevStart.Application.StartupMembers.UpdateProfile
     {
         public Guid StartupId { get; set; }
         public StartupPosition? Position { get; set; }
-        public string? Bio { get; set; }
         public int? YearsOfExperience { get; set; }
         public bool? HasPriorExit { get; set; }
         public int? PreviousStartupsCount { get; set; }
 
-        public UpdateStartupMemberProfileCommand(Guid startupId, StartupPosition? position, string? bio, int? yearsOfExperience,
+        public UpdateStartupMemberProfileCommand(Guid startupId, StartupPosition? position, int? yearsOfExperience,
             bool? hasPriorExit, int? previousStartupsCount)
         {
             StartupId = startupId;
             Position = position;
-            Bio = bio;
             YearsOfExperience = yearsOfExperience;
             HasPriorExit = hasPriorExit;
             PreviousStartupsCount = previousStartupsCount;

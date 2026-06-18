@@ -57,7 +57,6 @@ namespace DevStart.Application.StartupMembers.Create
                 command.IsPublic,
                 dateTimeProvider.UtcNow,
                 command.Position,
-                command.Bio,
                 command.YearsOfExperience,
                 command.HasPriorExit,
                 command.PreviousStartupsCount);

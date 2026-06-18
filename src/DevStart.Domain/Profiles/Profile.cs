@@ -9,6 +9,10 @@ namespace DevStart.Domain.Profiles
         public string? Bio { get; set; }
         public string? Url { get; set; }
         public List<string> SocialMediaLinks { get; set; } = [];
+        public string? LinkedInUrl { get; set; }
+        public string? TwitterUrl { get; set; }
+        public string? GitHubUrl { get; set; }
+        public string? TelegramUrl { get; set; }
         public bool IsAvailableForHire { get; set; }
         public bool IsPublic { get; set; }
         public Guid? AvatarId { get; set; }

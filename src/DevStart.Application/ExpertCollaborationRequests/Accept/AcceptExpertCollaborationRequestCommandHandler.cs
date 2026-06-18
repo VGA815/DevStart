@@ -1,8 +1,8 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Startups;
 using DevStart.Domain.ExpertCollaborationRequests;
-using DevStart.Domain.StartupMembers;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +11,7 @@ namespace DevStart.Application.ExpertCollaborationRequests.Accept
     internal sealed class AcceptExpertCollaborationRequestCommandHandler(
         IApplicationDbContext context,
         IUserContext userContext,
+        IStartupAuthorizationService authorization,
         IDateTimeProvider dateTimeProvider)
         : ICommandHandler<AcceptExpertCollaborationRequestCommand>
     {
@@ -24,12 +25,7 @@ namespace DevStart.Application.ExpertCollaborationRequests.Accept
                 return Result.Failure(ExpertCollaborationRequestErrors.NotFound(command.RequestId));
             }
 
-            StartupMember? member = await context.StartupMembers
-                .SingleOrDefaultAsync(
-                    sm => sm.StartupId == request.StartupId && sm.ProfileId == userContext.UserId,
-                    cancellationToken);
-
-            if (member is null || member.Role == StartupRole.Member)
+            if (!await authorization.IsFounderOrAdminAsync(userContext.UserId, request.StartupId, cancellationToken))
             {
                 return Result.Failure(ExpertCollaborationRequestErrors.Unauthorized);
             }

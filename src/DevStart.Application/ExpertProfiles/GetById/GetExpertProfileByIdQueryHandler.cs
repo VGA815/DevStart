@@ -11,41 +11,57 @@ namespace DevStart.Application.ExpertProfiles.GetById
     {
         public async Task<Result<ExpertProfileResponse>> Handle(GetExpertProfileByIdQuery query, CancellationToken cancellationToken)
         {
-            ExpertProfile? expertProfile = await context.ExpertProfiles
+            var data = await context.ExpertProfiles
                 .AsNoTracking()
-                .SingleOrDefaultAsync(ep => ep.UserId == query.UserId, cancellationToken);
+                .Where(ep => ep.UserId == query.UserId)
+                .Select(ep => new
+                {
+                    ep.Id,
+                    ep.UserId,
+                    ep.CreatedAt,
+                    ep.UpdatedAt,
+                    ep.Profile.Name,
+                    ep.Profile.Bio,
+                    ep.Profile.Url,
+                    ep.Profile.IsPublic,
+                    ep.Profile.LinkedInUrl,
+                    ep.Profile.TwitterUrl,
+                    ep.Profile.GitHubUrl,
+                    ep.Profile.TelegramUrl
+                })
+                .SingleOrDefaultAsync(cancellationToken);
 
-            if (expertProfile is null)
+            if (data is null)
             {
                 return Result.Failure<ExpertProfileResponse>(ExpertProfileErrors.NotFound(query.UserId));
             }
 
             List<ExpertSpecialization> specializations = await context.ExpertProfileSpecializations
                 .AsNoTracking()
-                .Where(s => s.ExpertProfileId == expertProfile.Id)
+                .Where(s => s.ExpertProfileId == data.Id)
                 .Select(s => s.Specialization)
                 .ToListAsync(cancellationToken);
 
             int experiencesCount = await context.ExpertExperiences
                 .AsNoTracking()
-                .CountAsync(e => e.ExpertProfileId == expertProfile.Id, cancellationToken);
+                .CountAsync(e => e.ExpertProfileId == data.Id, cancellationToken);
 
             return new ExpertProfileResponse
             {
-                Id = expertProfile.Id,
-                UserId = expertProfile.UserId,
-                DisplayName = expertProfile.DisplayName,
-                Bio = expertProfile.Bio,
-                Website = expertProfile.Website,
-                IsPublic = expertProfile.IsPublic,
-                LinkedInUrl = expertProfile.LinkedInUrl,
-                TwitterUrl = expertProfile.TwitterUrl,
-                GitHubUrl = expertProfile.GitHubUrl,
-                TelegramUrl = expertProfile.TelegramUrl,
+                Id = data.Id,
+                UserId = data.UserId,
+                DisplayName = data.Name ?? string.Empty,
+                Bio = data.Bio,
+                Website = data.Url,
+                IsPublic = data.IsPublic,
+                LinkedInUrl = data.LinkedInUrl,
+                TwitterUrl = data.TwitterUrl,
+                GitHubUrl = data.GitHubUrl,
+                TelegramUrl = data.TelegramUrl,
                 Specializations = specializations,
                 ExperiencesCount = experiencesCount,
-                CreatedAt = expertProfile.CreatedAt,
-                UpdatedAt = expertProfile.UpdatedAt
+                CreatedAt = data.CreatedAt,
+                UpdatedAt = data.UpdatedAt
             };
         }
     }

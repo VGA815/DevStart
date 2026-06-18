@@ -11,27 +11,29 @@ namespace DevStart.Application.InvestorProfiles.GetById
     {
         public async Task<Result<InvestorProfileResponse>> Handle(GetInvestorProfileByIdQuery query, CancellationToken cancellationToken)
         {
-            InvestorProfile? investorProfile = await context.InvestorProfiles
+            InvestorProfileResponse? response = await context.InvestorProfiles
                 .AsNoTracking()
-                .SingleOrDefaultAsync(ip => ip.UserId == query.UserId, cancellationToken);
+                .Where(ip => ip.UserId == query.UserId)
+                .Select(ip => new InvestorProfileResponse
+                {
+                    Id = ip.Id,
+                    UserId = ip.UserId,
+                    Type = ip.Type,
+                    DisplayName = ip.Profile.Name ?? string.Empty,
+                    Bio = ip.Profile.Bio,
+                    Website = ip.Profile.Url,
+                    IsPublic = ip.Profile.IsPublic,
+                    CreatedAt = ip.CreatedAt,
+                    UpdatedAt = ip.UpdatedAt
+                })
+                .SingleOrDefaultAsync(cancellationToken);
 
-            if (investorProfile is null)
+            if (response is null)
             {
                 return Result.Failure<InvestorProfileResponse>(InvestorProfileErrors.NotFound(query.UserId));
             }
 
-            return new InvestorProfileResponse
-            {
-                Id = investorProfile.Id,
-                UserId = investorProfile.UserId,
-                Type = investorProfile.Type,
-                DisplayName = investorProfile.DisplayName,
-                Bio = investorProfile.Bio,
-                Website = investorProfile.Website,
-                IsPublic = investorProfile.IsPublic,
-                CreatedAt = investorProfile.CreatedAt,
-                UpdatedAt = investorProfile.UpdatedAt
-            };
+            return response;
         }
     }
 }

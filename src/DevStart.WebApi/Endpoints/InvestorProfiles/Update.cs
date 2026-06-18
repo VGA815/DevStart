@@ -13,11 +13,7 @@ namespace DevStart.WebApi.Endpoints.InvestorProfiles
     internal sealed class Update : IEndpoint
     {
         public sealed record Request(
-            [property: JsonPropertyName("type")] InvestorProfileType Type,
-            [property: JsonPropertyName("display_name")] string DisplayName,
-            [property: JsonPropertyName("bio")] string? Bio,
-            [property: JsonPropertyName("website")] string? Website,
-            [property: JsonPropertyName("is_public")] bool IsPublic);
+            [property: JsonPropertyName("type")] InvestorProfileType Type);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -26,12 +22,7 @@ namespace DevStart.WebApi.Endpoints.InvestorProfiles
                 ICommandHandler<UpdateInvestorProfileCommand> handler,
                 CancellationToken cancellationToken) =>
             {
-                var command = new UpdateInvestorProfileCommand(
-                    request.Type,
-                    request.DisplayName,
-                    request.Bio,
-                    request.Website,
-                    request.IsPublic);
+                var command = new UpdateInvestorProfileCommand(request.Type);
 
                 Result result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.NoContent, CustomResults.Problem);

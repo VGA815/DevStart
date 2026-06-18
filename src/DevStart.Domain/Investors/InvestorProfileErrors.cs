@@ -15,5 +15,9 @@ namespace DevStart.Domain.Investors
         public static readonly Error Unauthorized = Error.Problem(
             "InvestorProfiles.Unauthorized",
             "You are not allowed to perform this action on this investor profile.");
+
+        public static readonly Error ProfileNameRequired = Error.Problem(
+            "InvestorProfiles.ProfileNameRequired",
+            "A profile with a non-empty name is required before creating an investor profile.");
     }
 }

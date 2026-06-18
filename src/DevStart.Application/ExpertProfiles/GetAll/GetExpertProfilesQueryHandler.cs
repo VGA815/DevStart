@@ -14,7 +14,7 @@ internal sealed class GetExpertProfilesQueryHandler(IApplicationDbContext contex
     {
         var q = context.ExpertProfiles
             .AsNoTracking()
-            .Where(ep => ep.IsPublic);
+            .Where(ep => ep.Profile.IsPublic);
 
         if (query.Specialization.HasValue)
         {
@@ -26,7 +26,7 @@ internal sealed class GetExpertProfilesQueryHandler(IApplicationDbContext contex
         q = query.SortBy switch
         {
             ExpertSortBy.CreatedAt => q.OrderByDescending(ep => ep.CreatedAt),
-            _                      => q.OrderBy(ep => ep.DisplayName)
+            _                      => q.OrderBy(ep => ep.Profile.Name)
         };
 
         List<ExpertCatalogResponse> result = await q
@@ -36,13 +36,13 @@ internal sealed class GetExpertProfilesQueryHandler(IApplicationDbContext contex
             {
                 Id              = ep.Id,
                 UserId          = ep.UserId,
-                DisplayName     = ep.DisplayName,
-                Bio             = ep.Bio,
-                Website         = ep.Website,
-                LinkedInUrl     = ep.LinkedInUrl,
-                TwitterUrl      = ep.TwitterUrl,
-                GitHubUrl       = ep.GitHubUrl,
-                TelegramUrl     = ep.TelegramUrl,
+                DisplayName     = ep.Profile.Name ?? string.Empty,
+                Bio             = ep.Profile.Bio,
+                Website         = ep.Profile.Url,
+                LinkedInUrl     = ep.Profile.LinkedInUrl,
+                TwitterUrl      = ep.Profile.TwitterUrl,
+                GitHubUrl       = ep.Profile.GitHubUrl,
+                TelegramUrl     = ep.Profile.TelegramUrl,
                 Specializations = context.ExpertProfileSpecializations
                                     .Where(s => s.ExpertProfileId == ep.Id)
                                     .Select(s => s.Specialization)

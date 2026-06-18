@@ -1,4 +1,3 @@
-﻿
 using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.StartupMembers.Create;
@@ -7,7 +6,6 @@ using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
 using DevStart.WebApi.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
 namespace DevStart.WebApi.Endpoints.StartupMembers
@@ -20,7 +18,6 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
             [property: JsonPropertyName("role")] StartupRole Role,
             [property: JsonPropertyName("is_public")] bool IsPublic,
             [property: JsonPropertyName("position")] StartupPosition? Position = null,
-            [property: JsonPropertyName("bio")] string? Bio = null,
             [property: JsonPropertyName("years_of_experience")] int? YearsOfExperience = null,
             [property: JsonPropertyName("has_prior_exit")] bool? HasPriorExit = null,
             [property: JsonPropertyName("previous_startups_count")] int? PreviousStartupsCount = null);
@@ -37,7 +34,6 @@ namespace DevStart.WebApi.Endpoints.StartupMembers
                     request.Role,
                     request.IsPublic,
                     request.Position,
-                    request.Bio,
                     request.YearsOfExperience,
                     request.HasPriorExit,
                     request.PreviousStartupsCount);

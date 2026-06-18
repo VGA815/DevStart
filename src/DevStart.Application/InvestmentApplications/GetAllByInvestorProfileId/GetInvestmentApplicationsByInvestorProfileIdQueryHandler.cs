@@ -29,9 +29,9 @@ namespace DevStart.Application.InvestmentApplications.GetAllByInvestorProfileId
                 {
                     Id = a.Id,
                     InvestorProfileId = a.InvestorProfileId,
-                    InvestorDisplayName = context.InvestorProfiles
-                        .Where(ip => ip.Id == a.InvestorProfileId)
-                        .Select(ip => ip.DisplayName)
+                    InvestorDisplayName = context.Profiles
+                        .Where(p => p.UserId == a.InvestorProfileId)
+                        .Select(p => p.Name)
                         .FirstOrDefault() ?? string.Empty,
                     StartupId = a.StartupId,
                     StartupName = context.Startups

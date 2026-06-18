@@ -13,14 +13,6 @@ namespace DevStart.WebApi.Endpoints.ExpertProfiles
     internal sealed class Create : IEndpoint
     {
         public sealed record Request(
-            [property: JsonPropertyName("display_name")] string DisplayName,
-            [property: JsonPropertyName("bio")] string? Bio,
-            [property: JsonPropertyName("website")] string? Website,
-            [property: JsonPropertyName("is_public")] bool IsPublic,
-            [property: JsonPropertyName("linkedin_url")] string? LinkedInUrl,
-            [property: JsonPropertyName("twitter_url")] string? TwitterUrl,
-            [property: JsonPropertyName("github_url")] string? GitHubUrl,
-            [property: JsonPropertyName("telegram_url")] string? TelegramUrl,
             [property: JsonPropertyName("specializations")] List<ExpertSpecialization> Specializations);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
@@ -31,14 +23,6 @@ namespace DevStart.WebApi.Endpoints.ExpertProfiles
                 CancellationToken cancellationToken) =>
             {
                 var command = new CreateExpertProfileCommand(
-                    request.DisplayName,
-                    request.Bio,
-                    request.Website,
-                    request.IsPublic,
-                    request.LinkedInUrl,
-                    request.TwitterUrl,
-                    request.GitHubUrl,
-                    request.TelegramUrl,
                     request.Specializations ?? new List<ExpertSpecialization>());
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);

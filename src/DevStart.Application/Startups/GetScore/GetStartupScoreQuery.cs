@@ -1,13 +1,10 @@
-using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Scoring;
 
 namespace DevStart.Application.Startups.GetScore
 {
-    public sealed record GetStartupScoreQuery(Guid StartupId) : IQuery<ScoreResult>, ICacheableQuery
-    {
-        public string CacheKey => CacheKeys.StartupScore(StartupId);
-
-        public TimeSpan Expiration => TimeSpan.FromHours(1);
-    }
+    // Public, authorization-gated entry point for a startup's score. NOT cacheable: the Pro/member
+    // gate in the handler must run on every request. The actual computation is cached one layer down
+    // via ComputeStartupScoreQuery (viewer-independent), so the gate can never be skipped on a cache hit.
+    public sealed record GetStartupScoreQuery(Guid StartupId) : IQuery<ScoreResult>;
 }

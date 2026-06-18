@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DevStart.Application.InvestmentApplications.SuggestedTerms
 {
     internal sealed class GetSuggestedTermsQueryHandler(
-        IQueryHandler<GetStartupScoreQuery, ScoreResult> scoreHandler,
+        IQueryHandler<ComputeStartupScoreQuery, ScoreResult> scoreHandler,
         IUserContext userContext,
         ISubscriptionChecker subscriptionChecker,
         IApplicationDbContext context)
@@ -43,8 +43,9 @@ namespace DevStart.Application.InvestmentApplications.SuggestedTerms
                 return Result.Failure<SuggestedTermsResponse>(SubscriptionErrors.ProRequired);
             }
 
+            // Viewer already gated above (member-or-Pro); call the ungated compute path directly.
             Result<ScoreResult> scoreResult = await scoreHandler.Handle(
-                new GetStartupScoreQuery(query.StartupId),
+                new ComputeStartupScoreQuery(query.StartupId),
                 cancellationToken);
 
             if (scoreResult.IsFailure)

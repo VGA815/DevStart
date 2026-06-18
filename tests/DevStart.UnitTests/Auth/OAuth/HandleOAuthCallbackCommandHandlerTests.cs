@@ -1,7 +1,11 @@
 using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Auth.OAuth;
 using DevStart.Application.Auth.OAuth.Callback;
+using DevStart.Application.UserConsents;
+using DevStart.Application.Users.Register;
 using DevStart.Domain.ExternalLogins;
 using DevStart.Domain.RefreshTokens;
+using DevStart.Domain.UserConsents;
 using DevStart.Domain.Users;
 using DevStart.Infrastructure.Authentication.RefreshTokens;
 using DevStart.Infrastructure.Database;
@@ -17,6 +21,8 @@ namespace DevStart.UnitTests.Auth.OAuth
     {
         private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
         private readonly InMemoryOAuthStateStore _stateStore = new();
+        private readonly InMemoryPendingRegistrationStore _pendingStore = new();
+        private readonly FakeConsentService _consentService = new();
         private readonly FakeExternalAuthProvider _provider = new() { Provider = ExternalLoginProvider.Google };
         private readonly FixedDateTimeProvider _clock = new();
         private readonly HandleOAuthCallbackCommandHandler _sut;
@@ -29,9 +35,11 @@ namespace DevStart.UnitTests.Auth.OAuth
             _sut = new HandleOAuthCallbackCommandHandler(
                 _db,
                 _stateStore,
+                _pendingStore,
                 new FakeExternalAuthProviderFactory(_provider),
                 new StubTokenProvider(),
                 refreshSvc,
+                _consentService,
                 _clock,
                 NullLogger<HandleOAuthCallbackCommandHandler>.Instance);
         }
@@ -60,12 +68,36 @@ namespace DevStart.UnitTests.Auth.OAuth
             string state = await SaveStateAsync();
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "code", state, "ip", "ua");
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal($"access-for-{user.Id}", result.Value.AccessToken);
+            Assert.NotNull(result.Value.Tokens);
+            Assert.Equal($"access-for-{user.Id}", result.Value.Tokens!.AccessToken);
             ExternalLogin reloaded = await _db.ExternalLogins.SingleAsync();
             Assert.Equal(_clock.UtcNow, reloaded.LastUsedAt);
+        }
+
+        [Fact]
+        public async Task ExistingLogin_WithOutdatedConsents_ReturnsConsentChallenge()
+        {
+            User user = User.Create("gwen", "gwen@example.com", "hash", _clock.UtcNow);
+            _db.Users.Add(user);
+            ExternalLogin link = ExternalLogin.Create(user.Id, ExternalLoginProvider.Google, "google-gwen", "gwen@example.com", _clock.UtcNow);
+            _db.ExternalLogins.Add(link);
+            await _db.SaveChangesAsync();
+
+            _consentService.MandatoryCurrent = false;
+            _provider.Result = new ExternalUserInfo("google-gwen", "gwen@example.com", true, "Gwen", null);
+            string state = await SaveStateAsync();
+
+            var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "c", state, null, null);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Tokens);
+            Assert.NotNull(result.Value.Consent);
+            Assert.Single(_pendingStore.Items);
+            Assert.Equal(user.Id, _pendingStore.Items.Values.Single().ExistingUserId);
         }
 
         [Fact]
@@ -74,7 +106,7 @@ namespace DevStart.UnitTests.Auth.OAuth
             _provider.Result = new ExternalUserInfo("x", "x@x", true, null, null);
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "code", "never-stored", null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsFailure);
             Assert.Equal(ExternalLoginErrors.InvalidState, result.Error);
@@ -92,7 +124,7 @@ namespace DevStart.UnitTests.Auth.OAuth
             _provider.Result = new ExternalUserInfo("x", "x@x", true, null, null);
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "code", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsFailure);
             Assert.Equal(ExternalLoginErrors.InvalidState, result.Error);
@@ -105,7 +137,7 @@ namespace DevStart.UnitTests.Auth.OAuth
             string state = await SaveStateAsync();
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "code", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsFailure);
             Assert.Equal(ExternalLoginErrors.ProviderError, result.Error);
@@ -123,7 +155,7 @@ namespace DevStart.UnitTests.Auth.OAuth
             string state = await SaveStateAsync();
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "c", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsFailure);
             Assert.Equal(ExternalLoginErrors.EmailMatchesUnverifiedAccount, result.Error);
@@ -142,35 +174,34 @@ namespace DevStart.UnitTests.Auth.OAuth
             string state = await SaveStateAsync();
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "c", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Value.Tokens);
             ExternalLogin link = await _db.ExternalLogins.SingleAsync();
             Assert.Equal(user.Id, link.UserId);
             Assert.Equal("google-dave", link.ProviderUserId);
         }
 
         [Fact]
-        public async Task UnknownExternal_NoLocalUser_CreatesUserAndProfileAndLink()
+        public async Task UnknownExternal_NoLocalUser_ReturnsConsentChallengeAndCreatesNothing()
         {
             _provider.Result = new ExternalUserInfo("google-eve", "eve@example.com", true, "Eve Doe", "https://avatar/eve");
             string state = await SaveStateAsync();
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "c", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Tokens);
+            Assert.NotNull(result.Value.Consent);
+            Assert.Single(_pendingStore.Items);
+            Assert.Null(_pendingStore.Items.Values.Single().ExistingUserId);
 
-            User created = await _db.Users.SingleAsync();
-            Assert.Equal("eve@example.com", created.Email);
-            Assert.True(created.IsVerified);
-            Assert.Null(created.PasswordHash);
-
-            ExternalLogin link = await _db.ExternalLogins.SingleAsync();
-            Assert.Equal(created.Id, link.UserId);
-
-            Assert.NotNull(await _db.Profiles.SingleOrDefaultAsync(p => p.UserId == created.Id));
-            Assert.NotNull(await _db.Preferences.SingleOrDefaultAsync(p => p.UserId == created.Id));
+            // No account is created before consent is accepted.
+            Assert.Empty(await _db.Users.ToListAsync());
+            Assert.Empty(await _db.ExternalLogins.ToListAsync());
+            Assert.Empty(await _db.Profiles.ToListAsync());
         }
 
         [Fact]
@@ -180,7 +211,7 @@ namespace DevStart.UnitTests.Auth.OAuth
             string state = await SaveStateAsync();
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "c", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsFailure);
             Assert.Equal(ExternalLoginErrors.EmailRequired, result.Error);
@@ -197,9 +228,10 @@ namespace DevStart.UnitTests.Auth.OAuth
             string state = await SaveStateAsync(linkUserId: user.Id);
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "c", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Value.Tokens);
             ExternalLogin link = await _db.ExternalLogins.SingleAsync();
             Assert.Equal(user.Id, link.UserId);
         }
@@ -218,10 +250,42 @@ namespace DevStart.UnitTests.Auth.OAuth
             string state = await SaveStateAsync(linkUserId: userB.Id);
 
             var cmd = new HandleOAuthCallbackCommand(ExternalLoginProvider.Google, "c", state, null, null);
-            Result<TokenPair> result = await _sut.Handle(cmd, default);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
 
             Assert.True(result.IsFailure);
             Assert.Equal(ExternalLoginErrors.AlreadyLinkedToAnotherUser, result.Error);
+        }
+
+        private sealed class InMemoryPendingRegistrationStore : IPendingRegistrationStore
+        {
+            public Dictionary<string, PendingExternalRegistration> Items { get; } = new();
+
+            public Task SaveAsync(string token, PendingExternalRegistration entry, TimeSpan ttl, CancellationToken cancellationToken)
+            {
+                Items[token] = entry;
+                return Task.CompletedTask;
+            }
+
+            public Task<PendingExternalRegistration?> ConsumeAsync(string token, CancellationToken cancellationToken)
+            {
+                Items.Remove(token, out PendingExternalRegistration? entry);
+                return Task.FromResult(entry);
+            }
+        }
+
+        private sealed class FakeConsentService : IConsentService
+        {
+            public bool MandatoryCurrent { get; set; } = true;
+
+            public Task<Result<List<UserConsent>>> BuildAcceptedConsentsAsync(
+                Guid userId, IReadOnlyList<ConsentItem> consents, DateTime now, CancellationToken cancellationToken)
+                => Task.FromResult(Result.Success(new List<UserConsent>()));
+
+            public Task<bool> AreMandatoryConsentsCurrentAsync(Guid userId, CancellationToken cancellationToken)
+                => Task.FromResult(MandatoryCurrent);
+
+            public Task<IReadOnlyList<RequiredConsent>> GetRequiredConsentsAsync(CancellationToken cancellationToken)
+                => Task.FromResult<IReadOnlyList<RequiredConsent>>(new List<RequiredConsent>());
         }
     }
 }

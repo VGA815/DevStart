@@ -15,5 +15,9 @@ namespace DevStart.Domain.Experts
         public static readonly Error Unauthorized = Error.Problem(
             "ExpertProfiles.Unauthorized",
             "You are not allowed to perform this action on this expert profile.");
+
+        public static readonly Error ProfileNameRequired = Error.Problem(
+            "ExpertProfiles.ProfileNameRequired",
+            "A profile with a non-empty name is required before creating an expert profile.");
     }
 }

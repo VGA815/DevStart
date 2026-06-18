@@ -14,7 +14,7 @@ internal sealed class GetInvestorProfilesQueryHandler(IApplicationDbContext cont
     {
         var q = context.InvestorProfiles
             .AsNoTracking()
-            .Where(ip => ip.IsPublic);
+            .Where(ip => ip.Profile.IsPublic);
 
         if (query.Type.HasValue)
             q = q.Where(ip => ip.Type == query.Type);
@@ -22,7 +22,7 @@ internal sealed class GetInvestorProfilesQueryHandler(IApplicationDbContext cont
         q = query.SortBy switch
         {
             InvestorSortBy.CreatedAt => q.OrderByDescending(ip => ip.CreatedAt),
-            _                        => q.OrderBy(ip => ip.DisplayName)
+            _                        => q.OrderBy(ip => ip.Profile.Name)
         };
 
         List<InvestorCatalogResponse> result = await q
@@ -33,9 +33,9 @@ internal sealed class GetInvestorProfilesQueryHandler(IApplicationDbContext cont
                 Id          = ip.Id,
                 UserId      = ip.UserId,
                 Type        = ip.Type,
-                DisplayName = ip.DisplayName,
-                Bio         = ip.Bio,
-                Website     = ip.Website,
+                DisplayName = ip.Profile.Name ?? string.Empty,
+                Bio         = ip.Profile.Bio,
+                Website     = ip.Profile.Url,
                 CreatedAt   = ip.CreatedAt,
                 UpdatedAt   = ip.UpdatedAt
             })

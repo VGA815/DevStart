@@ -1,4 +1,4 @@
-﻿using DevStart.Domain.StartupMembers;
+using DevStart.Domain.StartupMembers;
 
 namespace DevStart.Application.StartupMembers.GetAllByStartupId
 {
@@ -9,6 +9,7 @@ namespace DevStart.Application.StartupMembers.GetAllByStartupId
         public StartupRole Role { get; set; }
         public bool IsPublic { get; set; }
         public StartupPosition? Position { get; set; }
+        public string? Name { get; set; }
         public string? Bio { get; set; }
         public int? YearsOfExperience { get; set; }
         public bool? HasPriorExit { get; set; }

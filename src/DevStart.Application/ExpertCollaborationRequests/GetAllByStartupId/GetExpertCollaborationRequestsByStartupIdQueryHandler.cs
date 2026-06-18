@@ -2,8 +2,8 @@ using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.ExpertCollaborationRequests.GetById;
+using DevStart.Application.Startups;
 using DevStart.Domain.ExpertCollaborationRequests;
-using DevStart.Domain.StartupMembers;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,19 +11,13 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetAllByStartupId
 {
     internal sealed class GetExpertCollaborationRequestsByStartupIdQueryHandler(
         IApplicationDbContext context,
-        IUserContext userContext)
+        IUserContext userContext,
+        IStartupAuthorizationService authorization)
         : IQueryHandler<GetExpertCollaborationRequestsByStartupIdQuery, List<ExpertCollaborationRequestResponse>>
     {
         public async Task<Result<List<ExpertCollaborationRequestResponse>>> Handle(GetExpertCollaborationRequestsByStartupIdQuery query, CancellationToken cancellationToken)
         {
-            bool isFounderOrAdmin = await context.StartupMembers
-                .AsNoTracking()
-                .AnyAsync(sm => sm.StartupId == query.StartupId
-                             && sm.ProfileId == userContext.UserId
-                             && (sm.Role == StartupRole.Founder || sm.Role == StartupRole.Administration),
-                          cancellationToken);
-
-            if (!isFounderOrAdmin)
+            if (!await authorization.IsFounderOrAdminAsync(userContext.UserId, query.StartupId, cancellationToken))
             {
                 return Result.Failure<List<ExpertCollaborationRequestResponse>>(
                     ExpertCollaborationRequestErrors.Unauthorized);
@@ -37,9 +31,9 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetAllByStartupId
                 {
                     Id = r.Id,
                     ExpertProfileId = r.ExpertProfileId,
-                    ExpertDisplayName = context.ExpertProfiles
-                        .Where(ep => ep.Id == r.ExpertProfileId)
-                        .Select(ep => ep.DisplayName)
+                    ExpertDisplayName = context.Profiles
+                        .Where(p => p.UserId == r.ExpertProfileId)
+                        .Select(p => p.Name)
                         .FirstOrDefault() ?? string.Empty,
                     StartupId = r.StartupId,
                     StartupName = context.Startups

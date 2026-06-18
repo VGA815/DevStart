@@ -7,8 +7,10 @@ using DevStart.Application.ExpertCollaborationRequests.Reject;
 using DevStart.Application.ExpertCollaborationRequests.Withdraw;
 using DevStart.Domain.ExpertCollaborationRequests;
 using DevStart.Domain.Experts;
+using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Startups;
+using DevStart.Application.Startups;
 using DevStart.Infrastructure.Database;
 using DevStart.SharedKernel;
 using DevStart.UnitTests.TestSupport;
@@ -112,6 +114,7 @@ public sealed class ExpertCollaborationRequestHandlerTests
         var sut = new AcceptExpertCollaborationRequestCommandHandler(
             _db,
             new TestUserContext(founderId),
+            new StartupAuthorizationService(_db),
             _clock);
 
         Result result = await sut.Handle(new AcceptExpertCollaborationRequestCommand(request.Id), CancellationToken.None);
@@ -132,6 +135,7 @@ public sealed class ExpertCollaborationRequestHandlerTests
         var sut = new AcceptExpertCollaborationRequestCommandHandler(
             _db,
             new TestUserContext(memberId),
+            new StartupAuthorizationService(_db),
             _clock);
 
         Result result = await sut.Handle(new AcceptExpertCollaborationRequestCommand(request.Id), CancellationToken.None);
@@ -154,6 +158,7 @@ public sealed class ExpertCollaborationRequestHandlerTests
         var sut = new AcceptExpertCollaborationRequestCommandHandler(
             _db,
             new TestUserContext(founderId),
+            new StartupAuthorizationService(_db),
             _clock);
 
         Result result = await sut.Handle(new AcceptExpertCollaborationRequestCommand(request.Id), CancellationToken.None);
@@ -173,6 +178,7 @@ public sealed class ExpertCollaborationRequestHandlerTests
         var sut = new RejectExpertCollaborationRequestCommandHandler(
             _db,
             new TestUserContext(adminId),
+            new StartupAuthorizationService(_db),
             _clock);
 
         Result result = await sut.Handle(new RejectExpertCollaborationRequestCommand(request.Id), CancellationToken.None);
@@ -195,6 +201,7 @@ public sealed class ExpertCollaborationRequestHandlerTests
         var sut = new RejectExpertCollaborationRequestCommandHandler(
             _db,
             new TestUserContext(founderId),
+            new StartupAuthorizationService(_db),
             _clock);
 
         Result result = await sut.Handle(new RejectExpertCollaborationRequestCommand(request.Id), CancellationToken.None);
@@ -268,7 +275,8 @@ public sealed class ExpertCollaborationRequestHandlerTests
         ExpertCollaborationRequest request = SeedRequest(expertId, startup.Id);
         var sut = new GetExpertCollaborationRequestByIdQueryHandler(
             _db,
-            new TestUserContext(expertId));
+            new TestUserContext(expertId),
+            new StartupAuthorizationService(_db));
 
         Result<ExpertCollaborationRequestResponse> result = await sut.Handle(
             new GetExpertCollaborationRequestByIdQuery(request.Id),
@@ -288,7 +296,8 @@ public sealed class ExpertCollaborationRequestHandlerTests
         ExpertCollaborationRequest request = SeedRequest(expertId, startup.Id);
         var sut = new GetExpertCollaborationRequestByIdQueryHandler(
             _db,
-            new TestUserContext(Guid.NewGuid()));
+            new TestUserContext(Guid.NewGuid()),
+            new StartupAuthorizationService(_db));
 
         Result<ExpertCollaborationRequestResponse> result = await sut.Handle(
             new GetExpertCollaborationRequestByIdQuery(request.Id),
@@ -309,7 +318,8 @@ public sealed class ExpertCollaborationRequestHandlerTests
         ExpertCollaborationRequest request = SeedRequest(expertId, startup.Id);
         var sut = new GetExpertCollaborationRequestsByStartupIdQueryHandler(
             _db,
-            new TestUserContext(founderId));
+            new TestUserContext(founderId),
+            new StartupAuthorizationService(_db));
 
         Result<List<ExpertCollaborationRequestResponse>> result = await sut.Handle(
             new GetExpertCollaborationRequestsByStartupIdQuery(startup.Id),
@@ -364,19 +374,13 @@ public sealed class ExpertCollaborationRequestHandlerTests
 
     private ExpertProfile SeedExpertProfile(Guid userId, string displayName = "Expert")
     {
-        ExpertProfile expertProfile = ExpertProfile.Create(
-            userId,
-            displayName,
-            bio: null,
-            website: null,
-            isPublic: true,
-            linkedInUrl: null,
-            twitterUrl: null,
-            gitHubUrl: null,
-            telegramUrl: null,
-            Now);
+        ExpertProfile expertProfile = ExpertProfile.Create(userId, Now);
 
         _db.ExpertProfiles.Add(expertProfile);
+
+        Profile profile = Profile.Create(userId, displayName, null, null, false, true, null);
+        _db.Profiles.Add(profile);
+
         _db.SaveChanges();
 
         return expertProfile;

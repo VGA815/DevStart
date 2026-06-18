@@ -29,7 +29,6 @@ namespace DevStart.Application.StartupMembers.UpdateProfile
 
             Result updateResult = startupMember.UpdateProfile(
                 command.Position,
-                command.Bio,
                 command.YearsOfExperience,
                 command.HasPriorExit,
                 command.PreviousStartupsCount,

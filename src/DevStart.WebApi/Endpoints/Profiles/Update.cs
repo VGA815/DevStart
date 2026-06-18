@@ -1,4 +1,4 @@
-﻿
+
 using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Profiles.Update;
@@ -20,12 +20,16 @@ namespace DevStart.WebApi.Endpoints.Profiles
             [property: JsonPropertyName("avatar_id")] Guid? AvatarId,
             [property: JsonPropertyName("url")] string? Url,
             [property: JsonPropertyName("is_public")] bool IsPublic,
-            [property: JsonPropertyName("social_media_links")] List<string> SocialMediaLinks);
+            [property: JsonPropertyName("social_media_links")] List<string> SocialMediaLinks,
+            [property: JsonPropertyName("linkedin_url")] string? LinkedInUrl = null,
+            [property: JsonPropertyName("twitter_url")] string? TwitterUrl = null,
+            [property: JsonPropertyName("github_url")] string? GitHubUrl = null,
+            [property: JsonPropertyName("telegram_url")] string? TelegramUrl = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPut("api/profiles", async (
-                [FromBody] Request request, 
-                ICommandHandler<UpdateProfileCommand> handler, 
+                [FromBody] Request request,
+                ICommandHandler<UpdateProfileCommand> handler,
                 CancellationToken cancellationToken) =>
             {
                 var command = new UpdateProfileCommand(
@@ -36,7 +40,11 @@ namespace DevStart.WebApi.Endpoints.Profiles
                     request.Bio,
                     request.IsPublic,
                     request.IsAvailableForHire,
-                    request.SocialMediaLinks);
+                    request.SocialMediaLinks,
+                    request.LinkedInUrl,
+                    request.TwitterUrl,
+                    request.GitHubUrl,
+                    request.TelegramUrl);
 
                 Result result = await handler.Handle(command, cancellationToken);
 

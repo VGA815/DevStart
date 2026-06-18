@@ -13,11 +13,7 @@ namespace DevStart.WebApi.Endpoints.InvestorProfiles
     internal sealed class Create : IEndpoint
     {
         public sealed record Request(
-            [property: JsonPropertyName("type")] InvestorProfileType Type,
-            [property: JsonPropertyName("display_name")] string DisplayName,
-            [property: JsonPropertyName("bio")] string? Bio,
-            [property: JsonPropertyName("website")] string? Website,
-            [property: JsonPropertyName("is_public")] bool IsPublic);
+            [property: JsonPropertyName("type")] InvestorProfileType Type);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -26,12 +22,7 @@ namespace DevStart.WebApi.Endpoints.InvestorProfiles
                 ICommandHandler<CreateInvestorProfileCommand, Guid> handler,
                 CancellationToken cancellationToken) =>
             {
-                var command = new CreateInvestorProfileCommand(
-                    request.Type,
-                    request.DisplayName,
-                    request.Bio,
-                    request.Website,
-                    request.IsPublic);
+                var command = new CreateInvestorProfileCommand(request.Type);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);

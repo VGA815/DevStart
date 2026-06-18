@@ -27,6 +27,10 @@ namespace DevStart.Application.Profiles.Update
             profile.IsAvailableForHire = command.IsAvailableForHire;
             profile.Name = command.Name;
             profile.Url = command.Url;
+            profile.LinkedInUrl = command.LinkedInUrl;
+            profile.TwitterUrl = command.TwitterUrl;
+            profile.GitHubUrl = command.GitHubUrl;
+            profile.TelegramUrl = command.TelegramUrl;
 
             profile.Raise(new ProfileUpdatedDomainEvent(profile.UserId));
 
