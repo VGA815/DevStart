@@ -128,6 +128,7 @@ namespace DevStart.Infrastructure
 
             services.AddSingleton<IPkceGenerator, PkceGenerator>();
             services.AddSingleton<IOAuthStateStore, RedisOAuthStateStore>();
+            services.AddSingleton<IPendingRegistrationStore, RedisPendingRegistrationStore>();
 
             services.AddOptions<GoogleOAuthOptions>()
                 .Bind(configuration.GetSection("OAuth:Google"))

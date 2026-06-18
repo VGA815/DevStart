@@ -1,5 +1,5 @@
-using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Auth.OAuth;
 
 namespace DevStart.Application.Users.Login
 {
@@ -7,5 +7,5 @@ namespace DevStart.Application.Users.Login
         string Email,
         string Password,
         string? IpAddress,
-        string? UserAgent) : ICommand<TokenPair>;
+        string? UserAgent) : ICommand<OAuthAuthResult>;
 }

@@ -1,34 +1,38 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.UserConsents;
 using DevStart.Domain.ExternalLogins;
-using DevStart.Domain.Profiles;
-using DevStart.Domain.UserPreferences;
 using DevStart.Domain.Users;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 
 namespace DevStart.Application.Auth.OAuth.Callback
 {
     internal sealed class HandleOAuthCallbackCommandHandler(
         IApplicationDbContext context,
         IOAuthStateStore stateStore,
+        IPendingRegistrationStore pendingStore,
         IExternalAuthProviderFactory providerFactory,
         ITokenProvider tokenProvider,
         IRefreshTokenService refreshTokenService,
+        IConsentService consentService,
         IDateTimeProvider dateTimeProvider,
         ILogger<HandleOAuthCallbackCommandHandler> logger)
-        : ICommandHandler<HandleOAuthCallbackCommand, TokenPair>
+        : ICommandHandler<HandleOAuthCallbackCommand, OAuthAuthResult>
     {
-        public async Task<Result<TokenPair>> Handle(
+        private static readonly TimeSpan PendingTtl = TimeSpan.FromMinutes(15);
+
+        public async Task<Result<OAuthAuthResult>> Handle(
             HandleOAuthCallbackCommand command,
             CancellationToken cancellationToken)
         {
             OAuthStateEntry? state = await stateStore.ConsumeAsync(command.State, cancellationToken);
             if (state is null || state.Provider != command.Provider)
             {
-                return Result.Failure<TokenPair>(ExternalLoginErrors.InvalidState);
+                return Result.Failure<OAuthAuthResult>(ExternalLoginErrors.InvalidState);
             }
 
             IExternalAuthProvider provider = providerFactory.Get(command.Provider);
@@ -44,14 +48,12 @@ namespace DevStart.Application.Auth.OAuth.Callback
             }
             catch (Exception ex)
             {
-                // Preserve genuine cancellation; otherwise log the underlying provider failure (token
-                // exchange / JWT validation / network) so it's diagnosable, then return a generic error.
                 if (cancellationToken.IsCancellationRequested)
                 {
                     throw;
                 }
                 logger.LogWarning(ex, "OAuth code exchange failed for provider {Provider}", command.Provider);
-                return Result.Failure<TokenPair>(ExternalLoginErrors.ProviderError);
+                return Result.Failure<OAuthAuthResult>(ExternalLoginErrors.ProviderError);
             }
 
             DateTime now = dateTimeProvider.UtcNow;
@@ -61,74 +63,42 @@ namespace DevStart.Application.Auth.OAuth.Callback
                     x => x.Provider == command.Provider && x.ProviderUserId == info.ProviderUserId,
                     cancellationToken);
 
-            User user;
-
+            // Linking flow: the user is already authenticated (and has consented at registration).
             if (state.LinkUserId.HasValue)
             {
                 Result<User> linkResult = await LinkBranchAsync(
-                    state.LinkUserId.Value,
-                    command.Provider,
-                    info,
-                    existing,
-                    now,
-                    cancellationToken);
+                    state.LinkUserId.Value, command.Provider, info, existing, now, cancellationToken);
                 if (linkResult.IsFailure)
                 {
-                    return Result.Failure<TokenPair>(linkResult.Error);
+                    return Result.Failure<OAuthAuthResult>(linkResult.Error);
                 }
-                user = linkResult.Value;
-            }
-            else
-            {
-                Result<User> loginResult = await LoginBranchAsync(
-                    command.Provider,
-                    info,
-                    existing,
-                    now,
-                    cancellationToken);
-                if (loginResult.IsFailure)
-                {
-                    return Result.Failure<TokenPair>(loginResult.Error);
-                }
-                user = loginResult.Value;
+
+                await context.SaveChangesAsync(cancellationToken);
+                return OAuthAuthResult.Authenticated(await IssueTokensAsync(linkResult.Value, command, cancellationToken));
             }
 
-            await context.SaveChangesAsync(cancellationToken);
-
-            string accessToken = tokenProvider.CreateAccessToken(user);
-            IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
-                user,
-                command.IpAddress,
-                command.UserAgent,
-                cancellationToken);
-
-            return new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds);
-        }
-
-        private async Task<Result<User>> LoginBranchAsync(
-            ExternalLoginProvider providerKind,
-            ExternalUserInfo info,
-            ExternalLogin? existing,
-            DateTime now,
-            CancellationToken cancellationToken)
-        {
+            // Login flow with an already-linked external account.
             if (existing is not null)
             {
                 User? linkedUser = await context.Users
                     .FirstOrDefaultAsync(u => u.Id == existing.UserId, cancellationToken);
                 if (linkedUser is null)
                 {
-                    return Result.Failure<User>(ExternalLoginErrors.NotFound);
+                    return Result.Failure<OAuthAuthResult>(ExternalLoginErrors.NotFound);
                 }
+
                 existing.Touch(now);
-                return linkedUser;
+                await context.SaveChangesAsync(cancellationToken);
+
+                return await IssueOrChallengeAsync(linkedUser, info, command, cancellationToken);
             }
 
             if (string.IsNullOrWhiteSpace(info.Email))
             {
-                return Result.Failure<User>(ExternalLoginErrors.EmailRequired);
+                return Result.Failure<OAuthAuthResult>(ExternalLoginErrors.EmailRequired);
             }
 
+            // Login flow where the email matches a local account: link, then issue or challenge.
             User? userByEmail = await context.Users
                 .FirstOrDefaultAsync(u => u.Email == info.Email, cancellationToken);
 
@@ -136,38 +106,60 @@ namespace DevStart.Application.Auth.OAuth.Callback
             {
                 if (!userByEmail.IsVerified || !info.EmailVerified)
                 {
-                    return Result.Failure<User>(ExternalLoginErrors.EmailMatchesUnverifiedAccount);
+                    return Result.Failure<OAuthAuthResult>(ExternalLoginErrors.EmailMatchesUnverifiedAccount);
                 }
 
                 ExternalLogin link = ExternalLogin.Create(
-                    userByEmail.Id, providerKind, info.ProviderUserId, info.Email, now);
+                    userByEmail.Id, command.Provider, info.ProviderUserId, info.Email, now);
                 link.Raise(new UserLinkedExternalLoginDomainEvent(
-                    userByEmail.Id, providerKind, info.ProviderUserId));
+                    userByEmail.Id, command.Provider, info.ProviderUserId));
                 context.ExternalLogins.Add(link);
+                await context.SaveChangesAsync(cancellationToken);
 
-                return userByEmail;
+                return await IssueOrChallengeAsync(userByEmail, info, command, cancellationToken);
             }
 
-            string username = await GenerateUniqueUsernameAsync(info, providerKind, cancellationToken);
-            User newUser = User.CreateExternal(username, info.Email!, info.EmailVerified, now);
-            newUser.Raise(new UserRegisteredDomainEvent(newUser.Id, newUser.Email));
-            context.Users.Add(newUser);
+            // Brand-new user: do NOT create the account until consent is accepted.
+            string newToken = NewPendingToken();
+            await pendingStore.SaveAsync(
+                newToken,
+                new PendingExternalRegistration(
+                    command.Provider, info.ProviderUserId, info.Email!, info.EmailVerified, info.Name, null),
+                PendingTtl,
+                cancellationToken);
 
-            Profile profile = Profile.Create(
-                newUser.Id, info.Name, null, null, false, false, null);
-            context.Profiles.Add(profile);
+            IReadOnlyList<RequiredConsent> required = await consentService.GetRequiredConsentsAsync(cancellationToken);
+            return OAuthAuthResult.ConsentRequired(new ConsentChallenge(newToken, required));
+        }
 
-            UserPreference preference = UserPreference.Create(
-                newUser.Id, UserPreferenceTheme.System);
-            context.Preferences.Add(preference);
+        private async Task<Result<OAuthAuthResult>> IssueOrChallengeAsync(
+            User user, ExternalUserInfo info, HandleOAuthCallbackCommand command, CancellationToken cancellationToken)
+        {
+            if (await consentService.AreMandatoryConsentsCurrentAsync(user.Id, cancellationToken))
+            {
+                return OAuthAuthResult.Authenticated(await IssueTokensAsync(user, command, cancellationToken));
+            }
 
-            ExternalLogin newLink = ExternalLogin.Create(
-                newUser.Id, providerKind, info.ProviderUserId, info.Email, now);
-            newLink.Raise(new UserLinkedExternalLoginDomainEvent(
-                newUser.Id, providerKind, info.ProviderUserId));
-            context.ExternalLogins.Add(newLink);
+            string token = NewPendingToken();
+            await pendingStore.SaveAsync(
+                token,
+                new PendingExternalRegistration(
+                    command.Provider, info.ProviderUserId, info.Email ?? user.Email, info.EmailVerified, info.Name, user.Id),
+                PendingTtl,
+                cancellationToken);
 
-            return newUser;
+            IReadOnlyList<RequiredConsent> required = await consentService.GetRequiredConsentsAsync(cancellationToken);
+            return OAuthAuthResult.ConsentRequired(new ConsentChallenge(token, required));
+        }
+
+        private async Task<TokenPair> IssueTokensAsync(
+            User user, HandleOAuthCallbackCommand command, CancellationToken cancellationToken)
+        {
+            string accessToken = tokenProvider.CreateAccessToken(user);
+            IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
+                user, command.IpAddress, command.UserAgent, cancellationToken);
+
+            return new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds);
         }
 
         private async Task<Result<User>> LinkBranchAsync(
@@ -202,44 +194,6 @@ namespace DevStart.Application.Auth.OAuth.Callback
             return user;
         }
 
-        private async Task<string> GenerateUniqueUsernameAsync(
-            ExternalUserInfo info,
-            ExternalLoginProvider providerKind,
-            CancellationToken cancellationToken)
-        {
-            string baseName = !string.IsNullOrWhiteSpace(info.Name)
-                ? SlugifyUsername(info.Name!)
-                : $"{providerKind.ToString().ToLowerInvariant()}_{info.ProviderUserId}";
-
-            if (baseName.Length > 90)
-            {
-                baseName = baseName.Substring(0, 90);
-            }
-
-            string candidate = baseName;
-            int suffix = 1;
-            while (await context.Users.AnyAsync(u => u.Username == candidate, cancellationToken))
-            {
-                candidate = $"{baseName}_{suffix++}";
-                if (suffix > 1000)
-                {
-                    candidate = $"{baseName}_{Guid.NewGuid():N}".Substring(0, 100);
-                    break;
-                }
-            }
-            return candidate;
-        }
-
-        private static string SlugifyUsername(string raw)
-        {
-            var sb = new System.Text.StringBuilder(raw.Length);
-            foreach (char ch in raw)
-            {
-                if (char.IsLetterOrDigit(ch)) sb.Append(char.ToLowerInvariant(ch));
-                else if (ch is ' ' or '-' or '_' or '.') sb.Append('_');
-            }
-            string slug = sb.ToString().Trim('_');
-            return string.IsNullOrEmpty(slug) ? "user" : slug;
-        }
+        private static string NewPendingToken() => Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     }
 }

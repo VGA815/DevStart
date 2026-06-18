@@ -11,8 +11,9 @@
 - **Startups** — profiles with members, products, metrics, roadmap, competitors, followers, and documents, plus a computed startup score
 - **Investors** — investor profiles, investment applications, deals, and generated deal documents (term sheets, cap tables)
 - **Experts** — expert profiles, experience, specializations, and collaboration requests
+- **Profiles** — one personal profile per user (name, bio, avatar, links, visibility); the startup-member, expert, and investor roles reference it and add only role-specific data, so personal details live in a single place
 - **Subscriptions & payments** — Pro plan billed via YooKassa (one-time redirect payment + НПД receipts)
-- **Auth** — JWT bearer + 30-day refresh tokens, OAuth (Google, GitHub), email verification, invite tokens
+- **Auth** — JWT bearer + 30-day refresh tokens, OAuth (Google, GitHub), email verification, invite tokens. Legal consents (public offer, personal-data processing, cookies, privacy policy, terms) are captured on **every** sign-up — including OAuth, via a two-step completion that does not create the account until consent is given — and re-prompted when a document version changes. Password and OAuth sign-in both return either tokens or a consent challenge (completed at `POST api/auth/oauth/complete`)
 - **Messaging & notifications** — direct messages and real-time notifications over Centrifugo (WebSocket)
 - **Media** — avatars and documents stored in MinIO (S3-compatible), served via presigned URLs
 

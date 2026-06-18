@@ -29,7 +29,7 @@ namespace DevStart.Infrastructure.DealDocuments
         IFileStorage fileStorage,
         INotificationService notificationService,
         IDateTimeProvider dateTimeProvider,
-        IQueryHandler<GetStartupScoreQuery, ScoreResult> scoreHandler,
+        IQueryHandler<ComputeStartupScoreQuery, ScoreResult> scoreHandler,
         ILogger<TermSheetGenerationJob> logger)
     {
         public async Task GenerateAsync(Guid dealId, CancellationToken cancellationToken)
@@ -63,8 +63,10 @@ namespace DevStart.Infrastructure.DealDocuments
                 return;
             }
 
+            // Background job has no user context — use the ungated compute path (the public
+            // GetStartupScoreQuery would fail its Pro/member gate here).
             Result<ScoreResult> scoreResult = await scoreHandler.Handle(
-                new GetStartupScoreQuery(startup.Id),
+                new ComputeStartupScoreQuery(startup.Id),
                 cancellationToken);
             ScoreResult score = scoreResult.IsSuccess
                 ? scoreResult.Value

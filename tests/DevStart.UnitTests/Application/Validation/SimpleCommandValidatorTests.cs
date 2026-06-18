@@ -89,13 +89,12 @@ public sealed class SimpleCommandValidatorTests
     public void StartupMemberValidators_ShouldRequireIdsAndValidEnums()
     {
         ShouldValidate(
-            new CreateStartupMemberCommand(Id1, Id2, StartupRole.Founder, isPublic: true, StartupPosition.CEO, "Bio", 1, false, 0),
-            new CreateStartupMemberCommand(Guid.Empty, Guid.Empty, (StartupRole)999, isPublic: true, (StartupPosition)999, new string('b', 2001), -1, false, -1),
+            new CreateStartupMemberCommand(Id1, Id2, StartupRole.Founder, isPublic: true, StartupPosition.CEO, 1, false, 0),
+            new CreateStartupMemberCommand(Guid.Empty, Guid.Empty, (StartupRole)999, isPublic: true, (StartupPosition)999, -1, false, -1),
             "ProfileId",
             "StartupId",
             "Role",
             "Position",
-            "Bio",
             "YearsOfExperience",
             "PreviousStartupsCount");
 
@@ -113,11 +112,10 @@ public sealed class SimpleCommandValidatorTests
             "ProfileId");
 
         ShouldValidate(
-            new UpdateStartupMemberProfileCommand(Id1, StartupPosition.CTO, "Bio", 1, false, 0),
-            new UpdateStartupMemberProfileCommand(Guid.Empty, (StartupPosition)999, new string('b', 2001), -1, false, -1),
+            new UpdateStartupMemberProfileCommand(Id1, StartupPosition.CTO, 1, false, 0),
+            new UpdateStartupMemberProfileCommand(Guid.Empty, (StartupPosition)999, -1, false, -1),
             "StartupId",
             "Position",
-            "Bio",
             "YearsOfExperience",
             "PreviousStartupsCount");
 

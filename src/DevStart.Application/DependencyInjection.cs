@@ -44,6 +44,9 @@ namespace DevStart.Application
             services.AddSingleton<IDealTermsValidator, DealTermsValidator>();
             services.AddSingleton<ICapTableCalculator, CapTableCalculator>();
 
+            services.AddScoped<UserConsents.IConsentService, UserConsents.ConsentService>();
+            services.AddScoped<Startups.IStartupAuthorizationService, Startups.StartupAuthorizationService>();
+
             return services;
         }
     }

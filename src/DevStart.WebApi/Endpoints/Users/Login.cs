@@ -1,5 +1,5 @@
-using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Auth.OAuth;
 using DevStart.Application.Users.Login;
 using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
@@ -20,7 +20,7 @@ namespace DevStart.WebApi.Endpoints.Users
             app.MapPost("api/users/login", async (
                 Request request,
                 HttpContext httpContext,
-                ICommandHandler<LoginUserCommand, TokenPair> handler,
+                ICommandHandler<LoginUserCommand, OAuthAuthResult> handler,
                 CancellationToken cancellationToken) =>
             {
                 string? ip = httpContext.Connection.RemoteIpAddress?.ToString();
@@ -28,7 +28,7 @@ namespace DevStart.WebApi.Endpoints.Users
 
                 var command = new LoginUserCommand(request.Email, request.Password, ip, ua);
 
-                Result<TokenPair> result = await handler.Handle(command, cancellationToken);
+                Result<OAuthAuthResult> result = await handler.Handle(command, cancellationToken);
 
                 return result.Match(Results.Ok, CustomResults.Problem);
             })

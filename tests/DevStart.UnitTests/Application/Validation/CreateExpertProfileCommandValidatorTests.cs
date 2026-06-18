@@ -18,58 +18,26 @@ public sealed class CreateExpertProfileCommandValidatorTests
     public void Validate_ShouldPass_ForValidExpertProfile()
     {
         var result = _validator.Validate(new CreateExpertProfileCommand(
-            "Expert",
-            "Bio",
-            "https://expert.example.com",
-            isPublic: true,
-            linkedInUrl: "https://linkedin.com/in/expert",
-            twitterUrl: null,
-            gitHubUrl: null,
-            telegramUrl: null,
-            specializations: new List<ExpertSpecialization> { ExpertSpecialization.Engineering }));
+            new List<ExpertSpecialization> { ExpertSpecialization.Engineering }));
 
         result.IsValid.ShouldBeTrue();
     }
 
     [Fact]
-    public void Validate_ShouldFail_ForEmptyDisplayNameTooLongFieldsAndEmptySpecializations()
+    public void Validate_ShouldFail_ForEmptySpecializations()
     {
         var result = _validator.Validate(new CreateExpertProfileCommand(
-            string.Empty,
-            new string('b', 2001),
-            new string('w', 501),
-            isPublic: true,
-            linkedInUrl: new string('l', 501),
-            twitterUrl: new string('t', 501),
-            gitHubUrl: new string('g', 501),
-            telegramUrl: new string('m', 501),
-            specializations: new List<ExpertSpecialization>()));
+            new List<ExpertSpecialization>()));
 
         result.IsValid.ShouldBeFalse();
-        var failedProperties = result.Errors.Select(error => error.PropertyName).ToList();
-        failedProperties.ShouldContain("DisplayName");
-        failedProperties.ShouldContain("Bio");
-        failedProperties.ShouldContain("Website");
-        failedProperties.ShouldContain("LinkedInUrl");
-        failedProperties.ShouldContain("TwitterUrl");
-        failedProperties.ShouldContain("GitHubUrl");
-        failedProperties.ShouldContain("TelegramUrl");
-        failedProperties.ShouldContain("Specializations");
+        result.Errors.Select(error => error.PropertyName).ShouldContain("Specializations");
     }
 
     [Fact]
     public void Validate_ShouldFail_ForInvalidSpecializationEnum()
     {
         var result = _validator.Validate(new CreateExpertProfileCommand(
-            "Expert",
-            null,
-            null,
-            isPublic: true,
-            linkedInUrl: null,
-            twitterUrl: null,
-            gitHubUrl: null,
-            telegramUrl: null,
-            specializations: new List<ExpertSpecialization> { (ExpertSpecialization)999 }));
+            new List<ExpertSpecialization> { (ExpertSpecialization)999 }));
 
         result.IsValid.ShouldBeFalse();
         result.Errors.Select(error => error.PropertyName)

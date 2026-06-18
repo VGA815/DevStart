@@ -1,5 +1,5 @@
-using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Auth.OAuth;
 using DevStart.Application.Auth.OAuth.Callback;
 using DevStart.Domain.ExternalLogins;
 using DevStart.SharedKernel;
@@ -18,7 +18,7 @@ namespace DevStart.WebApi.Endpoints.Auth
                 string code,
                 string state,
                 HttpContext httpContext,
-                ICommandHandler<HandleOAuthCallbackCommand, TokenPair> handler,
+                ICommandHandler<HandleOAuthCallbackCommand, OAuthAuthResult> handler,
                 CancellationToken cancellationToken) =>
             {
                 if (!Enum.TryParse<ExternalLoginProvider>(provider, ignoreCase: true, out var parsed))
@@ -31,7 +31,7 @@ namespace DevStart.WebApi.Endpoints.Auth
 
                 var command = new HandleOAuthCallbackCommand(parsed, code, state, ip, ua);
 
-                Result<TokenPair> result = await handler.Handle(command, cancellationToken);
+                Result<OAuthAuthResult> result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
             .WithTags(Tags.Auth)

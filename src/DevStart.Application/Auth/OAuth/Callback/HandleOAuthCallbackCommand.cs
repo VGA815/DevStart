@@ -1,4 +1,3 @@
-using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.ExternalLogins;
 
@@ -9,5 +8,5 @@ namespace DevStart.Application.Auth.OAuth.Callback
         string Code,
         string State,
         string? IpAddress,
-        string? UserAgent) : ICommand<TokenPair>;
+        string? UserAgent) : ICommand<OAuthAuthResult>;
 }
