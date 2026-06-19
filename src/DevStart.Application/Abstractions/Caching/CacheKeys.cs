@@ -6,6 +6,8 @@ namespace DevStart.Application.Abstractions.Caching
 
         public static string User(Guid userId) => $"{Version}:users:{userId}";
 
+        public static string UserOverview(Guid userId) => $"{Version}:user-overviews:{userId}";
+
         public static string Profile(Guid userId) => $"{Version}:profiles:{userId}";
 
         public static string Startup(Guid startupId) => $"{Version}:startups:{startupId}";
