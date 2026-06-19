@@ -89,6 +89,46 @@ public sealed class CapTableCalculatorTests
         ]);
     }
 
+    [Fact]
+    public void Compute_ShouldNormalizeAfterColumnToExactly100_ForUnevenSplits()
+    {
+        // 10M / 100M SAFE → 10% investor, 90% dilution. Seven holders whose diluted shares each
+        // round independently leave a 0.01 rounding residual that must be absorbed.
+        InvestmentDeal deal = CreateDeal(InvestmentInstrument.Safe, amount: 10_000_000m, valuationCap: 100_000_000m);
+
+        var holders = new List<EquityHolderInput>
+        {
+            new(Guid.NewGuid(), "Founder 1", "Founder", 14.29m),
+            new(Guid.NewGuid(), "Founder 2", "Founder", 14.29m),
+            new(Guid.NewGuid(), "Founder 3", "Founder", 14.29m),
+            new(Guid.NewGuid(), "Founder 4", "Founder", 14.29m),
+            new(Guid.NewGuid(), "Founder 5", "Founder", 14.29m),
+            new(Guid.NewGuid(), "Founder 6", "Founder", 14.29m),
+            new(Guid.NewGuid(), "Founder 7", "Founder", 14.26m)
+        };
+
+        CapTableResult result = _calculator.Compute(deal, holders);
+
+        result.Entries.Sum(entry => entry.SharePctAfter).ShouldBe(100m);
+        result.InvestorSharePct.ShouldBe(10m);
+        result.FoundersTotalAfterPct.ShouldBe(90m);
+    }
+
+    [Fact]
+    public void Compute_ShouldFlagShareCapped_WhenAmountExceedsCap()
+    {
+        InvestmentDeal deal = CreateDeal(InvestmentInstrument.Safe, amount: 60_000_000m, valuationCap: 50_000_000m);
+
+        CapTableResult result = _calculator.Compute(deal, [
+            new EquityHolderInput(Guid.Parse("11111111-1111-1111-1111-111111111111"), "Founder", "Founder", 100m)
+        ]);
+
+        result.InvestorSharePct.ShouldBe(100m);
+        result.FoundersTotalAfterPct.ShouldBe(0m);
+        result.Entries.Sum(entry => entry.SharePctAfter).ShouldBe(100m);
+        result.Warnings.Select(warning => warning.Code).ShouldContain("cap_table.share_capped");
+    }
+
     private static InvestmentDeal CreateDeal(
         InvestmentInstrument instrument,
         decimal amount,

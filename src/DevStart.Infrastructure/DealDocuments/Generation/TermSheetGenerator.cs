@@ -4,12 +4,15 @@ using DevStart.Application.Scoring;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.Domain.Startups;
+using DevStart.SharedKernel;
 using System.Globalization;
 using System.Text;
 
 namespace DevStart.Infrastructure.DealDocuments.Generation
 {
-    internal sealed class TermSheetGenerator(IFileStorage fileStorage) : ITermSheetGenerator
+    internal sealed class TermSheetGenerator(
+        IFileStorage fileStorage,
+        IDateTimeProvider dateTimeProvider) : ITermSheetGenerator
     {
         public async Task<string> RenderAsync(
             InvestmentDeal deal,
@@ -37,6 +40,13 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
             }
 
             CultureInfo c = CultureInfo.InvariantCulture;
+
+            // The score job falls back to an all-zero ScoreResult with no methods when scoring fails.
+            // Render "N/A" in that case so the term sheet never presents a fabricated 0/100 score or
+            // a ₽0 valuation range as if it were real.
+            const string na = "N/A";
+            bool scoreAvailable = score.MethodsUsed.Count > 0;
+
             Dictionary<string, string> map = new()
             {
                 ["startup_name"] = startup.Name,
@@ -53,19 +63,19 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
                 ["pro_rata_rights"] = deal.ProRataRights ? "Yes" : "No",
                 ["investor_share_pct"] = capTable.InvestorSharePct.ToString("0.##", c),
                 ["founders_total_after_pct"] = capTable.FoundersTotalAfterPct.ToString("0.##", c),
-                ["score_total"] = score.TotalScore.ToString("0.##", c),
-                ["score_team"] = score.TeamScore.ToString("0.##", c),
-                ["score_market"] = score.MarketScore.ToString("0.##", c),
-                ["score_product"] = score.ProductScore.ToString("0.##", c),
-                ["score_traction"] = score.TractionScore.ToString("0.##", c),
-                ["score_competition"] = score.CompetitionScore.ToString("0.##", c),
-                ["valuation_low"] = score.ValuationLow.ToString("N2", c),
-                ["valuation_high"] = score.ValuationHigh.ToString("N2", c),
-                ["methods_used"] = string.Join(", ", score.MethodsUsed),
-                ["calculated_at"] = score.CalculatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'", c),
+                ["score_total"] = scoreAvailable ? score.TotalScore.ToString("0.##", c) : na,
+                ["score_team"] = scoreAvailable ? score.TeamScore.ToString("0.##", c) : na,
+                ["score_market"] = scoreAvailable ? score.MarketScore.ToString("0.##", c) : na,
+                ["score_product"] = scoreAvailable ? score.ProductScore.ToString("0.##", c) : na,
+                ["score_traction"] = scoreAvailable ? score.TractionScore.ToString("0.##", c) : na,
+                ["score_competition"] = scoreAvailable ? score.CompetitionScore.ToString("0.##", c) : na,
+                ["valuation_low"] = scoreAvailable ? score.ValuationLow.ToString("N2", c) : na,
+                ["valuation_high"] = scoreAvailable ? score.ValuationHigh.ToString("N2", c) : na,
+                ["methods_used"] = scoreAvailable ? string.Join(", ", score.MethodsUsed) : na,
+                ["calculated_at"] = scoreAvailable ? score.CalculatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'", c) : na,
                 ["cap_table_md_table"] = BuildCapTableMarkdown(capTable),
                 ["flags_section"] = BuildFlagsSection(capTable.Warnings),
-                ["generated_at"] = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'", c)
+                ["generated_at"] = dateTimeProvider.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'", c)
             };
 
             string output = template;

@@ -25,6 +25,8 @@
 - **Investor share after deal:** {{investor_share_pct}} %
 - **Founders' combined share after deal:** {{founders_total_after_pct}} %
 
+> *Calculated as `amount / (pre_money_valuation + amount)` (post-money basis). No conversion discount applies to a priced round.*
+
 ## Cap table after deal
 
 {{cap_table_md_table}}

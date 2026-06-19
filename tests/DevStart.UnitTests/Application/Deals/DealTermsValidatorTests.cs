@@ -70,6 +70,23 @@ public sealed class DealTermsValidatorTests
     }
 
     [Fact]
+    public void Validate_ShouldFlagAmountExceedsCap_ForSafe()
+    {
+        IReadOnlyList<DealTermsFlag> flags = _validator.Validate(new DealTermsInput(
+            InvestmentInstrument.Safe,
+            Amount: 50_000_000m,
+            ValuationCap: 50_000_000m,
+            Discount: null,
+            InterestRate: null,
+            TermMonths: null,
+            PreMoneyValuation: null,
+            LiquidationPreference: 1.0m,
+            ProRataRights: false));
+
+        flags.Select(flag => flag.Code).ShouldContain("deal_terms.amount_exceeds_cap");
+    }
+
+    [Fact]
     public void Validate_ShouldComputeDilutionForPricedRound()
     {
         IReadOnlyList<DealTermsFlag> flags = _validator.Validate(new DealTermsInput(

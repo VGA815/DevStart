@@ -2,7 +2,7 @@ namespace DevStart.Application.Abstractions.Caching
 {
     public static class CacheKeys
     {
-        private const string Version = "v2";
+        private const string Version = "v3";
 
         public static string User(Guid userId) => $"{Version}:users:{userId}";
 

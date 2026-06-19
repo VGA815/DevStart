@@ -154,24 +154,35 @@ namespace DevStart.Infrastructure.DealDocuments
             const decimal esopPct = 10m;
             const decimal foundersPoolPct = 100m - esopPct;
 
-            List<Guid> founderIds = await context.StartupMembers
-                .AsNoTracking()
-                .Where(sm => sm.StartupId == deal.StartupId && sm.Role == StartupRole.Founder)
-                .Select(sm => sm.ProfileId)
+            // Personal data lives on the shared Profile (keyed by UserId == StartupMember.ProfileId).
+            // Left-join so a founder without a profile row still gets a row in the cap table.
+            var founders = await (
+                from sm in context.StartupMembers.AsNoTracking()
+                join p in context.Profiles.AsNoTracking() on sm.ProfileId equals p.UserId into profiles
+                from profile in profiles.DefaultIfEmpty()
+                where sm.StartupId == deal.StartupId && sm.Role == StartupRole.Founder
+                select new { sm.ProfileId, Name = profile != null ? profile.Name : null })
                 .ToListAsync(cancellationToken);
 
             var holders = new List<EquityHolderInput>();
 
-            if (founderIds.Count == 0)
+            if (founders.Count == 0)
             {
                 holders.Add(new EquityHolderInput(null, "Founders pool", "Founder", foundersPoolPct));
             }
             else
             {
-                decimal perFounder = Math.Round(foundersPoolPct / founderIds.Count, 2, MidpointRounding.AwayFromZero);
-                foreach (Guid founderId in founderIds)
+                decimal perFounder = Math.Round(foundersPoolPct / founders.Count, 2, MidpointRounding.AwayFromZero);
+                // Per-founder rounding leaves a tiny residual; fold it into the first founder so the
+                // founders pool sums to exactly (100 - ESOP) and the cap table totals 100%.
+                decimal residual = foundersPoolPct - (perFounder * founders.Count);
+                for (int i = 0; i < founders.Count; i++)
                 {
-                    holders.Add(new EquityHolderInput(founderId, $"Founder {founderId}", "Founder", perFounder));
+                    decimal share = i == 0 ? perFounder + residual : perFounder;
+                    string name = string.IsNullOrWhiteSpace(founders[i].Name)
+                        ? $"Founder {i + 1}"
+                        : founders[i].Name!;
+                    holders.Add(new EquityHolderInput(founders[i].ProfileId, name, "Founder", share));
                 }
             }
 

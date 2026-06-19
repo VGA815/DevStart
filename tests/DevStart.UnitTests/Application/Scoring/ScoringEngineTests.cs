@@ -1,7 +1,6 @@
 using DevStart.Application;
 using DevStart.Application.Scoring;
 using DevStart.Domain.StartupMembers;
-using DevStart.Domain.StartupMetrics;
 using DevStart.Domain.Startups;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
@@ -21,15 +20,7 @@ public sealed class ScoringEngineTests
     public void Compute_ShouldReturnZeroScores_WhenInputsAreEmpty()
     {
         ScoreResult result = _scoringEngine.Compute(
-            new ScoringInputs(
-                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                StartupStage.Idea,
-                Tam: null,
-                MarketGrowthRate: null,
-                HasPatents: false,
-                CompetitorsCount: 4,
-                Members: [],
-                LatestMetrics: new Dictionary<MetricType, decimal>()),
+            Inputs(StartupStage.Idea, competitorsCount: 4),
             CalculatedAt);
 
         // Idea-stage weights: product 0.20, competition 0.10 → 15*0.20 + 35*0.10 = 6.5
@@ -49,24 +40,19 @@ public sealed class ScoringEngineTests
     public void Compute_ShouldApplyTeamMarketProductTractionAndCompetitionRules()
     {
         ScoreResult result = _scoringEngine.Compute(
-            new ScoringInputs(
-                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            Inputs(
                 StartupStage.Mvp,
-                Tam: 10_000_000_000m,
-                MarketGrowthRate: 20m,
-                HasPatents: true,
-                CompetitorsCount: 0,
-                Members:
+                tam: 10_000_000_000m,
+                cagr: 20m,
+                hasPatents: true,
+                competitorsCount: 0,
+                members:
                 [
                     new MemberInput(Guid.NewGuid(), StartupRole.Founder, StartupPosition.CEO, 4, false, 0),
                     new MemberInput(Guid.NewGuid(), StartupRole.Member, StartupPosition.CTO, 1, false, 0),
                     new MemberInput(Guid.NewGuid(), StartupRole.Member, StartupPosition.CMO, 1, false, 0)
                 ],
-                LatestMetrics: new Dictionary<MetricType, decimal>
-                {
-                    [MetricType.Mrr] = 4_000_000m,
-                    [MetricType.MomGrowth] = 20m
-                }),
+                traction: new TractionSignals(4_000_000m, 0m, 20m)),
             CalculatedAt);
 
         result.TeamScore.ShouldBe(75m);
@@ -82,24 +68,18 @@ public sealed class ScoringEngineTests
     public void Compute_ShouldUseHighestFounderTierAndRoundTotal()
     {
         ScoreResult result = _scoringEngine.Compute(
-            new ScoringInputs(
-                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            Inputs(
                 StartupStage.Seed,
-                Tam: 1_000_000_000m,
-                MarketGrowthRate: 10m,
-                HasPatents: false,
-                CompetitorsCount: 2,
-                Members:
+                tam: 1_000_000_000m,
+                cagr: 10m,
+                competitorsCount: 2,
+                members:
                 [
                     new MemberInput(Guid.NewGuid(), StartupRole.Founder, StartupPosition.CEO, 1, false, 0),
                     new MemberInput(Guid.NewGuid(), StartupRole.Founder, StartupPosition.CTO, 1, true, 0),
                     new MemberInput(Guid.NewGuid(), StartupRole.Member, StartupPosition.CMO, null, null, null)
                 ],
-                LatestMetrics: new Dictionary<MetricType, decimal>
-                {
-                    [MetricType.Mrr] = 100_000m,
-                    [MetricType.MomGrowth] = 10m
-                }),
+                traction: new TractionSignals(100_000m, 0m, 10m)),
             CalculatedAt);
 
         result.TeamScore.ShouldBe(100m);
@@ -115,21 +95,16 @@ public sealed class ScoringEngineTests
     public void Compute_ShouldScoreMauOnlyTractionWithoutRevenue()
     {
         ScoreResult result = _scoringEngine.Compute(
-            new ScoringInputs(
-                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            Inputs(
                 StartupStage.PreSeed,
-                Tam: 500_000_000m,
-                MarketGrowthRate: 5m,
-                HasPatents: false,
-                CompetitorsCount: 3,
-                Members:
+                tam: 500_000_000m,
+                cagr: 5m,
+                competitorsCount: 3,
+                members:
                 [
                     new MemberInput(Guid.NewGuid(), StartupRole.Founder, StartupPosition.CEO, 2, false, 0)
                 ],
-                LatestMetrics: new Dictionary<MetricType, decimal>
-                {
-                    [MetricType.Mau] = 1_000m
-                }),
+                traction: new TractionSignals(0m, 1_000m, 0m)),
             CalculatedAt);
 
         result.MarketScore.ShouldBe(20m);
@@ -141,40 +116,11 @@ public sealed class ScoringEngineTests
     public void Compute_ShouldScoreDecliningRevenueBelowFlatGrowth()
     {
         ScoreResult result = _scoringEngine.Compute(
-            Inputs(StartupStage.Seed, metrics: new Dictionary<MetricType, decimal>
-            {
-                [MetricType.Mrr] = 2_000_000m,
-                [MetricType.MomGrowth] = -5m
-            }),
+            Inputs(StartupStage.Seed, traction: new TractionSignals(2_000_000m, 0m, -5m)),
             CalculatedAt);
 
         // MRR > 0 but shrinking → decline tier (25), below the flat-growth 50.
         result.TractionScore.ShouldBe(25m);
-    }
-
-    [Fact]
-    public void Compute_ShouldTreatNegativeMetricsAsZero()
-    {
-        ScoreResult withMau = _scoringEngine.Compute(
-            Inputs(StartupStage.Seed, metrics: new Dictionary<MetricType, decimal>
-            {
-                [MetricType.Mrr] = -100m,
-                [MetricType.Mau] = 500m
-            }),
-            CalculatedAt);
-
-        // Negative MRR is floored to 0 → falls into the MAU-only branch.
-        withMau.TractionScore.ShouldBe(35m);
-
-        ScoreResult noSignal = _scoringEngine.Compute(
-            Inputs(StartupStage.Seed, metrics: new Dictionary<MetricType, decimal>
-            {
-                [MetricType.Mrr] = -100m,
-                [MetricType.Mau] = -10m
-            }),
-            CalculatedAt);
-
-        noSignal.TractionScore.ShouldBe(0m);
     }
 
     [Fact]
@@ -190,6 +136,36 @@ public sealed class ScoringEngineTests
 
         // Falls back to the highest tier among all members (SerialWithExit = 90), not NoExperience (30).
         result.TeamScore.ShouldBe(90m);
+    }
+
+    [Fact]
+    public void Compute_ShouldRewardConsistentMarketFunnel()
+    {
+        // Tam 1B → From1To10B base 60, no CAGR. Consistent funnel (0 < Som <= Sam <= Tam) → +5.
+        ScoreResult consistent = _scoringEngine.Compute(
+            Inputs(StartupStage.Seed, tam: 1_000_000_000m, sam: 500_000_000m, som: 100_000_000m),
+            CalculatedAt);
+        consistent.MarketScore.ShouldBe(65m);
+
+        // Inconsistent funnel (Som > Sam) → no bonus.
+        ScoreResult inconsistent = _scoringEngine.Compute(
+            Inputs(StartupStage.Seed, tam: 1_000_000_000m, sam: 100_000_000m, som: 500_000_000m),
+            CalculatedAt);
+        inconsistent.MarketScore.ShouldBe(60m);
+    }
+
+    [Fact]
+    public void Compute_ShouldRewardArticulatedPositioningAndPlanning()
+    {
+        // Idea base 15, +5 articulated positioning, +5 for >= 3 roadmap items.
+        ScoreResult result = _scoringEngine.Compute(
+            Inputs(
+                StartupStage.Idea,
+                product: new ProductSignals(HasArticulatedPositioning: true),
+                roadmap: new RoadmapSignals(ItemCount: 3, DoneCount: 1)),
+            CalculatedAt);
+
+        result.ProductScore.ShouldBe(25m);
     }
 
     [Theory]
@@ -208,14 +184,26 @@ public sealed class ScoringEngineTests
     private static ScoringInputs Inputs(
         StartupStage stage,
         IReadOnlyList<MemberInput>? members = null,
-        IReadOnlyDictionary<MetricType, decimal>? metrics = null) =>
+        TractionSignals? traction = null,
+        decimal? tam = null,
+        decimal? sam = null,
+        decimal? som = null,
+        decimal? cagr = null,
+        bool hasPatents = false,
+        int competitorsCount = 0,
+        ProductSignals? product = null,
+        RoadmapSignals? roadmap = null) =>
         new(
             Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
             stage,
-            Tam: null,
-            MarketGrowthRate: null,
-            HasPatents: false,
-            CompetitorsCount: 0,
+            Tam: tam,
+            Sam: sam,
+            Som: som,
+            MarketGrowthRate: cagr,
+            HasPatents: hasPatents,
+            CompetitorsCount: competitorsCount,
             Members: members ?? [],
-            LatestMetrics: metrics ?? new Dictionary<MetricType, decimal>());
+            Traction: traction ?? TractionSignals.Empty,
+            Product: product ?? ProductSignals.None,
+            Roadmap: roadmap ?? RoadmapSignals.None);
 }

@@ -36,6 +36,20 @@ namespace DevStart.Application.Abstractions.Validation
                     "Interest rate above 8% is above the typical market range for convertible notes."));
             }
 
+            // For cap-based instruments the invested amount must stay below the cap, otherwise the
+            // implied share is >= 100% and gets clamped, leaving founders with nothing.
+            if ((input.Instrument == InvestmentInstrument.Safe
+                    || input.Instrument == InvestmentInstrument.ConvertibleLoan)
+                && input.ValuationCap.HasValue
+                && input.ValuationCap.Value > 0
+                && input.Amount >= input.ValuationCap.Value)
+            {
+                flags.Add(new DealTermsFlag(
+                    "deal_terms.amount_exceeds_cap",
+                    SeverityWarning,
+                    "Invested amount meets or exceeds the valuation cap; the investor would take the entire cap table."));
+            }
+
             // Investor share = amount / cap (Safe / Convertible) or amount / (premoney + amount) (Priced)
             decimal? investorShare = ComputeShare(input);
             if (investorShare.HasValue && investorShare.Value > 0.30m)

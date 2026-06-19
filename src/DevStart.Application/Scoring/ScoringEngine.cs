@@ -1,6 +1,5 @@
 using DevStart.Application.Scoring.Tiers;
 using DevStart.Domain.StartupMembers;
-using DevStart.Domain.StartupMetrics;
 using DevStart.Domain.Startups;
 
 namespace DevStart.Application.Scoring
@@ -10,9 +9,9 @@ namespace DevStart.Application.Scoring
         public ScoreResult Compute(ScoringInputs inputs, DateTime calculatedAt)
         {
             decimal team = ComputeTeamScore(inputs.Members);
-            decimal market = ComputeMarketScore(inputs.Tam, inputs.MarketGrowthRate);
-            decimal product = ComputeProductScore(inputs.Stage, inputs.HasPatents);
-            decimal traction = ComputeTractionScore(inputs.LatestMetrics);
+            decimal market = ComputeMarketScore(inputs.Tam, inputs.Sam, inputs.Som, inputs.MarketGrowthRate);
+            decimal product = ComputeProductScore(inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap);
+            decimal traction = ComputeTractionScore(inputs.Traction);
             decimal competition = ComputeCompetitionScore(inputs.CompetitorsCount);
 
             ScoreWeights w = WeightsFor(inputs.Stage);
@@ -116,10 +115,10 @@ namespace DevStart.Application.Scoring
             return FounderExperienceTier.NoExperience;
         }
 
-        // Spec: Sub1B=20, 1-10B=60, 10B+=90, plus CAGR bump (+10 / +25).
+        // Spec: Sub1B=20, 1-10B=60, 10B+=90, plus CAGR bump (+10 / +25) and a funnel-consistency bump.
         // NOTE: Tam is interpreted as USD here — the tier ranges ($1B / $10B) are dollar figures.
         // Valuation output (IValuationCalculator) is in RUB; the two are deliberately different currencies.
-        private static decimal ComputeMarketScore(decimal? tam, decimal? cagr)
+        private static decimal ComputeMarketScore(decimal? tam, decimal? sam, decimal? som, decimal? cagr)
         {
             if (tam is null || tam <= 0)
             {
@@ -148,7 +147,19 @@ namespace DevStart.Application.Scoring
                 };
             }
 
-            return Clamp(tamBase + cagrBump);
+            return Clamp(tamBase + cagrBump + FunnelBonus(tam.Value, sam, som));
+        }
+
+        // Proposed default — tunable. Rewards a credibly-scoped market: a defined obtainable slice that
+        // forms a consistent funnel (0 < SOM <= SAM <= TAM). Missing/inconsistent SAM/SOM → no bonus.
+        private static decimal FunnelBonus(decimal tam, decimal? sam, decimal? som)
+        {
+            if (sam is not > 0m || som is not > 0m)
+            {
+                return 0m;
+            }
+            bool consistent = som <= sam && sam <= tam;
+            return consistent ? 5m : 0m;
         }
 
         private static MarketTamTier ClassifyTam(decimal tam)
@@ -166,7 +177,9 @@ namespace DevStart.Application.Scoring
         }
 
         // Spec: Idea=15, PreSeed=35, Mvp=60, Seed=75, SeriesA=85; +10 for patents.
-        private static decimal ComputeProductScore(StartupStage stage, bool hasPatents)
+        // Proposed defaults — tunable: +5 for articulated positioning (value proposition AND
+        // differentiators filled in), +5 for evidence of planning (>= 3 roadmap items).
+        private static decimal ComputeProductScore(StartupStage stage, bool hasPatents, ProductSignals product, RoadmapSignals roadmap)
         {
             decimal baseScore = stage switch
             {
@@ -178,7 +191,9 @@ namespace DevStart.Application.Scoring
                 _ => 15m
             };
             decimal patentBonus = hasPatents ? 10m : 0m;
-            return Clamp(baseScore + patentBonus);
+            decimal articulationBonus = product.HasArticulatedPositioning ? 5m : 0m;
+            decimal planningBonus = roadmap.ItemCount >= 3 ? 5m : 0m;
+            return Clamp(baseScore + patentBonus + articulationBonus + planningBonus);
         }
 
         // Spec:
@@ -188,13 +203,13 @@ namespace DevStart.Application.Scoring
         // - MRR > 0, MoM 10–20%: 70
         // - MRR >= ₽1M with MoM >= 10%: 80
         // - MRR >= ₽4M with MoM >= 20%: 95
-        // Only the dedicated Mrr/Mau/MomGrowth metric types feed traction — by design there is no
-        // Revenue->Mrr / Users->Mau fallback. Negative MRR/MAU are treated as 0 (dirty input guard).
-        private static decimal ComputeTractionScore(IReadOnlyDictionary<MetricType, decimal> latest)
+        // Signals are resolved upstream by IScoringDataProvider (incl. Revenue/Users/GrowthRate
+        // fallbacks and the negative-MRR/MAU floor) — the engine just applies the tiers.
+        private static decimal ComputeTractionScore(TractionSignals traction)
         {
-            decimal mrr = latest.TryGetValue(MetricType.Mrr, out decimal m) ? Math.Max(0m, m) : 0m;
-            decimal mau = latest.TryGetValue(MetricType.Mau, out decimal a) ? Math.Max(0m, a) : 0m;
-            decimal mom = latest.TryGetValue(MetricType.MomGrowth, out decimal g) ? g : 0m;
+            decimal mrr = traction.Mrr;
+            decimal mau = traction.Mau;
+            decimal mom = traction.MomGrowth;
 
             if (mrr <= 0)
             {

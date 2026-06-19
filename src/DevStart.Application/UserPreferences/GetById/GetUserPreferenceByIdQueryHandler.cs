@@ -1,34 +1,26 @@
-﻿using DevStart.Application.Abstractions.Authentication;
-using DevStart.Application.Abstractions.Data;
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.UserPreferences;
 using DevStart.SharedKernel;
-using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.UserPreferences.GetById
 {
-    internal sealed class GetUserPreferenceByIdQueryHandler(IApplicationDbContext context, IUserContext userContext)
+    internal sealed class GetUserPreferenceByIdQueryHandler(
+        IQueryHandler<FetchUserPreferenceByIdQuery, UserPreferenceResponse> fetchHandler,
+        IUserContext userContext)
         : IQueryHandler<GetUserPreferenceByIdQuery, UserPreferenceResponse>
     {
         public async Task<Result<UserPreferenceResponse>> Handle(GetUserPreferenceByIdQuery query, CancellationToken cancellationToken)
         {
-
-            UserPreferenceResponse? userPreference = await context.Preferences
-                .Where(up => up.UserId == query.UserId && up.UserId == userContext.UserId)
-                .Select(up => new UserPreferenceResponse
-                {
-                    UserId = up.UserId,
-                    ReceiveNotifications = up.ReceiveNotifications,
-                    Theme = up.Theme,
-                })
-                .SingleOrDefaultAsync(cancellationToken);
-
-            if (userPreference is null)
+            // Own-account gate runs on every request, before the cached read is reached — so a warm
+            // cache can never let one user read another user's preferences. Cross-account requests
+            // get NotFound (rather than a distinct "forbidden"), preserving enumeration-safe behavior.
+            if (query.UserId != userContext.UserId)
             {
                 return Result.Failure<UserPreferenceResponse>(UserPreferenceErrors.NotFound(query.UserId));
             }
 
-            return userPreference;
+            return await fetchHandler.Handle(new FetchUserPreferenceByIdQuery(query.UserId), cancellationToken);
         }
     }
 }
