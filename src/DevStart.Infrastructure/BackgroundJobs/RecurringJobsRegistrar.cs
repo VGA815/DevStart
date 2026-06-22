@@ -1,3 +1,4 @@
+using DevStart.Infrastructure.Moderation;
 using DevStart.Infrastructure.Payments;
 using DevStart.Infrastructure.Subscriptions;
 using Hangfire;
@@ -20,6 +21,11 @@ namespace DevStart.Infrastructure.BackgroundJobs
 
             recurringJobManager.AddOrUpdate<SubscriptionMaintenanceJob>(
                 "subscription-maintenance",
+                job => job.RunAsync(CancellationToken.None),
+                Cron.Hourly());
+
+            recurringJobManager.AddOrUpdate<BanExpiryJob>(
+                "ban-expiry",
                 job => job.RunAsync(CancellationToken.None),
                 Cron.Hourly());
 

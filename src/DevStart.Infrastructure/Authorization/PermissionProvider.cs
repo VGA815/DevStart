@@ -187,6 +187,16 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.ExpertProfilesCreate,
                 Permissions.ExpertProfilesUpdate,
                 Permissions.ExpertProfilesRead,
+
+                Permissions.AdminUsersRead,
+                Permissions.AdminUsersBan,
+                Permissions.AdminStartupsRead,
+                Permissions.AdminStartupsBan,
+                Permissions.AdminSubscriptionsRead,
+                Permissions.AdminSubscriptionsManage,
+                Permissions.AdminPromoCodesRead,
+                Permissions.AdminPromoCodesManage,
+                Permissions.AdminAuditRead,
             },
         };
 

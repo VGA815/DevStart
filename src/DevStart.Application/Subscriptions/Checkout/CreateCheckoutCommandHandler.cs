@@ -4,6 +4,7 @@ using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Payments.Sync;
 using DevStart.Domain.Payments;
+using DevStart.Domain.PromoCodes;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +59,72 @@ namespace DevStart.Application.Subscriptions.Checkout
                 return Result.Failure<CheckoutResponse>(SubscriptionErrors.AlreadyActive);
             }
 
+            // 1b. Resolve and validate a promo code (if any). A free/100%-off code activates Pro directly
+            // without touching the payment provider; a partial discount lowers the amount charged below.
+            decimal chargeAmount = planConfig.Price;
+            Guid? promoCodeId = null;
+            decimal discountAmount = 0m;
+            if (!string.IsNullOrWhiteSpace(command.PromoCode))
+            {
+                string normalizedCode = PromoCode.Normalize(command.PromoCode);
+                PromoCode? promo = await context.PromoCodes
+                    .FirstOrDefaultAsync(p => p.Code == normalizedCode, cancellationToken);
+                if (promo is null)
+                {
+                    return Result.Failure<CheckoutResponse>(PromoCodeErrors.InvalidCode);
+                }
+
+                bool alreadyRedeemed = await context.PromoCodeRedemptions
+                    .AnyAsync(r => r.PromoCodeId == promo.Id && r.UserId == userId, cancellationToken);
+                Result validation = promo.Validate(command.Plan, utcNow, alreadyRedeemed);
+                if (validation.IsFailure)
+                {
+                    return Result.Failure<CheckoutResponse>(validation.Error);
+                }
+
+                PromoCheckout promoCheckout = promo.ComputeCheckout(planConfig.Price);
+
+                if (promoCheckout.IsFree)
+                {
+                    Subscription freeSubscription = Subscription.CreatePending(
+                        userId, command.Plan, utcNow, SubscriptionSource.Promo);
+                    Result activated = freeSubscription.Activate(
+                        utcNow, promoCheckout.FreeDays ?? planConfig.DurationDays);
+                    if (activated.IsFailure)
+                    {
+                        return Result.Failure<CheckoutResponse>(activated.Error);
+                    }
+
+                    context.Subscriptions.Add(freeSubscription);
+                    context.PromoCodeRedemptions.Add(PromoCodeRedemption.Create(
+                        promo.Id, userId, freeSubscription.Id, paymentId: null, promoCheckout.Discount, utcNow));
+                    promo.RegisterRedemption();
+
+                    try
+                    {
+                        // The unique (promo_code_id, user_id) index is the final guard against a concurrent
+                        // double-redemption that slips past the AnyAsync check above.
+                        await context.SaveChangesAsync(cancellationToken);
+                    }
+                    catch (DbUpdateException)
+                    {
+                        return Result.Failure<CheckoutResponse>(PromoCodeErrors.AlreadyRedeemedByUser);
+                    }
+
+                    return new CheckoutResponse
+                    {
+                        SubscriptionId = freeSubscription.Id,
+                        PaymentId = Guid.Empty,
+                        ConfirmationUrl = null,
+                        Activated = true,
+                    };
+                }
+
+                chargeAmount = promoCheckout.Amount;
+                promoCodeId = promo.Id;
+                discountAmount = promoCheckout.Discount;
+            }
+
             // 2. Reuse an existing Pending payment+subscription if the user retries checkout.
             Payment? pendingPayment = await context.Payments
                 .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending)
@@ -88,6 +155,14 @@ namespace DevStart.Application.Subscriptions.Checkout
 
             if (pendingPayment is not null)
             {
+                // A promo code was supplied but an in-flight checkout already exists with a different
+                // (or no) promo. Don't silently reuse the old amount/discount — make the user finish or
+                // cancel the pending checkout first.
+                if (!string.IsNullOrWhiteSpace(command.PromoCode) && pendingPayment.PromoCodeId != promoCodeId)
+                {
+                    return Result.Failure<CheckoutResponse>(PaymentErrors.PendingCheckoutPromoMismatch);
+                }
+
                 Subscription? existing = await context.Subscriptions
                     .SingleOrDefaultAsync(s => s.Id == pendingPayment.SubscriptionId, cancellationToken);
                 if (existing is null)
@@ -117,9 +192,11 @@ namespace DevStart.Application.Subscriptions.Checkout
                     userId,
                     subscription.Id,
                     PaymentProvider.YooKassa,
-                    planConfig.Price,
+                    chargeAmount,
                     planConfig.Currency,
-                    utcNow);
+                    utcNow,
+                    promoCodeId,
+                    discountAmount);
 
                 context.Subscriptions.Add(subscription);
                 context.Payments.Add(payment);
@@ -167,8 +244,9 @@ namespace DevStart.Application.Subscriptions.Checkout
 
             // The payment id doubles as the idempotence key so retries never create a duplicate
             // charge in YooKassa.
+            // Use the payment's own amount: it reflects any promo discount applied when it was created.
             var input = new CreatePaymentInput(
-                Amount: planConfig.Price,
+                Amount: payment.Amount,
                 Currency: planConfig.Currency,
                 Description: planConfig.Description,
                 ReturnUrl: returnUrl,

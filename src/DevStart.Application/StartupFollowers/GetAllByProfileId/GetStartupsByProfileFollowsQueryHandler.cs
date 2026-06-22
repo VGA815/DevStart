@@ -6,13 +6,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupFollowers.GetAllByProfileId
 {
-    internal sealed class GetStartupsByProfileFollowsQueryHandler(IApplicationDbContext context)
+    internal sealed class GetStartupsByProfileFollowsQueryHandler(IApplicationDbContext context, IDateTimeProvider dateTimeProvider)
         : IQueryHandler<GetStartupsByProfileFollowsQuery, List<StartupResponse>>
     {
         public async Task<Result<List<StartupResponse>>> Handle(
             GetStartupsByProfileFollowsQuery query,
             CancellationToken cancellationToken)
         {
+            DateTime now = dateTimeProvider.UtcNow;
+
             List<Guid> followedIds = await context.StartupFollowers
                 .Where(sf => sf.ProfileId == query.ProfileId)
                 .Select(sf => sf.StartupId)
@@ -22,7 +24,8 @@ namespace DevStart.Application.StartupFollowers.GetAllByProfileId
                 return new List<StartupResponse>();
 
             List<StartupResponse> startups = await context.Startups
-                .Where(s => followedIds.Contains(s.Id))
+                .Where(s => followedIds.Contains(s.Id)
+                         && !(s.IsBanned && (s.BanExpiresAt == null || s.BanExpiresAt > now)))
                 .Select(s => new StartupResponse
                 {
                     Id = s.Id,

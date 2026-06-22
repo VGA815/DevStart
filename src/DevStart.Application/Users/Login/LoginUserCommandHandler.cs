@@ -52,6 +52,11 @@ namespace DevStart.Application.Users.Login
                 return Result.Failure<OAuthAuthResult>(UserErrors.EmailNotVerified);
             }
 
+            if (user.IsCurrentlyBanned(dateTimeProvider.UtcNow))
+            {
+                return Result.Failure<OAuthAuthResult>(UserErrors.Banned);
+            }
+
             // Re-consent gate: if mandatory consents are outdated (e.g. an admin activated a new document
             // version), require acceptance before issuing tokens. The client completes the challenge via
             // POST api/auth/oauth/complete using the returned pending token.

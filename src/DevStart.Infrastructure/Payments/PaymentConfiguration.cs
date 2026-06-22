@@ -40,6 +40,11 @@ namespace DevStart.Infrastructure.Payments
                 .HasConversion<int>()
                 .IsRequired()
                 .HasColumnName("status");
+            builder.Property(x => x.PromoCodeId).HasColumnName("promo_code_id");
+            builder.Property(x => x.DiscountAmount)
+                .HasColumnName("discount_amount")
+                .HasColumnType("numeric(10,2)")
+                .HasDefaultValue(0m);
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.PaidAt).HasColumnName("paid_at");
 
@@ -62,6 +67,14 @@ namespace DevStart.Infrastructure.Payments
                 .WithMany()
                 .HasForeignKey(x => x.SubscriptionId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex(x => x.PromoCodeId).HasDatabaseName("ix_payments_promo_code_id");
+
+            // Restrict: promo codes are deactivated, never deleted, so a payment's promo reference stays valid.
+            builder.HasOne<DevStart.Domain.PromoCodes.PromoCode>()
+                .WithMany()
+                .HasForeignKey(x => x.PromoCodeId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

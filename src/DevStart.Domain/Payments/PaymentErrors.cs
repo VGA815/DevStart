@@ -40,6 +40,11 @@ namespace DevStart.Domain.Payments
             "Payments.NotRefundable",
             "Only a succeeded payment can be refunded.");
 
+        public static readonly Error PendingCheckoutPromoMismatch = Error.Conflict(
+            "Payments.PendingCheckoutPromoMismatch",
+            "You already have a pending checkout with a different (or no) promo code. " +
+            "Complete or cancel it before applying this promo code.");
+
         public static Error RefundAmountInvalid(decimal max) => Error.Problem(
             "Payments.RefundAmountInvalid",
             $"Refund amount must be greater than zero and not exceed the refundable balance ({max}).");

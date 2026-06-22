@@ -3,6 +3,7 @@ using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
+using DevStart.Domain.PromoCodes;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -79,6 +80,27 @@ namespace DevStart.Application.Payments.Sync
                         return activated;
                     }
                 }
+
+                // Finalize a promo redemption only once the payment actually succeeded, so an abandoned
+                // discounted checkout never burns the code. Idempotent across webhook/reconciliation replays.
+                if (payment.PromoCodeId is Guid promoCodeId)
+                {
+                    bool alreadyRedeemed = await context.PromoCodeRedemptions
+                        .AnyAsync(r => r.PromoCodeId == promoCodeId && r.UserId == payment.UserId, cancellationToken);
+                    if (!alreadyRedeemed)
+                    {
+                        PromoCode? promo = await context.PromoCodes
+                            .SingleOrDefaultAsync(p => p.Id == promoCodeId, cancellationToken);
+                        if (promo is not null)
+                        {
+                            context.PromoCodeRedemptions.Add(PromoCodeRedemption.Create(
+                                promoCodeId, payment.UserId, payment.SubscriptionId, payment.Id,
+                                payment.DiscountAmount, utcNow));
+                            promo.RegisterRedemption();
+                        }
+                    }
+                }
+
                 if (snapshot.RefundedAmount > 0m)
                 {
                     // Partial refund: record the amount but keep access.

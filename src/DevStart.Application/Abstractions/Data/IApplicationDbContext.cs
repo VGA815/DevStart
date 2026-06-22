@@ -1,6 +1,8 @@
-﻿using DevStart.Domain.ConsentDocuments;
+﻿using DevStart.Domain.Admin;
+using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.ExternalLogins;
+using DevStart.Domain.PromoCodes;
 using DevStart.Domain.RefreshTokens;
 using DevStart.Domain.UserConsents;
 using DevStart.Domain.EmailVerificationTokens;
@@ -67,6 +69,9 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<ConsentDocument> ConsentDocuments { get; }
         DbSet<ExternalLogin> ExternalLogins { get; }
         DbSet<RefreshToken> RefreshTokens { get; }
+        DbSet<AdminActionLog> AdminActionLogs { get; }
+        DbSet<PromoCode> PromoCodes { get; }
+        DbSet<PromoCodeRedemption> PromoCodeRedemptions { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

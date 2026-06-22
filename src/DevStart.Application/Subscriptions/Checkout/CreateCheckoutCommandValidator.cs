@@ -9,6 +9,10 @@ namespace DevStart.Application.Subscriptions.Checkout
         {
             RuleFor(x => x.Plan)
                 .Equal(SubscriptionPlan.Pro);
+
+            RuleFor(x => x.PromoCode)
+                .MaximumLength(64)
+                .When(x => !string.IsNullOrWhiteSpace(x.PromoCode));
         }
     }
 }

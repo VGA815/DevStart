@@ -89,6 +89,12 @@ namespace DevStart.Application.Auth.OAuth.Complete
                 user = newUser;
             }
 
+            // A re-consenting existing user could have been banned in the meantime.
+            if (user.IsCurrentlyBanned(now))
+            {
+                return Result.Failure<TokenPair>(UserErrors.Banned);
+            }
+
             await context.SaveChangesAsync(cancellationToken);
 
             string accessToken = tokenProvider.CreateAccessToken(user);

@@ -21,8 +21,57 @@ namespace DevStart.Domain.Startups
         public decimal? Som { get; set; }
         public decimal? MarketGrowthRate { get; set; }
         public bool HasPatents { get; set; }
+        public bool IsBanned { get; set; }
+        public string? BanReason { get; set; }
+        public DateTime? BannedAt { get; set; }
+        public DateTime? BanExpiresAt { get; set; }
+        public Guid? BannedByUserId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        /// <summary>
+        /// True while a moderation ban is in force. Distinct from <see cref="IsStopped"/> (owner-controlled).
+        /// A temporary ban whose <see cref="BanExpiresAt"/> has passed is treated as lifted ("lazy" expiry).
+        /// </summary>
+        public bool IsCurrentlyBanned(DateTime utcNow) =>
+            IsBanned && (BanExpiresAt is null || BanExpiresAt > utcNow);
+
+        public Result Ban(string reason, DateTime? expiresAt, Guid byUserId, DateTime utcNow)
+        {
+            if (IsCurrentlyBanned(utcNow))
+            {
+                return Result.Failure(StartupErrors.AlreadyBanned);
+            }
+            if (expiresAt is not null && expiresAt <= utcNow)
+            {
+                return Result.Failure(StartupErrors.BanExpiryInPast);
+            }
+
+            IsBanned = true;
+            BanReason = reason;
+            BannedAt = utcNow;
+            BanExpiresAt = expiresAt;
+            BannedByUserId = byUserId;
+            UpdatedAt = utcNow;
+            return Result.Success();
+        }
+
+        public Result Unban(DateTime utcNow)
+        {
+            if (!IsBanned)
+            {
+                return Result.Failure(StartupErrors.NotBanned);
+            }
+
+            IsBanned = false;
+            BanReason = null;
+            BannedAt = null;
+            BanExpiresAt = null;
+            BannedByUserId = null;
+            UpdatedAt = utcNow;
+            return Result.Success();
+        }
+
         public static Startup Create(
             string name, string publicEmail, string? description,
             string? url, StartupStage startupStage, StartupLocation? location,

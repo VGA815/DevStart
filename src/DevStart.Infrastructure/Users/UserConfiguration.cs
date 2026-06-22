@@ -20,9 +20,16 @@ namespace DevStart.Infrastructure.Users
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
             builder.Property(x => x.Role).HasColumnName("role").HasDefaultValue(UserSystemRole.User);
+            builder.Property(x => x.IsBanned).HasColumnName("is_banned").HasDefaultValue(false);
+            builder.Property(x => x.BanReason).HasColumnName("ban_reason").HasColumnType("text");
+            builder.Property(x => x.BannedAt).HasColumnName("banned_at");
+            builder.Property(x => x.BanExpiresAt).HasColumnName("ban_expires_at");
+            builder.Property(x => x.BannedByUserId).HasColumnName("banned_by_user_id");
 
             builder.HasIndex(x => x.Email).IsUnique();
             builder.HasIndex(x => x.Username).IsUnique();
+            builder.HasIndex(x => new { x.IsBanned, x.BanExpiresAt })
+                .HasDatabaseName("ix_users_banned");
         }
     }
 }

@@ -22,6 +22,11 @@ namespace DevStart.Infrastructure.Subscriptions
                 .HasConversion<int>()
                 .IsRequired()
                 .HasColumnName("status");
+            builder.Property(x => x.Source)
+                .HasConversion<int>()
+                .IsRequired()
+                .HasColumnName("source")
+                .HasDefaultValue(DevStart.Domain.Subscriptions.SubscriptionSource.Purchase);
             builder.Property(x => x.StartedAt).HasColumnName("started_at");
             builder.Property(x => x.ExpiresAt).HasColumnName("expires_at");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");

@@ -5,11 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.Startups.GetAllByProfileId
 {
-    internal sealed class GetStartupsByProfileIdQueryHandler(IApplicationDbContext context)
+    internal sealed class GetStartupsByProfileIdQueryHandler(IApplicationDbContext context, IDateTimeProvider dateTimeProvider)
         : IQueryHandler<GetStartupsByProfileIdQuery, List<StartupResponse>>
     {
         public async Task<Result<List<StartupResponse>>> Handle(GetStartupsByProfileIdQuery query, CancellationToken cancellationToken)
         {
+            DateTime now = dateTimeProvider.UtcNow;
             List<Guid> startupMemberIds = await context.StartupMembers
                 .Where(sm => sm.ProfileId == query.ProfileId)
                 .Select(sm => sm.StartupId)
@@ -20,7 +21,8 @@ namespace DevStart.Application.Startups.GetAllByProfileId
                 .ToListAsync(cancellationToken);
 
             List<StartupResponse> startups = await context.Startups
-                .Where(s => startupMemberIds.Contains(s.Id) || startupInvestorIds.Contains(s.Id))
+                .Where(s => (startupMemberIds.Contains(s.Id) || startupInvestorIds.Contains(s.Id))
+                         && !(s.IsBanned && (s.BanExpiresAt == null || s.BanExpiresAt > now)))
                 .Select(s => new StartupResponse
                 {
                     Id = s.Id,

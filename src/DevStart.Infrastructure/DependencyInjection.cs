@@ -19,6 +19,7 @@ using DevStart.Infrastructure.DealDocuments;
 using DevStart.Infrastructure.DealDocuments.Generation;
 using DevStart.Infrastructure.DomainEvents;
 using DevStart.Infrastructure.FileStorage;
+using DevStart.Infrastructure.Moderation;
 using DevStart.Infrastructure.Notifications;
 using DevStart.Infrastructure.Payments;
 using DevStart.Infrastructure.Subscriptions;
@@ -222,6 +223,7 @@ namespace DevStart.Infrastructure
 
             services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
             services.AddScoped<TermSheetGenerationJob>();
+            services.AddScoped<BanExpiryJob>();
 
             return services;
         }

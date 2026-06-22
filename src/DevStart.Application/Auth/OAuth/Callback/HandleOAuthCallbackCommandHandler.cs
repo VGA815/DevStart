@@ -72,6 +72,10 @@ namespace DevStart.Application.Auth.OAuth.Callback
                 {
                     return Result.Failure<OAuthAuthResult>(linkResult.Error);
                 }
+                if (linkResult.Value.IsCurrentlyBanned(now))
+                {
+                    return Result.Failure<OAuthAuthResult>(UserErrors.Banned);
+                }
 
                 await context.SaveChangesAsync(cancellationToken);
                 return OAuthAuthResult.Authenticated(await IssueTokensAsync(linkResult.Value, command, cancellationToken));
@@ -135,6 +139,11 @@ namespace DevStart.Application.Auth.OAuth.Callback
         private async Task<Result<OAuthAuthResult>> IssueOrChallengeAsync(
             User user, ExternalUserInfo info, HandleOAuthCallbackCommand command, CancellationToken cancellationToken)
         {
+            if (user.IsCurrentlyBanned(dateTimeProvider.UtcNow))
+            {
+                return Result.Failure<OAuthAuthResult>(UserErrors.Banned);
+            }
+
             if (await consentService.AreMandatoryConsentsCurrentAsync(user.Id, cancellationToken))
             {
                 return OAuthAuthResult.Authenticated(await IssueTokensAsync(user, command, cancellationToken));

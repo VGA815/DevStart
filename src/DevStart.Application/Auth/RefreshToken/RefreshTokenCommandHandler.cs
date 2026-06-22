@@ -10,7 +10,8 @@ namespace DevStart.Application.Auth.RefreshToken
     internal sealed class RefreshTokenCommandHandler(
         IApplicationDbContext context,
         IRefreshTokenService refreshTokenService,
-        ITokenProvider tokenProvider)
+        ITokenProvider tokenProvider,
+        IDateTimeProvider dateTimeProvider)
         : ICommandHandler<RefreshTokenCommand, TokenPair>
     {
         public async Task<Result<TokenPair>> Handle(RefreshTokenCommand command, CancellationToken cancellationToken)
@@ -32,6 +33,14 @@ namespace DevStart.Application.Auth.RefreshToken
             if (user is null)
             {
                 return Result.Failure<TokenPair>(UserErrors.NotFound(rotated.Value.UserId));
+            }
+
+            // A banned user must not be able to mint a fresh access token. Revoke the just-rotated token
+            // (and any others) so the session is fully terminated.
+            if (user.IsCurrentlyBanned(dateTimeProvider.UtcNow))
+            {
+                await refreshTokenService.RevokeAllForUserAsync(user.Id, cancellationToken);
+                return Result.Failure<TokenPair>(UserErrors.Banned);
             }
 
             string accessToken = tokenProvider.CreateAccessToken(user);

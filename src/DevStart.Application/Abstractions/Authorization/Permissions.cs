@@ -91,5 +91,19 @@ namespace DevStart.Application.Abstractions.Authorization
 
         public const string ConsentDocumentsCreate           = "consent_documents::create";
         public const string ConsentDocumentsActivate         = "consent_documents::activate";
+
+        public const string AdminUsersRead                   = "admin_users::read";
+        public const string AdminUsersBan                    = "admin_users::ban";
+
+        public const string AdminStartupsRead                = "admin_startups::read";
+        public const string AdminStartupsBan                 = "admin_startups::ban";
+
+        public const string AdminSubscriptionsRead           = "admin_subscriptions::read";
+        public const string AdminSubscriptionsManage         = "admin_subscriptions::manage";
+
+        public const string AdminPromoCodesRead              = "admin_promo_codes::read";
+        public const string AdminPromoCodesManage            = "admin_promo_codes::manage";
+
+        public const string AdminAuditRead                   = "admin_audit::read";
     }
 }

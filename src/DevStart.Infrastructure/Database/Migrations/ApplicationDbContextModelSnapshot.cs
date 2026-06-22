@@ -23,6 +23,57 @@ namespace DevStart.Infrastructure.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DevStart.Domain.Admin.AdminActionLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("ActionType")
+                        .HasColumnType("integer")
+                        .HasColumnName("action_type");
+
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("admin_user_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("metadata_json");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("integer")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_admin_action_logs");
+
+                    b.HasIndex("AdminUserId")
+                        .HasDatabaseName("ix_admin_action_logs_admin_user_id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_admin_action_logs_created_at");
+
+                    b.HasIndex("TargetType", "TargetId")
+                        .HasDatabaseName("ix_admin_action_logs_target");
+
+                    b.ToTable("admin_action_logs", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.ConsentDocuments.ConsentDocument", b =>
                 {
                     b.Property<Guid>("Id")
@@ -823,9 +874,19 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("currency");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(10,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("discount_amount");
+
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("paid_at");
+
+                    b.Property<Guid?>("PromoCodeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("promo_code_id");
 
                     b.Property<int>("Provider")
                         .HasColumnType("integer")
@@ -856,6 +917,9 @@ namespace DevStart.Infrastructure.Database.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_payments");
+
+                    b.HasIndex("PromoCodeId")
+                        .HasDatabaseName("ix_payments_promo_code_id");
 
                     b.HasIndex("SubscriptionId")
                         .HasDatabaseName("ix_payments_subscription_id");
@@ -943,6 +1007,114 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasName("pk_profiles");
 
                     b.ToTable("profiles", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.PromoCodes.PromoCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<int>("DiscountType")
+                        .HasColumnType("integer")
+                        .HasColumnName("discount_type");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("discount_value");
+
+                    b.Property<int?>("FreePeriodDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("free_period_days");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<int?>("MaxRedemptions")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_redemptions");
+
+                    b.Property<int>("Plan")
+                        .HasColumnType("integer")
+                        .HasColumnName("plan");
+
+                    b.Property<int>("RedeemedCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("redeemed_count");
+
+                    b.Property<DateTime?>("ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("valid_from");
+
+                    b.Property<DateTime?>("ValidUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("valid_until");
+
+                    b.HasKey("Id")
+                        .HasName("pk_promo_codes");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ux_promo_codes_code");
+
+                    b.ToTable("promo_codes", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.PromoCodes.PromoCodeRedemption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("DiscountApplied")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("discount_applied");
+
+                    b.Property<Guid?>("PaymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_id");
+
+                    b.Property<Guid>("PromoCodeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("promo_code_id");
+
+                    b.Property<DateTime>("RedeemedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("redeemed_at");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subscription_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_promo_code_redemptions");
+
+                    b.HasIndex("PromoCodeId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_promo_code_redemptions_promo_user");
+
+                    b.ToTable("promo_code_redemptions", "public");
                 });
 
             modelBuilder.Entity("DevStart.Domain.RefreshTokens.RefreshToken", b =>
@@ -1328,6 +1500,22 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("avatar_id");
 
+                    b.Property<DateTime?>("BanExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ban_expires_at");
+
+                    b.Property<string>("BanReason")
+                        .HasColumnType("text")
+                        .HasColumnName("ban_reason");
+
+                    b.Property<DateTime?>("BannedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("banned_at");
+
+                    b.Property<Guid?>("BannedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("banned_by_user_id");
+
                     b.Property<string>("BillingEmail")
                         .HasColumnType("text")
                         .HasColumnName("billing_email");
@@ -1345,6 +1533,12 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("has_patents");
+
+                    b.Property<bool>("IsBanned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_banned");
 
                     b.Property<bool>("IsStopped")
                         .HasColumnType("boolean")
@@ -1403,6 +1597,9 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.HasKey("Id")
                         .HasName("pk_startups");
 
+                    b.HasIndex("IsBanned", "BanExpiresAt")
+                        .HasDatabaseName("ix_startups_banned");
+
                     b.ToTable("startups", "public");
                 });
 
@@ -1428,6 +1625,12 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.Property<DateTime?>("RenewalReminderSentAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("renewal_reminder_sent_at");
+
+                    b.Property<int>("Source")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("source");
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1526,6 +1729,22 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTime?>("BanExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ban_expires_at");
+
+                    b.Property<string>("BanReason")
+                        .HasColumnType("text")
+                        .HasColumnName("ban_reason");
+
+                    b.Property<DateTime?>("BannedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("banned_at");
+
+                    b.Property<Guid?>("BannedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("banned_by_user_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -1535,6 +1754,12 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("email");
+
+                    b.Property<bool>("IsBanned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_banned");
 
                     b.Property<bool>("IsVerified")
                         .HasColumnType("boolean")
@@ -1571,6 +1796,9 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_users_username");
 
+                    b.HasIndex("IsBanned", "BanExpiresAt")
+                        .HasDatabaseName("ix_users_banned");
+
                     b.ToTable("users", "public");
                 });
 
@@ -1600,12 +1828,28 @@ namespace DevStart.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("DevStart.Domain.Payments.Payment", b =>
                 {
+                    b.HasOne("DevStart.Domain.PromoCodes.PromoCode", null)
+                        .WithMany()
+                        .HasForeignKey("PromoCodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_payments_promo_codes_promo_code_id");
+
                     b.HasOne("DevStart.Domain.Subscriptions.Subscription", null)
                         .WithMany()
                         .HasForeignKey("SubscriptionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_payments_subscriptions_subscription_id");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.PromoCodes.PromoCodeRedemption", b =>
+                {
+                    b.HasOne("DevStart.Domain.PromoCodes.PromoCode", null)
+                        .WithMany()
+                        .HasForeignKey("PromoCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_promo_code_redemptions_promo_codes_promo_code_id");
                 });
 
             modelBuilder.Entity("DevStart.Domain.StartupMembers.StartupMember", b =>

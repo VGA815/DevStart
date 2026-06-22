@@ -1,7 +1,9 @@
 ﻿using DevStart.Application.Abstractions.Data;
+using DevStart.Domain.Admin;
 using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.ExternalLogins;
+using DevStart.Domain.PromoCodes;
 using DevStart.Domain.RefreshTokens;
 using DevStart.Domain.UserConsents;
 using DevStart.Domain.EmailVerificationTokens;
@@ -105,6 +107,12 @@ namespace DevStart.Infrastructure.Database
         public DbSet<ExternalLogin> ExternalLogins { get; set; }
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+        public DbSet<AdminActionLog> AdminActionLogs { get; set; }
+
+        public DbSet<PromoCode> PromoCodes { get; set; }
+
+        public DbSet<PromoCodeRedemption> PromoCodeRedemptions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

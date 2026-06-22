@@ -14,6 +14,8 @@ namespace DevStart.Domain.Payments
         public decimal RefundedAmount { get; set; }
         public string Currency { get; set; } = "RUB";
         public PaymentStatus Status { get; set; }
+        public Guid? PromoCodeId { get; set; }
+        public decimal DiscountAmount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? PaidAt { get; set; }
 
@@ -25,7 +27,9 @@ namespace DevStart.Domain.Payments
             PaymentProvider provider,
             decimal amount,
             string currency,
-            DateTime utcNow)
+            DateTime utcNow,
+            Guid? promoCodeId = null,
+            decimal discountAmount = 0m)
             => new()
             {
                 Id = Guid.NewGuid(),
@@ -38,6 +42,8 @@ namespace DevStart.Domain.Payments
                 RefundedAmount = 0m,
                 Currency = currency,
                 Status = PaymentStatus.Pending,
+                PromoCodeId = promoCodeId,
+                DiscountAmount = discountAmount,
                 CreatedAt = utcNow,
                 PaidAt = null,
             };

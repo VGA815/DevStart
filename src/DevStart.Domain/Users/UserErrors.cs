@@ -34,5 +34,25 @@ namespace DevStart.Domain.Users
         public static readonly Error PasswordNotSet = Error.Conflict(
             "Users.PasswordNotSet",
             "This account has no password set (it uses an external login). Use the password reset flow to set one.");
+        // Generic on purpose: the moderation reason is privacy-sensitive and is exposed only on
+        // admin/audit surfaces (AdminActionLog, User.BanReason), never to the banned user.
+        public static readonly Error Banned = Error.Forbidden(
+            "Users.Banned",
+            "This account has been banned.");
+        public static readonly Error AlreadyBanned = Error.Conflict(
+            "Users.AlreadyBanned",
+            "The user is already banned");
+        public static readonly Error NotBanned = Error.Conflict(
+            "Users.NotBanned",
+            "The user is not banned");
+        public static readonly Error BanExpiryInPast = Error.Validation(
+            "Users.BanExpiryInPast",
+            "The ban expiry date must be in the future");
+        public static readonly Error CannotBanSelf = Error.Validation(
+            "Users.CannotBanSelf",
+            "You cannot ban your own account");
+        public static readonly Error CannotBanAdmin = Error.Forbidden(
+            "Users.CannotBanAdmin",
+            "Administrator accounts cannot be banned");
     }
 }

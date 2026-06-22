@@ -27,5 +27,13 @@ namespace DevStart.Domain.Subscriptions
         public static Error ProRequiredForFeature(string feature) => Error.Forbidden(
             "Subscriptions.ProRequiredForFeature",
             $"An active Pro subscription is required to access feature '{feature}'.");
+
+        public static readonly Error CannotExtend = Error.Problem(
+            "Subscriptions.CannotExtend",
+            "Only an active subscription can be extended.");
+
+        public static readonly Error AlreadyEnded = Error.Conflict(
+            "Subscriptions.AlreadyEnded",
+            "The subscription is already cancelled or expired.");
     }
 }

@@ -6,13 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.Startups.GetById
 {
-    internal sealed class GetStartupByIdQueryHandler(IApplicationDbContext context)
+    internal sealed class GetStartupByIdQueryHandler(IApplicationDbContext context, IDateTimeProvider dateTimeProvider)
         : IQueryHandler<GetStartupByIdQuery, StartupResponse>
     {
         public async Task<Result<StartupResponse>> Handle(GetStartupByIdQuery query, CancellationToken cancellationToken)
         {
+            // Hide a currently-banned startup; honour lazy expiry of temporary bans.
+            DateTime now = dateTimeProvider.UtcNow;
             StartupResponse? startup = await context.Startups
-                .Where(s => s.Id == query.StartupId)
+                .Where(s => s.Id == query.StartupId
+                         && !(s.IsBanned && (s.BanExpiresAt == null || s.BanExpiresAt > now)))
                 .Select(s => new StartupResponse
                 {
                     Id = s.Id,

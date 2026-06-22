@@ -6,12 +6,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.Startups.GetAll
 {
-    internal sealed class GetStartupsQueryHandler(IApplicationDbContext context)
+    internal sealed class GetStartupsQueryHandler(IApplicationDbContext context, IDateTimeProvider dateTimeProvider)
         : IQueryHandler<GetStartupsQuery, List<StartupResponse>>
     {
         public async Task<Result<List<StartupResponse>>> Handle(GetStartupsQuery query, CancellationToken cancellationToken)
         {
-            var startupQuery = context.Startups.AsQueryable();
+            // Banned startups are hidden from public discovery. We honour "lazy expiry": a temporary ban
+            // whose BanExpiresAt has passed is treated as lifted immediately, without waiting for the
+            // hourly ban-expiry job to clear the flag.
+            DateTime now = dateTimeProvider.UtcNow;
+            var startupQuery = context.Startups
+                .Where(s => !(s.IsBanned && (s.BanExpiresAt == null || s.BanExpiresAt > now)));
 
             if (query.Stage.HasValue)
             {
