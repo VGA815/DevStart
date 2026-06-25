@@ -13,6 +13,8 @@ namespace DevStart.Application.Startups.Update
             RuleFor(s => s.Sam).GreaterThanOrEqualTo(0).When(s => s.Sam.HasValue);
             RuleFor(s => s.Som).GreaterThanOrEqualTo(0).When(s => s.Som.HasValue);
             RuleFor(s => s.MarketGrowthRate).GreaterThanOrEqualTo(0).When(s => s.MarketGrowthRate.HasValue);
+            RuleFor(s => s.Industry).IsInEnum();
+            RuleFor(s => s.TargetRoundAmount).GreaterThanOrEqualTo(0).When(s => s.TargetRoundAmount.HasValue);
         }
     }
 }

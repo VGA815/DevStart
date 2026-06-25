@@ -59,11 +59,22 @@ namespace DevStart.Infrastructure
                 .AddAuthorizationInternal()
                 .AddBackgroundJobs(configuration)
                 .AddDealDocumentGeneration()
-                .AddBilling(configuration);
+                .AddBilling(configuration)
+                .AddValuation(configuration);
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
             services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
+
+            return services;
+        }
+
+        // Binds the tunable valuation constants (Berkus ceilings, Scorecard medians, VC multiples/IRR,
+        // range band, methodology version) over the code defaults registered in AddApplication.
+        private static IServiceCollection AddValuation(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<Application.Scoring.ValuationOptions>(
+                configuration.GetSection(Application.Scoring.ValuationOptions.SectionName));
 
             return services;
         }

@@ -25,16 +25,18 @@ namespace DevStart.Application.Startups.GetScore
             DateTime utcNow = dateTimeProvider.UtcNow;
             ScoreResult baseScore = scoringEngine.Compute(inputs, utcNow);
 
-            // ARR anchors the revenue-multiple comparable in the valuation ensemble. The provider already
-            // resolved and floored the traction signals, so ARR derives from the same MRR the engine scored.
-            ValuationRange range = valuationCalculator.ComputeRange(
-                baseScore.TotalScore, inputs.Stage, inputs.Traction.AnnualRecurringRevenue);
+            // The valuation ensemble reads the engine sub-scores plus the raw signals (stage, industry,
+            // ARR, target round amount, partnerships) the provider already resolved.
+            ValuationResult valuation = valuationCalculator.Compute(baseScore, inputs);
 
             return baseScore with
             {
-                ValuationLow = range.Low,
-                ValuationHigh = range.High,
-                MethodsUsed = range.MethodsUsed
+                ValuationLow = valuation.Low,
+                ValuationHigh = valuation.High,
+                ValuationPoint = valuation.Point,
+                MethodsUsed = valuation.MethodsUsed,
+                ValuationMethods = valuation.Methods,
+                MethodologyVersion = valuation.MethodologyVersion
             };
         }
     }

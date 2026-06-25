@@ -27,11 +27,15 @@ namespace DevStart.Application.Startups.Create
         public decimal? Som { get; set; }
         public decimal? MarketGrowthRate { get; set; }
         public bool HasPatents { get; set; }
+        public Industry Industry { get; set; }
+        public decimal? TargetRoundAmount { get; set; }
+        public bool HasStrategicPartnerships { get; set; }
 
         public CreateStartupCommand(Guid userId, string name, string publicEmail, string? description, string? url, bool isStopped, StartupStage stage, List<string>? socialMediaLinks, StartupLocation? location,
             string? billingEmail, Guid? avatarId, string? shortDescription, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators,
             decimal? tam = null, decimal? sam = null, decimal? som = null,
-            decimal? marketGrowthRate = null, bool hasPatents = false)
+            decimal? marketGrowthRate = null, bool hasPatents = false,
+            Industry industry = Industry.Other, decimal? targetRoundAmount = null, bool hasStrategicPartnerships = false)
         {
             UserId = userId;
             Name = name;
@@ -55,6 +59,9 @@ namespace DevStart.Application.Startups.Create
             Som = som;
             MarketGrowthRate = marketGrowthRate;
             HasPatents = hasPatents;
+            Industry = industry;
+            TargetRoundAmount = targetRoundAmount;
+            HasStrategicPartnerships = hasStrategicPartnerships;
         }
     }
 }

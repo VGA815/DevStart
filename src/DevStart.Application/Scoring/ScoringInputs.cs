@@ -14,7 +14,10 @@ namespace DevStart.Application.Scoring
         IReadOnlyList<MemberInput> Members,
         TractionSignals Traction,
         ProductSignals Product,
-        RoadmapSignals Roadmap);
+        RoadmapSignals Roadmap,
+        Industry Industry = Industry.Other,
+        decimal? TargetRoundAmount = null,
+        bool HasStrategicPartnerships = false);
 
     /// <summary>
     /// Resolved traction signals. The single home for the dirty-input guard (negative MRR/MAU floored

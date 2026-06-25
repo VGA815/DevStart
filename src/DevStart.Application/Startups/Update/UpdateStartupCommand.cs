@@ -22,11 +22,15 @@ namespace DevStart.Application.Startups.Update
         public decimal? Som { get; set; }
         public decimal? MarketGrowthRate { get; set; }
         public bool HasPatents { get; set; }
+        public Industry Industry { get; set; }
+        public decimal? TargetRoundAmount { get; set; }
+        public bool HasStrategicPartnerships { get; set; }
 
         public UpdateStartupCommand(Guid startupId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage startupStage,
             List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId, string? shortDescription,
             decimal? tam = null, decimal? sam = null, decimal? som = null,
-            decimal? marketGrowthRate = null, bool hasPatents = false)
+            decimal? marketGrowthRate = null, bool hasPatents = false,
+            Industry industry = Industry.Other, decimal? targetRoundAmount = null, bool hasStrategicPartnerships = false)
         {
             StartupId = startupId;
             Name = name;
@@ -45,6 +49,9 @@ namespace DevStart.Application.Startups.Update
             Som = som;
             MarketGrowthRate = marketGrowthRate;
             HasPatents = hasPatents;
+            Industry = industry;
+            TargetRoundAmount = targetRoundAmount;
+            HasStrategicPartnerships = hasStrategicPartnerships;
         }
     }
 }

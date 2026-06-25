@@ -48,6 +48,8 @@ namespace DevStart.Infrastructure.Database
 
         public DbSet<Startup> Startups { get; set; }
 
+        public DbSet<StartupValuationSnapshot> StartupValuationSnapshots { get; set; }
+
         public DbSet<StartupRoadmapItem> StartupRoadmapItems { get; set; }
 
         public DbSet<StartupProduct> StartupProducts { get; set; }

@@ -51,6 +51,9 @@ namespace DevStart.Application.Startups.Update
             startup.Som = command.Som;
             startup.MarketGrowthRate = command.MarketGrowthRate;
             startup.HasPatents = command.HasPatents;
+            startup.Industry = command.Industry;
+            startup.TargetRoundAmount = command.TargetRoundAmount;
+            startup.HasStrategicPartnerships = command.HasStrategicPartnerships;
             startup.UpdatedAt = dateTimeProvider.UtcNow;
 
             startup.Raise(new StartupUpdatedDomainEvent(startup.Id));

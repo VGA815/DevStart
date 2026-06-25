@@ -10,5 +10,8 @@ namespace DevStart.Application.Scoring
         decimal ValuationLow,
         decimal ValuationHigh,
         IReadOnlyList<string> MethodsUsed,
-        DateTime CalculatedAt);
+        DateTime CalculatedAt,
+        decimal ValuationPoint = 0m,
+        IReadOnlyList<ValuationBreakdown>? ValuationMethods = null,
+        string MethodologyVersion = "");
 }

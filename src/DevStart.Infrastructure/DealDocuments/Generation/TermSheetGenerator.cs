@@ -72,6 +72,9 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
                 ["valuation_low"] = scoreAvailable ? score.ValuationLow.ToString("N2", c) : na,
                 ["valuation_high"] = scoreAvailable ? score.ValuationHigh.ToString("N2", c) : na,
                 ["methods_used"] = scoreAvailable ? string.Join(", ", score.MethodsUsed) : na,
+                ["methodology_version"] = scoreAvailable && !string.IsNullOrEmpty(score.MethodologyVersion)
+                    ? score.MethodologyVersion
+                    : na,
                 ["calculated_at"] = scoreAvailable ? score.CalculatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'", c) : na,
                 ["cap_table_md_table"] = BuildCapTableMarkdown(capTable),
                 ["flags_section"] = BuildFlagsSection(capTable.Warnings),

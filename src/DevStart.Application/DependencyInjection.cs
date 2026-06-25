@@ -39,6 +39,10 @@ namespace DevStart.Application
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
+            // Default valuation constants; the WebApi/Infrastructure layer binds the "Valuation"
+            // configuration section on top of these so IOptions<ValuationOptions> is always resolvable.
+            services.AddOptions<ValuationOptions>();
+
             services.AddSingleton<IScoringEngine, ScoringEngine>();
             services.AddSingleton<IValuationCalculator, ValuationCalculator>();
             services.AddSingleton<IDealTermsValidator, DealTermsValidator>();

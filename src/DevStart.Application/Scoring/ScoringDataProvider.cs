@@ -60,7 +60,10 @@ namespace DevStart.Application.Scoring
                 Members: members,
                 Traction: traction,
                 Product: product,
-                Roadmap: roadmap);
+                Roadmap: roadmap,
+                Industry: startup.Industry,
+                TargetRoundAmount: startup.TargetRoundAmount,
+                HasStrategicPartnerships: startup.HasStrategicPartnerships);
 
             return inputs;
         }

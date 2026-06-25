@@ -39,6 +39,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<User> Users { get; }
         DbSet<UserPreference> Preferences { get; }
         DbSet<Startup> Startups { get; }
+        DbSet<StartupValuationSnapshot> StartupValuationSnapshots { get; }
         DbSet<StartupRoadmapItem> StartupRoadmapItems { get; }
         DbSet<StartupProduct> StartupProducts { get; }
         DbSet<StartupMetric> StartupMetrics { get; }

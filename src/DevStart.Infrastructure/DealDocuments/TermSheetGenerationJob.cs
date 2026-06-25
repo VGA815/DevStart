@@ -72,6 +72,26 @@ namespace DevStart.Infrastructure.DealDocuments
                 ? scoreResult.Value
                 : new ScoreResult(0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<string>(), dateTimeProvider.UtcNow);
 
+            // Persist a valuation snapshot for history/backtesting and document provenance. Only when
+            // scoring actually produced a valuation (methods present) — never store a fabricated 0/0.
+            // Saved together with the DealDocument at step 8.
+            if (scoreResult.IsSuccess && score.MethodsUsed.Count > 0)
+            {
+                string? breakdownJson = score.ValuationMethods is { Count: > 0 }
+                    ? JsonSerializer.Serialize(score.ValuationMethods, ValuationSnapshotJson.Options)
+                    : null;
+
+                context.StartupValuationSnapshots.Add(StartupValuationSnapshot.Create(
+                    startup.Id,
+                    score.TotalScore, score.TeamScore, score.MarketScore, score.ProductScore,
+                    score.TractionScore, score.CompetitionScore,
+                    score.ValuationLow, score.ValuationHigh, score.ValuationPoint,
+                    string.Join(",", score.MethodsUsed),
+                    breakdownJson,
+                    score.MethodologyVersion,
+                    score.CalculatedAt));
+            }
+
             // 3. Build holdersBefore: founders split (100 - 10% ESOP) equally; previous
             //    completed deals applied cumulatively.
             List<EquityHolderInput> holdersBefore = await BuildHoldersBeforeAsync(deal, cancellationToken);

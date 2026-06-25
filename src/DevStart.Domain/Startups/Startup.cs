@@ -21,6 +21,16 @@ namespace DevStart.Domain.Startups
         public decimal? Som { get; set; }
         public decimal? MarketGrowthRate { get; set; }
         public bool HasPatents { get; set; }
+
+        /// <summary>Sector — feeds sector-specific valuation constants. Defaults to <see cref="Industry.Other"/>.</summary>
+        public Industry Industry { get; set; }
+
+        /// <summary>Target raising amount for the current round (RUB). Used for the VC Method pre/post-money split.</summary>
+        public decimal? TargetRoundAmount { get; set; }
+
+        /// <summary>Whether the startup has strategic partnerships — the fifth Berkus factor.</summary>
+        public bool HasStrategicPartnerships { get; set; }
+
         public bool IsBanned { get; set; }
         public string? BanReason { get; set; }
         public DateTime? BannedAt { get; set; }
@@ -78,7 +88,9 @@ namespace DevStart.Domain.Startups
             string? billingEmail, Guid? avatarId, DateTime createdAt,
             List<string>? socialMediaLinks, string? shortDescription,
             decimal? tam = null, decimal? sam = null, decimal? som = null,
-            decimal? marketGrowthRate = null, bool hasPatents = false)
+            decimal? marketGrowthRate = null, bool hasPatents = false,
+            Industry industry = Industry.Other, decimal? targetRoundAmount = null,
+            bool hasStrategicPartnerships = false)
             => new ()
             {
                 Id = Guid.NewGuid(),
@@ -99,7 +111,10 @@ namespace DevStart.Domain.Startups
                 Sam = sam,
                 Som = som,
                 MarketGrowthRate = marketGrowthRate,
-                HasPatents = hasPatents
+                HasPatents = hasPatents,
+                Industry = industry,
+                TargetRoundAmount = targetRoundAmount,
+                HasStrategicPartnerships = hasStrategicPartnerships
             };
         public Startup() { }
     }

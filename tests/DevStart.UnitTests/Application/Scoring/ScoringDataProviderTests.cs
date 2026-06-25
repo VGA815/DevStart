@@ -135,6 +135,43 @@ public sealed class ScoringDataProviderTests
     }
 
     [Fact]
+    public async Task GetInputsAsync_MapsValuationSignals_IndustryTargetAmountAndPartnerships()
+    {
+        _db.Startups.Add(new Startup
+        {
+            Id = _startupId,
+            Name = "Acme",
+            PublicEmail = "acme@example.com",
+            Stage = StartupStage.Seed,
+            Industry = Industry.Saas,
+            TargetRoundAmount = 50_000_000m,
+            HasStrategicPartnerships = true,
+            CreatedAt = Now,
+            UpdatedAt = Now,
+        });
+        await _db.SaveChangesAsync();
+
+        ScoringInputs inputs = (await CreateSut().GetInputsAsync(_startupId, CancellationToken.None)).Value;
+
+        inputs.Industry.ShouldBe(Industry.Saas);
+        inputs.TargetRoundAmount.ShouldBe(50_000_000m);
+        inputs.HasStrategicPartnerships.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task GetInputsAsync_DefaultsValuationSignals_WhenUnset()
+    {
+        SeedStartup();
+        await _db.SaveChangesAsync();
+
+        ScoringInputs inputs = (await CreateSut().GetInputsAsync(_startupId, CancellationToken.None)).Value;
+
+        inputs.Industry.ShouldBe(Industry.Other);
+        inputs.TargetRoundAmount.ShouldBeNull();
+        inputs.HasStrategicPartnerships.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task GetInputsAsync_FlagsPositioningUnarticulated_WhenDifferentiatorsMissing()
     {
         SeedStartup();

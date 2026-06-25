@@ -49,6 +49,7 @@
 - Team {{score_team}} · Market {{score_market}} · Product {{score_product}} · Traction {{score_traction}} · Competition {{score_competition}}
 - **Valuation range (platform estimate):** ₽{{valuation_low}} – ₽{{valuation_high}}
 - **Methods used:** {{methods_used}}
+- **Methodology version:** {{methodology_version}}
 - **Calculated at:** {{calculated_at}}
 
 ## Warnings
