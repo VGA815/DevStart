@@ -196,6 +196,8 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.AdminSubscriptionsManage,
                 Permissions.AdminPromoCodesRead,
                 Permissions.AdminPromoCodesManage,
+                Permissions.AdminValuationBenchmarksRead,
+                Permissions.AdminValuationBenchmarksManage,
                 Permissions.AdminAuditRead,
             },
         };

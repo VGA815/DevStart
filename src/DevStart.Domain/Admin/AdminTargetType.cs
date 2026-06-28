@@ -6,5 +6,6 @@ namespace DevStart.Domain.Admin
         Startup = 1,
         Subscription = 2,
         PromoCode = 3,
+        ValuationBenchmark = 4,
     }
 }

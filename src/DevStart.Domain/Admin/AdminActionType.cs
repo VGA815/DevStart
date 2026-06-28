@@ -11,5 +11,6 @@ namespace DevStart.Domain.Admin
         RevokeSubscription = 6,
         CreatePromoCode = 7,
         DeactivatePromoCode = 8,
+        AddValuationBenchmark = 9,
     }
 }

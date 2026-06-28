@@ -4,8 +4,12 @@ using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Notifications;
 using DevStart.Application.Abstractions.Payments;
 using DevStart.Domain.ExternalLogins;
+using DevStart.Domain.Startups;
+using DevStart.Domain.Valuation;
+using DevStart.Infrastructure.Database;
 using DevStart.IntegrationTests.Fakes;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -206,7 +210,42 @@ namespace DevStart.IntegrationTests.Infrastructure
             }
 
             await _respawner.ResetAsync(_resetConnection!);
+
+            // The benchmark table is truncated with everything else (write isolation between tests), so
+            // restore the initial median seed the engine relies on — mirrors ValuationBenchmarksSeeder.
+            await SeedValuationBenchmarksAsync();
+
             Cache.Clear();
+        }
+
+        private async Task SeedValuationBenchmarksAsync()
+        {
+            using IServiceScope scope = Services.CreateScope();
+            ApplicationDbContext db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            if (await db.ValuationBenchmarks.AnyAsync())
+            {
+                return;
+            }
+
+            var effectiveFrom = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            (StartupStage Stage, decimal Value)[] medians =
+            [
+                (StartupStage.Idea, 60_000_000m),
+                (StartupStage.PreSeed, 120_000_000m),
+                (StartupStage.Mvp, 250_000_000m),
+                (StartupStage.Seed, 400_000_000m),
+            ];
+
+            foreach ((StartupStage stage, decimal value) in medians)
+            {
+                db.ValuationBenchmarks.Add(ValuationBenchmark.Create(
+                    BenchmarkMetricType.PreMoneyMedian, Industry.Other, stage, value,
+                    currency: "RUB", effectiveFrom: effectiveFrom, source: "initial seed",
+                    createdByUserId: null, utcNow: effectiveFrom));
+            }
+
+            await db.SaveChangesAsync();
         }
     }
 }

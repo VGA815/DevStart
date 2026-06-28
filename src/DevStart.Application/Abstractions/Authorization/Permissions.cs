@@ -104,6 +104,9 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string AdminPromoCodesRead              = "admin_promo_codes::read";
         public const string AdminPromoCodesManage            = "admin_promo_codes::manage";
 
+        public const string AdminValuationBenchmarksRead     = "admin_valuation_benchmarks::read";
+        public const string AdminValuationBenchmarksManage   = "admin_valuation_benchmarks::manage";
+
         public const string AdminAuditRead                   = "admin_audit::read";
     }
 }

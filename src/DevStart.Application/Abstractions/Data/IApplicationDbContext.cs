@@ -30,6 +30,7 @@ using DevStart.Domain.StartupRoadmapItems;
 using DevStart.Domain.Startups;
 using DevStart.Domain.UserPreferences;
 using DevStart.Domain.Users;
+using DevStart.Domain.Valuation;
 using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.Abstractions.Data
@@ -73,6 +74,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<AdminActionLog> AdminActionLogs { get; }
         DbSet<PromoCode> PromoCodes { get; }
         DbSet<PromoCodeRedemption> PromoCodeRedemptions { get; }
+        DbSet<ValuationBenchmark> ValuationBenchmarks { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

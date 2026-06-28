@@ -32,11 +32,13 @@ namespace DevStart.Application.Scoring
     {
         /// <summary>
         /// Computes a valuation range (RUB) from an ensemble of stage-applicable methods
-        /// (Berkus, Scorecard, VC Method). Sub-scores are read from <paramref name="score"/>; stage,
-        /// industry, ARR, target round amount and the partnerships signal from <paramref name="inputs"/>.
-        /// Weights are renormalized to sum 1.0 over the methods that apply to the stage. All constants
-        /// are read from <see cref="ValuationOptions"/>.
+        /// (Berkus, Scorecard, VC Method, Comparable). Sub-scores are read from <paramref name="score"/>;
+        /// stage, industry, ARR, target round amount and the partnerships signal from
+        /// <paramref name="inputs"/>; the pre-money medians and revenue multiples from
+        /// <paramref name="benchmarks"/> (Scorecard and Comparable drop out when their datum is absent).
+        /// Weights are renormalized to sum 1.0 over the methods that actually contribute. Tunable
+        /// constants are read from <see cref="ValuationOptions"/>.
         /// </summary>
-        ValuationResult Compute(ScoreResult score, ScoringInputs inputs);
+        ValuationResult Compute(ScoreResult score, ScoringInputs inputs, ValuationBenchmarkSet benchmarks);
     }
 }

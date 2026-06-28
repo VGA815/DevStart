@@ -4,29 +4,34 @@ using Microsoft.Extensions.Options;
 namespace DevStart.Application.Scoring
 {
     /// <summary>
-    /// Stage-applicable ensemble of three valuation methods — Berkus, Scorecard, VC Method — all RUB.
-    /// All constants come from <see cref="ValuationOptions"/> (tunable); the methodology version travels
-    /// on every result for transparency/backtesting.
+    /// Stage-applicable ensemble of four valuation methods — Berkus, Scorecard, VC Method, Comparable —
+    /// all RUB. Tunable constants come from <see cref="ValuationOptions"/>; the pre-money medians and
+    /// revenue multiples come from the <see cref="ValuationBenchmarkSet"/> (DB-backed, versioned). The
+    /// methodology version travels on every result for transparency/backtesting.
     ///
-    /// Methodology (SC-01):
-    ///   Applicability   Berkus: Idea/PreSeed/Mvp · Scorecard: Idea–Seed · VC: Mvp/Seed/SeriesA.
+    /// Methodology:
+    ///   Applicability   Berkus: Idea/PreSeed/Mvp · Scorecard: Idea–Seed (needs a median) ·
+    ///                   VC: Mvp/Seed/SeriesA · Comparable: Mvp/Seed/SeriesA (needs a sector multiple
+    ///                   and ARR &gt; 0).
     ///   Berkus          5 factors (idea, prototype, team, partnerships, traction), each a 0..1 signal ×
     ///                   a RUB ceiling; partnerships → 0 when absent.
     ///   Scorecard       stage/sector median × Σ(weightᵢ × multiplierᵢ), multiplierᵢ = clamp(0.5 + subᵢ/100,
-    ///                   0.5..1.5). "Sales" factor is proxied by the traction sub-score.
+    ///                   0.5..1.5). "Sales" factor is proxied by the traction sub-score. No median on file
+    ///                   → the method drops out of the ensemble (insufficient data, not a hardcoded floor).
     ///   VC Method       TV = exitRevenue × sector multiple; post-money = TV / (1+IRR)^n; pre-money =
     ///                   post-money − target round amount (when known). Exit revenue = ARR × growth, or a
     ///                   stage default when pre-revenue.
-    ///   Ensemble        weights renormalized to sum 1.0 over the applicable methods.
+    ///   Comparable      sector revenue multiple × ARR; drops out when there is no multiple or no revenue.
+    ///   Ensemble        weights renormalized to sum 1.0 over the methods that actually contribute.
     ///   Range           Low = min(point×(1−band), minMethod); High = max(point×(1+band), maxMethod);
     ///                   guarantees Low ≤ Point ≤ High.
-    ///   Guardrails      negatives clamped to 0; when no method applies → insufficient-data (empty/0).
+    ///   Guardrails      negatives clamped to 0; when no method contributes → insufficient-data (empty/0).
     /// </summary>
     internal sealed class ValuationCalculator(IOptions<ValuationOptions> options) : IValuationCalculator
     {
         private readonly ValuationOptions _o = options.Value;
 
-        public ValuationResult Compute(ScoreResult score, ScoringInputs inputs)
+        public ValuationResult Compute(ScoreResult score, ScoringInputs inputs, ValuationBenchmarkSet benchmarks)
         {
             string version = _o.MethodologyVersion;
             StartupStage stage = inputs.Stage;
@@ -36,13 +41,21 @@ namespace DevStart.Application.Scoring
             {
                 methods.Add(Berkus(score, inputs, _o.BerkusWeight));
             }
-            if (ScorecardApplies(stage))
+            if (ScorecardApplies(stage) && benchmarks.Median(inputs.Industry, stage) is { } median)
             {
-                methods.Add(Scorecard(score, inputs, _o.ScorecardWeight));
+                methods.Add(Scorecard(score, inputs, median, benchmarks.HasSectorMedian(inputs.Industry, stage), _o.ScorecardWeight));
             }
             if (VcApplies(stage))
             {
                 methods.Add(Vc(inputs, _o.VcWeight));
+            }
+            if (ComparableApplies(stage))
+            {
+                decimal arr = Math.Max(0m, inputs.Traction.AnnualRecurringRevenue);
+                if (arr > 0m && benchmarks.RevenueMultiple(inputs.Industry) is { } multiple)
+                {
+                    methods.Add(Comparable(inputs, multiple, arr, _o.ComparableWeight));
+                }
             }
 
             if (methods.Count == 0)
@@ -108,6 +121,11 @@ namespace DevStart.Application.Scoring
         private static bool VcApplies(StartupStage s) =>
             s is StartupStage.Mvp or StartupStage.Seed or StartupStage.SeriesA;
 
+        // Revenue-bearing stages. The ensemble adds Comparable only when a sector multiple exists and
+        // ARR > 0, so the "Mvp only if revenue" rule falls out of the ARR gate at the call site.
+        private static bool ComparableApplies(StartupStage s) =>
+            s is StartupStage.Mvp or StartupStage.Seed or StartupStage.SeriesA;
+
         // ---- Berkus ----------------------------------------------------------------------------
 
         private Method Berkus(ScoreResult score, ScoringInputs inputs, decimal baseWeight)
@@ -150,10 +168,9 @@ namespace DevStart.Application.Scoring
 
         // ---- Scorecard -------------------------------------------------------------------------
 
-        private Method Scorecard(ScoreResult score, ScoringInputs inputs, decimal baseWeight)
+        private Method Scorecard(ScoreResult score, ScoringInputs inputs, decimal median, bool sectorMedian, decimal baseWeight)
         {
             ScorecardOptions s = _o.Scorecard;
-            decimal median = Median(inputs.Stage, inputs.Industry);
 
             decimal mTeam = Multiplier(score.TeamScore, s);
             decimal mMarket = Multiplier(score.MarketScore, s);
@@ -173,9 +190,6 @@ namespace DevStart.Application.Scoring
 
             decimal value = RoundRub(median * composite);
 
-            bool sectorMedian = inputs.Industry != Industry.Other
-                && s.SectorStageMedians.TryGetValue(inputs.Industry, out Dictionary<StartupStage, decimal>? byStage)
-                && byStage.ContainsKey(inputs.Stage);
             var assumptions = new List<string>
             {
                 $"median ₽{median:N0} ({(sectorMedian ? $"{inputs.Industry} {inputs.Stage}" : $"{inputs.Stage} (stage-only)")})",
@@ -183,20 +197,6 @@ namespace DevStart.Application.Scoring
             };
 
             return new Method("Scorecard", Math.Max(0m, value), baseWeight, assumptions);
-        }
-
-        private decimal Median(StartupStage stage, Industry industry)
-        {
-            ScorecardOptions s = _o.Scorecard;
-            if (industry != Industry.Other &&
-                s.SectorStageMedians.TryGetValue(industry, out Dictionary<StartupStage, decimal>? byStage) &&
-                byStage.TryGetValue(stage, out decimal sectorMedian))
-            {
-                return sectorMedian;
-            }
-            return s.StageMedians.TryGetValue(stage, out decimal stageMedian)
-                ? stageMedian
-                : 60_000_000m;
         }
 
         private static decimal Multiplier(decimal subScore, ScorecardOptions s)
@@ -247,6 +247,22 @@ namespace DevStart.Application.Scoring
             }
 
             return new Method("VcMethod", Math.Max(0m, RoundRub(value)), baseWeight, assumptions);
+        }
+
+        // ---- Comparable ------------------------------------------------------------------------
+
+        // Market comparables: a sector EV/Revenue multiple applied to current ARR. The caller only
+        // invokes this when both the multiple and ARR > 0 are present, so it never fabricates a value.
+        private static Method Comparable(ScoringInputs inputs, decimal multiple, decimal arr, decimal baseWeight)
+        {
+            decimal value = RoundRub(multiple * arr);
+            var assumptions = new List<string>
+            {
+                $"sector revenue multiple {multiple:0.##}× × ARR ₽{arr:N0}",
+                $"metric: ARR (MRR × 12); sector {inputs.Industry}"
+            };
+
+            return new Method("Comparable", Math.Max(0m, value), baseWeight, assumptions);
         }
 
         // ---- Helpers ---------------------------------------------------------------------------

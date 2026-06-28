@@ -125,6 +125,8 @@ Run the architecture tests after moving types between projects — a failure mea
 
 Clean Architecture with CQRS across four layers (`WebApi → Application → Domain`, with `Infrastructure` and a shared `SharedKernel`). Handlers return a `Result` / `Result<T>` railway type, and endpoints self-register via `IEndpoint`.
 
+The startup valuation engine and its data sourcing are documented in **[docs/valuation-methodology.md](docs/valuation-methodology.md)**.
+
 ## Contributing & license
 
 - Contributions — see **[CONTRIBUTING.md](CONTRIBUTING.md)** and the issue templates under [`.github/`](.github/).

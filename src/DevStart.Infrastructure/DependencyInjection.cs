@@ -24,6 +24,7 @@ using DevStart.Infrastructure.Notifications;
 using DevStart.Infrastructure.Payments;
 using DevStart.Infrastructure.Subscriptions;
 using DevStart.Infrastructure.Time;
+using DevStart.Infrastructure.Valuation;
 using DevStart.SharedKernel;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -69,12 +70,16 @@ namespace DevStart.Infrastructure
             return services;
         }
 
-        // Binds the tunable valuation constants (Berkus ceilings, Scorecard medians, VC multiples/IRR,
-        // range band, methodology version) over the code defaults registered in AddApplication.
+        // Binds the tunable valuation constants (Berkus ceilings, VC multiples/IRR, range band,
+        // methodology version) over the code defaults registered in AddApplication, and wires the
+        // database-backed benchmark provider (medians + revenue multiples) plus its initial seed.
         private static IServiceCollection AddValuation(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<Application.Scoring.ValuationOptions>(
                 configuration.GetSection(Application.Scoring.ValuationOptions.SectionName));
+
+            services.AddScoped<Application.Scoring.IValuationBenchmarkProvider, ValuationBenchmarkProvider>();
+            services.AddHostedService<ValuationBenchmarksSeeder>();
 
             return services;
         }

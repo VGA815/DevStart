@@ -31,6 +31,7 @@ using DevStart.Domain.StartupRoadmapItems;
 using DevStart.Domain.Startups;
 using DevStart.Domain.UserPreferences;
 using DevStart.Domain.Users;
+using DevStart.Domain.Valuation;
 using DevStart.Infrastructure.DomainEvents;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -115,6 +116,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<PromoCode> PromoCodes { get; set; }
 
         public DbSet<PromoCodeRedemption> PromoCodeRedemptions { get; set; }
+
+        public DbSet<ValuationBenchmark> ValuationBenchmarks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -9,6 +9,7 @@ namespace DevStart.Application.Startups.GetScore
         IScoringDataProvider dataProvider,
         IScoringEngine scoringEngine,
         IValuationCalculator valuationCalculator,
+        IValuationBenchmarkProvider benchmarkProvider,
         IDateTimeProvider dateTimeProvider)
         : IQueryHandler<ComputeStartupScoreQuery, ScoreResult>
     {
@@ -26,8 +27,10 @@ namespace DevStart.Application.Startups.GetScore
             ScoreResult baseScore = scoringEngine.Compute(inputs, utcNow);
 
             // The valuation ensemble reads the engine sub-scores plus the raw signals (stage, industry,
-            // ARR, target round amount, partnerships) the provider already resolved.
-            ValuationResult valuation = valuationCalculator.Compute(baseScore, inputs);
+            // ARR, target round amount, partnerships) the provider already resolved, and the pre-money
+            // medians / revenue multiples as of the valuation date.
+            ValuationBenchmarkSet benchmarks = await benchmarkProvider.GetAsync(utcNow, cancellationToken);
+            ValuationResult valuation = valuationCalculator.Compute(baseScore, inputs, benchmarks);
 
             return baseScore with
             {

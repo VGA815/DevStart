@@ -16,7 +16,7 @@ namespace DevStart.Application.Scoring
     {
         public const string SectionName = "Valuation";
 
-        public string MethodologyVersion { get; set; } = "v2-2026.06-berkus-scorecard-vc";
+        public string MethodologyVersion { get; set; } = "v3-2026.07-berkus-scorecard-vc-comparable";
 
         /// <summary>Half-width of the band drawn around the weighted point estimate (e.g. 0.25 = ±25%).</summary>
         public decimal RangeBand { get; set; } = 0.25m;
@@ -25,6 +25,7 @@ namespace DevStart.Application.Scoring
         public decimal BerkusWeight { get; set; } = 1m;
         public decimal ScorecardWeight { get; set; } = 1m;
         public decimal VcWeight { get; set; } = 1m;
+        public decimal ComparableWeight { get; set; } = 1m;
 
         public BerkusOptions Berkus { get; set; } = new();
         public ScorecardOptions Scorecard { get; set; } = new();
@@ -41,21 +42,13 @@ namespace DevStart.Application.Scoring
         public decimal TractionCeiling { get; set; } = 45_000_000m;
     }
 
-    /// <summary>Scorecard: a stage/sector median multiplied by 7 weighted 0.5–1.5 factor multipliers.</summary>
+    /// <summary>
+    /// Scorecard: a stage/sector median multiplied by 7 weighted 0.5–1.5 factor multipliers. The median
+    /// itself is data, not config — it comes from <c>IValuationBenchmarkProvider</c> (the
+    /// <c>valuation_benchmark</c> table); only the factor weights and the multiplier band live here.
+    /// </summary>
     public sealed class ScorecardOptions
     {
-        /// <summary>Median pre-money valuation by stage (RUB).</summary>
-        public Dictionary<StartupStage, decimal> StageMedians { get; set; } = new()
-        {
-            [StartupStage.Idea] = 60_000_000m,
-            [StartupStage.PreSeed] = 120_000_000m,
-            [StartupStage.Mvp] = 250_000_000m,
-            [StartupStage.Seed] = 400_000_000m,
-        };
-
-        /// <summary>Optional sector override: median per stage within a sector; falls back to the stage median.</summary>
-        public Dictionary<Industry, Dictionary<StartupStage, decimal>> SectorStageMedians { get; set; } = new();
-
         // Bill-Payne factor weights (sum ≈ 1.0). "Sales" is proxied by the traction sub-score.
         public decimal TeamWeight { get; set; } = 0.30m;
         public decimal MarketWeight { get; set; } = 0.25m;
