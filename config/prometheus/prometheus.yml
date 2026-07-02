@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # The API exposes OpenTelemetry metrics at /metrics (OpenTelemetry.Exporter.Prometheus.AspNetCore).
+  # Scraped directly over the internal docker network — /metrics is NOT exposed publicly via nginx.
+  - job_name: devstart-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['devstart.webapi:8080']

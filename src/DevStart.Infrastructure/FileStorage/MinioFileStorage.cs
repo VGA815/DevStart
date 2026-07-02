@@ -9,21 +9,19 @@ namespace DevStart.Infrastructure.FileStorage
 {
     public class MinioFileStorage : IFileStorage
     {
-        private readonly MinioClient _internalMinioClient;
-        private readonly MinioClient _externalMinioClient;
+        private readonly IMinioClient _internalMinioClient;
+        private readonly IMinioClient _externalMinioClient;
         private readonly ILogger<MinioFileStorage> _logger;
-        public MinioFileStorage(IOptions<MinioOptions> options, ILogger<MinioFileStorage> logger)
+        public MinioFileStorage(IMinioClient internalClient, IOptions<MinioOptions> options, ILogger<MinioFileStorage> logger)
         {
             var o = options.Value;
             _logger = logger;
 
-            _internalMinioClient = (MinioClient)new MinioClient()
-                .WithEndpoint(o.Endpoint)
-                .WithCredentials(o.AccessKey, o.SecretKey)
-                .WithSSL(o.UseSsl)
-                .Build();
+            // Internal-endpoint client comes from DI (shared with the health check); the presign
+            // client targets the public endpoint, so it is built here.
+            _internalMinioClient = internalClient;
 
-            _externalMinioClient = (MinioClient)new MinioClient()
+            _externalMinioClient = new MinioClient()
                 .WithEndpoint(o.PubEndpoint)
                 .WithCredentials(o.AccessKey, o.SecretKey)
                 .WithSSL(o.PubUseSsl)

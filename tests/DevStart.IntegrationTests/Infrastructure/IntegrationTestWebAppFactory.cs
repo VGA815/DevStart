@@ -30,6 +30,9 @@ namespace DevStart.IntegrationTests.Infrastructure
     /// </summary>
     public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<DevStart.WebApi.Program>, IAsyncLifetime
     {
+        /// <summary>The trusted-proxy secret the Hangfire dashboard filter is configured with in tests.</summary>
+        internal const string HangfireProxySecret = "integration-tests-proxy-secret";
+
 #pragma warning disable CS0618 // PostgreSqlBuilder() is obsolete; the image is set below via WithImage.
         private readonly PostgreSqlContainer _database = new PostgreSqlBuilder()
             // Use an image already present locally (the dev stack pulls postgres:latest; 17-alpine is cached)
@@ -130,6 +133,9 @@ namespace DevStart.IntegrationTests.Infrastructure
             ["Minio:UseSsl"] = "false",
             ["Minio:PubEndpoint"] = "localhost:9000",
             ["Minio:PubUseSsl"] = "false",
+            // Enables the trusted-proxy path of the Hangfire dashboard filter so tests can cover it.
+            ["Hangfire:Dashboard:ProxyAuthSecret"] = HangfireProxySecret,
+
             ["Centrifugo:ApiUrl"] = "http://localhost:8000",
             ["Centrifugo:ApiKey"] = "test-api-key",
             ["Centrifugo:TokenHmacSecret"] = "integration-tests-centrifugo-hmac-secret-0123456789",

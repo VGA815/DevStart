@@ -199,6 +199,7 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.AdminValuationBenchmarksRead,
                 Permissions.AdminValuationBenchmarksManage,
                 Permissions.AdminAuditRead,
+                Permissions.AdminObservabilityRead,
             },
         };
 

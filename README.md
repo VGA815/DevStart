@@ -107,7 +107,7 @@ make up-prod                  # docker compose -f docker-compose.prod.yml up -d 
 
 Before running `init-letsencrypt.sh`:
 
-- Set `DOMAIN` and `LETSENCRYPT_EMAIL` in `.env`, and replace `example.com` in `config/nginx/nginx.prod.conf` with the same `DOMAIN`.
+- Set `DOMAIN` and `LETSENCRYPT_EMAIL` in `.env` — the nginx config is rendered from `config/nginx/nginx.prod.conf.template` with these values at container start.
 - Point DNS for `DOMAIN` at the host (ports 80/443 reachable from the internet).
 - The `frontend` service builds from a sibling `../devstart-client` repository — clone it alongside this one, or remove the service if the SPA is deployed separately.
 
@@ -126,6 +126,18 @@ Run the architecture tests after moving types between projects — a failure mea
 Clean Architecture with CQRS across four layers (`WebApi → Application → Domain`, with `Infrastructure` and a shared `SharedKernel`). Handlers return a `Result` / `Result<T>` railway type, and endpoints self-register via `IEndpoint`.
 
 The startup valuation engine and its data sourcing are documented in **[docs/valuation-methodology.md](docs/valuation-methodology.md)**.
+
+## Documentation
+
+| Doc | For |
+| --- | --- |
+| **[docs/api.md](docs/api.md)** | REST API reference — conventions (auth, errors, pagination, rate limits) and the full endpoint catalog |
+| **[docs/frontend.md](docs/frontend.md)** | Frontend integration guide — auth lifecycle, consent challenge, OAuth, realtime, files, payments |
+| **[docs/business-logic.md](docs/business-logic.md)** | Domain & business rules, lifecycles, and the wire-value status reference |
+| **[docs/valuation-methodology.md](docs/valuation-methodology.md)** | How startup valuations are computed |
+| **[DEPLOYMENT.md](DEPLOYMENT.md)** | Production deployment & operations |
+
+> The authoritative, always-current API contract is the OpenAPI document at `/swagger` (Development).
 
 ## Contributing & license
 

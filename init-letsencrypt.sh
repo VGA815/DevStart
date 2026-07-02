@@ -2,9 +2,9 @@
 # Bootstrap a Let's Encrypt certificate for the nginx + certbot compose stack.
 #
 # Run ONCE on the production host, AFTER you have:
-#   1. Filled .env (DOMAIN and LETSENCRYPT_EMAIL at minimum).
-#   2. Replaced `example.com` in config/nginx/nginx.prod.conf with the SAME domain as DOMAIN.
-#   3. Pointed DNS for $DOMAIN at this host (ports 80/443 reachable from the internet).
+#   1. Filled .env (DOMAIN and LETSENCRYPT_EMAIL at minimum) — the nginx config is rendered
+#      from config/nginx/nginx.prod.conf.template using DOMAIN at container start.
+#   2. Pointed DNS for $DOMAIN at this host (ports 80/443 reachable from the internet).
 #
 # Usage:  ./init-letsencrypt.sh
 set -eu

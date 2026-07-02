@@ -1,0 +1,22 @@
+apiVersion: 1
+
+# Auto-provisioned datasources so Grafana is wired to metrics (Prometheus) and traces (Tempo)
+# on first boot — no manual setup required.
+datasources:
+  - name: Prometheus
+    # Explicit uid so cross-datasource references (Tempo's tracesToMetrics) are deterministic.
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      # Correlate traces → metrics via the service name resource attribute.
+      tracesToMetrics:
+        datasourceUid: prometheus

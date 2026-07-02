@@ -34,6 +34,12 @@ MINIO_ROOT_PASSWORD=$(gen 24)
 # JWT — HS256 needs >=32 chars; 64 hex = 256-bit
 JWT_SECRET=$(gen 32)
 
+# Grafana
+GRAFANA_ADMIN_PASSWORD=$(gen 12)
+
+# Hangfire
+HANGFIRE_DASHBOARD_SECRET=$(gen 32)
+
 # Centrifugo (real-time). TokenHmacSecret is shared by the API and Centrifugo via
 # this same variable, so they stay in sync automatically.
 CENTRIFUGO_API_KEY=$(gen 24)

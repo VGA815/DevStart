@@ -108,5 +108,7 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string AdminValuationBenchmarksManage   = "admin_valuation_benchmarks::manage";
 
         public const string AdminAuditRead                   = "admin_audit::read";
+
+        public const string AdminObservabilityRead           = "admin_observability::read";
     }
 }

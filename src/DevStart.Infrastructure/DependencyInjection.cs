@@ -14,6 +14,7 @@ using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
 using DevStart.Infrastructure.Caching;
 using DevStart.Infrastructure.Database;
+using DevStart.Infrastructure.Diagnostics;
 using DevStart.Infrastructure.ConsentDocuments;
 using DevStart.Infrastructure.DealDocuments;
 using DevStart.Infrastructure.DealDocuments.Generation;
@@ -33,10 +34,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Minio;
 using StackExchange.Redis;
 using System.Net.Mail;
 using System.Text;
@@ -101,7 +104,41 @@ namespace DevStart.Infrastructure
         {
             services
                 .AddHealthChecks()
-                .AddNpgSql(configuration.GetConnectionString("Database")!);
+                // Critical dependencies — tagged "ready" so they gate readiness (and the orchestrator).
+                .AddNpgSql(
+                    configuration.GetConnectionString("Database")!,
+                    name: "postgres",
+                    tags: ["ready", "db"])
+                .AddRedis(
+                    sp => sp.GetRequiredService<IConnectionMultiplexer>(),
+                    name: "redis",
+                    tags: ["ready", "cache"])
+                .AddHangfire(
+                    options => options.MinimumAvailableServers = 1,
+                    name: "hangfire",
+                    tags: ["ready", "jobs"])
+                .AddTypeActivatedCheck<MinioHealthCheck>(
+                    "minio",
+                    failureStatus: HealthStatus.Unhealthy,
+                    tags: ["ready", "storage"])
+                .AddTypeActivatedCheck<CentrifugoHealthCheck>(
+                    "centrifugo",
+                    failureStatus: HealthStatus.Unhealthy,
+                    tags: ["ready", "realtime"])
+                // Email is non-critical: tagged "details" only, so it never fails readiness.
+                .AddTypeActivatedCheck<SmtpHealthCheck>(
+                    "smtp",
+                    failureStatus: HealthStatus.Degraded,
+                    tags: ["details", "email"]);
+
+            // Periodically evaluate readiness checks and emit structured events Seq can alert on.
+            services.AddSingleton<IHealthCheckPublisher, LoggingHealthCheckPublisher>();
+            services.Configure<HealthCheckPublisherOptions>(options =>
+            {
+                options.Delay = TimeSpan.FromSeconds(15);
+                options.Period = TimeSpan.FromSeconds(30);
+                options.Predicate = registration => registration.Tags.Contains("ready");
+            });
 
             return services;
         }
@@ -185,6 +222,19 @@ namespace DevStart.Infrastructure
             services.Configure<MinioOptions>(
                     configuration.GetSection("Minio"));
 
+            // Shared internal-endpoint client (uploads/downloads + health check). The presign client
+            // targets the public endpoint and is built separately inside MinioFileStorage.
+            services.AddSingleton<IMinioClient>(sp =>
+            {
+                MinioOptions o = sp.GetRequiredService<IOptions<MinioOptions>>().Value;
+
+                return new MinioClient()
+                    .WithEndpoint(o.Endpoint)
+                    .WithCredentials(o.AccessKey, o.SecretKey)
+                    .WithSSL(o.UseSsl)
+                    .Build();
+            });
+
             services.AddSingleton<IFileStorage, MinioFileStorage>();
 
             return services;
@@ -229,11 +279,16 @@ namespace DevStart.Infrastructure
         {
             string? connectionString = configuration.GetConnectionString("Database");
 
-            services.AddHangfire(cfg => cfg
+            // Resolved from DI so it can take an ILogger; emits a structured Seq-alertable event on
+            // permanent job failure.
+            services.AddSingleton<JobFailureAlertFilter>();
+
+            services.AddHangfire((provider, cfg) => cfg
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                 .UseSimpleAssemblyNameTypeSerializer()
                 .UseRecommendedSerializerSettings()
-                .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString!)));
+                .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString!))
+                .UseFilter(provider.GetRequiredService<JobFailureAlertFilter>()));
 
             services.AddHangfireServer();
 
