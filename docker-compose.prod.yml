@@ -141,6 +141,8 @@ services:
       CENTRIFUGO_API_KEY: ${CENTRIFUGO_API_KEY}
       CENTRIFUGO_ADMIN_PASSWORD: ${CENTRIFUGO_ADMIN_PASSWORD}
       CENTRIFUGO_ADMIN_SECRET: ${CENTRIFUGO_ADMIN_SECRET}
+      # Overrides the placeholder in config.prod.json so the WebSocket origin check follows .env.
+      CENTRIFUGO_ALLOWED_ORIGINS: "https://${DOMAIN}"
     volumes:
       - ./config/centrifugo/config.prod.json:/centrifugo/config.json:ro
     ulimits:
@@ -171,7 +173,8 @@ services:
       - devstart-net
 
   tempo:
-    image: grafana/tempo:latest
+    # Pinned: the config schema is Tempo 2.x; :latest (3.x) fails to parse it and crash-loops.
+    image: grafana/tempo:2.8.2
     restart: unless-stopped
     command: [ "-config.file=/etc/tempo/tempo.yml" ]
     volumes:

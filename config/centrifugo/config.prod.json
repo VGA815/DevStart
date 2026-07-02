@@ -2,12 +2,8 @@
   "allowed_origins": [
     "https://example.com"
   ],
-  "health": {
-    "enabled": true
-  },
-  "debug": {
-    "enabled": false
-  },
+  "health": true,
+  "debug": false,
   "admin": true,
   "namespaces": [
     {

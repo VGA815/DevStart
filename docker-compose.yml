@@ -126,7 +126,8 @@ services:
     networks:
       - devstart-net
   tempo:
-    image: grafana/tempo:latest
+    # Pinned: the config schema is Tempo 2.x; :latest (3.x) fails to parse it and crash-loops.
+    image: grafana/tempo:2.8.2
     container_name: tempo
     command: [ "-config.file=/etc/tempo/tempo.yml" ]
     volumes:
