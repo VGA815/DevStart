@@ -18,6 +18,8 @@ namespace DevStart.Application.Users.GetById
                     Id = u.Id,
                     Username = u.Username,
                     Email = u.Email,
+                    IsVerified = u.IsVerified,
+                    Role = u.Role,
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 
