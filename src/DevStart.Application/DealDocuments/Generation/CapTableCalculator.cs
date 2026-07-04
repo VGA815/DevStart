@@ -1,5 +1,4 @@
 using DevStart.Application.Abstractions.Validation;
-using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.InvestmentDeals;
 
 namespace DevStart.Application.DealDocuments.Generation
@@ -13,7 +12,9 @@ namespace DevStart.Application.DealDocuments.Generation
         public CapTableResult Compute(InvestmentDeal deal, IReadOnlyList<EquityHolderInput> holdersBefore)
         {
             decimal rawShareFraction = ComputeInvestorShareFraction(deal);
-            bool shareCapped = rawShareFraction > 1m;
+            // >= 1: at amount == cap the investor takes exactly 100% and founders are wiped —
+            // that deserves the warning just as much as overshooting the cap.
+            bool shareCapped = rawShareFraction >= 1m;
 
             decimal investorShareFraction = rawShareFraction;
             if (investorShareFraction < 0m) investorShareFraction = 0m;
@@ -115,39 +116,13 @@ namespace DevStart.Application.DealDocuments.Generation
             };
         }
 
-        private static decimal ComputeInvestorShareFraction(InvestmentDeal deal)
-        {
-            switch (deal.Instrument)
-            {
-                case InvestmentInstrument.Safe:
-                    {
-                        if (deal.ValuationCap is null || deal.ValuationCap.Value <= 0)
-                        {
-                            return 0m;
-                        }
-                        return deal.Amount / deal.ValuationCap.Value;
-                    }
-                case InvestmentInstrument.ConvertibleLoan:
-                    {
-                        if (deal.ValuationCap is null || deal.ValuationCap.Value <= 0)
-                        {
-                            return 0m;
-                        }
-                        decimal interest = (deal.InterestRate ?? 0m) * (deal.TermMonths ?? 0) / 12m;
-                        decimal totalAtConversion = deal.Amount + (deal.Amount * interest);
-                        return totalAtConversion / deal.ValuationCap.Value;
-                    }
-                case InvestmentInstrument.PricedRound:
-                    {
-                        if (deal.PreMoneyValuation is null || deal.PreMoneyValuation.Value <= 0)
-                        {
-                            return 0m;
-                        }
-                        return deal.Amount / (deal.PreMoneyValuation.Value + deal.Amount);
-                    }
-                default:
-                    return 0m;
-            }
-        }
+        private static decimal ComputeInvestorShareFraction(InvestmentDeal deal) =>
+            InvestorShareMath.ComputeShareFraction(
+                deal.Instrument,
+                deal.Amount,
+                deal.ValuationCap,
+                deal.InterestRate,
+                deal.TermMonths,
+                deal.PreMoneyValuation) ?? 0m;
     }
 }

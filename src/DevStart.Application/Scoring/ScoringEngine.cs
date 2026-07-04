@@ -116,8 +116,8 @@ namespace DevStart.Application.Scoring
         }
 
         // Spec: Sub1B=20, 1-10B=60, 10B+=90, plus CAGR bump (+10 / +25) and a funnel-consistency bump.
-        // NOTE: Tam is interpreted as USD here — the tier ranges ($1B / $10B) are dollar figures.
-        // Valuation output (IValuationCalculator) is in RUB; the two are deliberately different currencies.
+        // Tam/Sam/Som are entered and interpreted in RUB: the tier thresholds are ₽1B / ₽10B —
+        // deliberate steps for the RUB-native platform, consistent with the RUB valuation output.
         private static decimal ComputeMarketScore(decimal? tam, decimal? sam, decimal? som, decimal? cagr)
         {
             if (tam is null || tam <= 0)

@@ -87,6 +87,25 @@ public sealed class DealTermsValidatorTests
     }
 
     [Fact]
+    public void Validate_ShouldIncludeAccruedInterest_InConvertibleLoanDilution()
+    {
+        // Principal alone is 27% of the cap (< 30%), but the accrued simple interest converts too:
+        // 27M × (1 + 0.08 × 24/12) = 31.32M → 31.32% — the same share the cap table computes.
+        IReadOnlyList<DealTermsFlag> flags = _validator.Validate(new DealTermsInput(
+            InvestmentInstrument.ConvertibleLoan,
+            Amount: 27_000_000m,
+            ValuationCap: 100_000_000m,
+            Discount: null,
+            InterestRate: 0.08m,
+            TermMonths: 24,
+            PreMoneyValuation: null,
+            LiquidationPreference: 1.0m,
+            ProRataRights: false));
+
+        flags.Select(flag => flag.Code).ShouldBe(["deal_terms.high_dilution"]);
+    }
+
+    [Fact]
     public void Validate_ShouldComputeDilutionForPricedRound()
     {
         IReadOnlyList<DealTermsFlag> flags = _validator.Validate(new DealTermsInput(

@@ -16,7 +16,9 @@ namespace DevStart.Application.Scoring
     {
         public const string SectionName = "Valuation";
 
-        public string MethodologyVersion { get; set; } = "v3-2026.07-berkus-scorecard-vc-comparable";
+        // v4: the valuation's ARR anchor is derived only from a true Mrr metric — a Revenue-proxied
+        // MRR no longer annualizes into ARR (its period is undefined), so Comparable/VC inputs changed.
+        public string MethodologyVersion { get; set; } = "v4-2026.07-arr-real-mrr-only";
 
         /// <summary>Half-width of the band drawn around the weighted point estimate (e.g. 0.25 = ±25%).</summary>
         public decimal RangeBand { get; set; } = 0.25m;

@@ -33,4 +33,13 @@ public sealed class TractionSignalsTests
         TractionSignals.From(mrr: -100m, mau: 0m, momGrowth: 0m)
             .AnnualRecurringRevenue.ShouldBe(0m);
     }
+
+    [Fact]
+    public void AnnualRecurringRevenue_IsZero_WhenMrrIsARevenueProxy()
+    {
+        TractionSignals signals = TractionSignals.From(mrr: 80_000m, mau: 0m, momGrowth: 0m, mrrIsProxy: true);
+
+        signals.Mrr.ShouldBe(80_000m);               // still feeds the traction score tiers
+        signals.AnnualRecurringRevenue.ShouldBe(0m); // but never the valuation's revenue anchor
+    }
 }

@@ -87,12 +87,14 @@ namespace DevStart.Application.Scoring
 
             // Metric fallback: a startup that tracks Revenue/Users/GrowthRate instead of the dedicated
             // MRR-family still gets a traction signal. Revenue is used only as an MRR proxy when no Mrr
-            // metric exists — see the caveat in the scoring notes.
+            // metric exists; the proxy is flagged so it feeds the traction score but never the
+            // valuation's ARR anchor (Revenue's period is undefined — see TractionSignals).
             decimal? mrr = Pick(latest, MetricType.Mrr, MetricType.Revenue);
             decimal? mau = Pick(latest, MetricType.Mau, MetricType.Users);
             decimal? mom = Pick(latest, MetricType.MomGrowth, MetricType.GrowthRate);
+            bool mrrIsProxy = !latest.ContainsKey(MetricType.Mrr) && latest.ContainsKey(MetricType.Revenue);
 
-            return TractionSignals.From(mrr, mau, mom);
+            return TractionSignals.From(mrr, mau, mom, mrrIsProxy);
         }
 
         private static decimal? Pick(IReadOnlyDictionary<MetricType, decimal> latest, MetricType primary, MetricType fallback)

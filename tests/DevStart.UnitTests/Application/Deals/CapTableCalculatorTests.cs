@@ -129,6 +129,21 @@ public sealed class CapTableCalculatorTests
         result.Warnings.Select(warning => warning.Code).ShouldContain("cap_table.share_capped");
     }
 
+    [Fact]
+    public void Compute_ShouldFlagShareCapped_WhenAmountEqualsCap()
+    {
+        // amount == cap → the investor takes exactly 100%; "meets or exceeds" must warn here too.
+        InvestmentDeal deal = CreateDeal(InvestmentInstrument.Safe, amount: 50_000_000m, valuationCap: 50_000_000m);
+
+        CapTableResult result = _calculator.Compute(deal, [
+            new EquityHolderInput(Guid.Parse("11111111-1111-1111-1111-111111111111"), "Founder", "Founder", 100m)
+        ]);
+
+        result.InvestorSharePct.ShouldBe(100m);
+        result.FoundersTotalAfterPct.ShouldBe(0m);
+        result.Warnings.Select(warning => warning.Code).ShouldContain("cap_table.share_capped");
+    }
+
     private static InvestmentDeal CreateDeal(
         InvestmentInstrument instrument,
         decimal amount,

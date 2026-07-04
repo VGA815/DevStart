@@ -101,6 +101,9 @@ public sealed class ScoringDataProviderTests
         inputs.Traction.Mrr.ShouldBe(80_000m);
         inputs.Traction.Mau.ShouldBe(4_000m);
         inputs.Traction.MomGrowth.ShouldBe(15m);
+        // The Revenue proxy feeds the traction score but is flagged so it never annualizes into ARR.
+        inputs.Traction.MrrIsProxy.ShouldBeTrue();
+        inputs.Traction.AnnualRecurringRevenue.ShouldBe(0m);
     }
 
     [Fact]
@@ -114,6 +117,8 @@ public sealed class ScoringDataProviderTests
         ScoringInputs inputs = (await CreateSut().GetInputsAsync(_startupId, CancellationToken.None)).Value;
 
         inputs.Traction.Mrr.ShouldBe(500_000m);
+        inputs.Traction.MrrIsProxy.ShouldBeFalse();
+        inputs.Traction.AnnualRecurringRevenue.ShouldBe(6_000_000m);
     }
 
     [Fact]

@@ -50,7 +50,8 @@ namespace DevStart.Application.Abstractions.Validation
                     "Invested amount meets or exceeds the valuation cap; the investor would take the entire cap table."));
             }
 
-            // Investor share = amount / cap (Safe / Convertible) or amount / (premoney + amount) (Priced)
+            // Implied investor share via the shared formula (InvestorShareMath) — the same math the
+            // cap table uses, including accrued convertible-note interest.
             decimal? investorShare = ComputeShare(input);
             if (investorShare.HasValue && investorShare.Value > 0.30m)
             {
@@ -63,28 +64,13 @@ namespace DevStart.Application.Abstractions.Validation
             return flags;
         }
 
-        private static decimal? ComputeShare(DealTermsInput input)
-        {
-            switch (input.Instrument)
-            {
-                case InvestmentInstrument.Safe:
-                case InvestmentInstrument.ConvertibleLoan:
-                    if (input.ValuationCap.HasValue && input.ValuationCap.Value > 0)
-                    {
-                        return input.Amount / input.ValuationCap.Value;
-                    }
-                    return null;
-
-                case InvestmentInstrument.PricedRound:
-                    if (input.PreMoneyValuation.HasValue && input.PreMoneyValuation.Value > 0)
-                    {
-                        return input.Amount / (input.PreMoneyValuation.Value + input.Amount);
-                    }
-                    return null;
-
-                default:
-                    return null;
-            }
-        }
+        private static decimal? ComputeShare(DealTermsInput input) =>
+            InvestorShareMath.ComputeShareFraction(
+                input.Instrument,
+                input.Amount,
+                input.ValuationCap,
+                input.InterestRate,
+                input.TermMonths,
+                input.PreMoneyValuation);
     }
 }

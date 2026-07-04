@@ -27,9 +27,7 @@ namespace DevStart.Application.Startups.RecomputeValuation
             if (score.MethodsUsed.Count == 0)
             {
                 // No method applied to the stage — don't store a fabricated 0/0 snapshot.
-                return Result.Failure<Guid>(Error.Problem(
-                    "Valuation.InsufficientData",
-                    "No valuation method applies to this startup's stage; nothing to snapshot."));
+                return Result.Failure<Guid>(ValuationErrors.InsufficientData);
             }
 
             string? breakdownJson = score.ValuationMethods is { Count: > 0 }
