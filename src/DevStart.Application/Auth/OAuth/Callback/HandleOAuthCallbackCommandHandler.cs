@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.UserConsents;
 using DevStart.Domain.ExternalLogins;
 using DevStart.Domain.Users;
@@ -19,6 +20,7 @@ namespace DevStart.Application.Auth.OAuth.Callback
         ITokenProvider tokenProvider,
         IRefreshTokenService refreshTokenService,
         IConsentService consentService,
+        ITwoFactorLoginGate twoFactorGate,
         IDateTimeProvider dateTimeProvider,
         ILogger<HandleOAuthCallbackCommandHandler> logger)
         : ICommandHandler<HandleOAuthCallbackCommand, OAuthAuthResult>
@@ -78,6 +80,15 @@ namespace DevStart.Application.Auth.OAuth.Callback
                 }
 
                 await context.SaveChangesAsync(cancellationToken);
+
+                // Linking issues a fresh token pair — a full login — so the 2FA gate applies here too.
+                OAuthAuthResult? linkChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
+                    linkResult.Value, command.IpAddress, command.UserAgent, cancellationToken);
+                if (linkChallenge is not null)
+                {
+                    return linkChallenge;
+                }
+
                 return OAuthAuthResult.Authenticated(await IssueTokensAsync(linkResult.Value, command, cancellationToken));
             }
 
@@ -142,6 +153,14 @@ namespace DevStart.Application.Auth.OAuth.Callback
             if (user.IsCurrentlyBanned(dateTimeProvider.UtcNow))
             {
                 return Result.Failure<OAuthAuthResult>(UserErrors.Banned);
+            }
+
+            // Second factor before the consent gate; the verify handler re-checks consent afterwards.
+            OAuthAuthResult? twoFactorChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
+                user, command.IpAddress, command.UserAgent, cancellationToken);
+            if (twoFactorChallenge is not null)
+            {
+                return twoFactorChallenge;
             }
 
             if (await consentService.AreMandatoryConsentsCurrentAsync(user.Id, cancellationToken))

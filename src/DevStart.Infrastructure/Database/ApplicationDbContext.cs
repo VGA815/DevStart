@@ -29,6 +29,7 @@ using DevStart.Domain.StartupMetrics;
 using DevStart.Domain.StartupProducts;
 using DevStart.Domain.StartupRoadmapItems;
 using DevStart.Domain.Startups;
+using DevStart.Domain.TwoFactor;
 using DevStart.Domain.UserPreferences;
 using DevStart.Domain.Users;
 using DevStart.Domain.Valuation;
@@ -110,6 +111,10 @@ namespace DevStart.Infrastructure.Database
         public DbSet<ExternalLogin> ExternalLogins { get; set; }
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+        public DbSet<UserTwoFactor> UserTwoFactors { get; set; }
+
+        public DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes { get; set; }
 
         public DbSet<AdminActionLog> AdminActionLogs { get; set; }
 

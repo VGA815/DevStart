@@ -9,5 +9,6 @@ namespace DevStart.Application.Users.GetById
         public string Username { get; init; } = null!;
         public bool IsVerified { get; init; }
         public UserSystemRole Role { get; init; }
+        public bool TwoFactorEnabled { get; init; }
     }
 }

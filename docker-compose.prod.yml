@@ -20,6 +20,9 @@ services:
       Jwt__ExpirationInMinutes: "${JWT_EXPIRATION_MINUTES}"
       Jwt__RequireHttpsMetadata: "true"
 
+      TwoFactor__EncryptionKey: "${TWO_FACTOR_ENCRYPTION_KEY}"
+      TwoFactor__Issuer: "DevStart"
+
       OAuth__Google__ClientId: "${OAUTH_GOOGLE_CLIENT_ID}"
       OAuth__Google__ClientSecret: "${OAUTH_GOOGLE_CLIENT_SECRET}"
       OAuth__Google__RedirectUri: "${OAUTH_GOOGLE_REDIRECT_URI}"

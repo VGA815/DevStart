@@ -94,6 +94,7 @@ namespace DevStart.Application.Abstractions.Authorization
 
         public const string AdminUsersRead                   = "admin_users::read";
         public const string AdminUsersBan                    = "admin_users::ban";
+        public const string AdminUsersTwoFactorReset         = "admin_users::two_factor_reset";
 
         public const string AdminStartupsRead                = "admin_startups::read";
         public const string AdminStartupsBan                 = "admin_startups::ban";

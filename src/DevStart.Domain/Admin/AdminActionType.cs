@@ -12,5 +12,6 @@ namespace DevStart.Domain.Admin
         CreatePromoCode = 7,
         DeactivatePromoCode = 8,
         AddValuationBenchmark = 9,
+        ResetUserTwoFactor = 10,
     }
 }

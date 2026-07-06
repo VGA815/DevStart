@@ -56,6 +56,7 @@ namespace DevStart.IntegrationTests.Infrastructure
         internal RecordingBackgroundJobScheduler BackgroundJobs { get; } = new();
         internal InMemoryOAuthStateStore OAuthStateStore { get; } = new();
         internal InMemoryPendingRegistrationStore PendingRegistrations { get; } = new();
+        internal InMemoryPendingTwoFactorStore PendingTwoFactor { get; } = new();
         internal FakeExternalAuthProvider GoogleAuth { get; } = new() { Provider = ExternalLoginProvider.Google };
         internal FakeExternalAuthProvider GitHubAuth { get; } = new() { Provider = ExternalLoginProvider.GitHub };
 
@@ -88,6 +89,10 @@ namespace DevStart.IntegrationTests.Infrastructure
             ["Jwt:ExpirationInMinutes"] = "60",
             ["Jwt:RequireHttpsMetadata"] = "false",
             ["Jwt:RefreshToken:LifetimeDays"] = "30",
+
+            // ValidateOnStart requires a base64 32-byte AES key for TOTP secrets at rest.
+            ["TwoFactor:EncryptionKey"] = Convert.ToBase64String(new byte[32]),
+            ["TwoFactor:Issuer"] = "DevStart-Tests",
 
             // ValidateOnStart requires non-empty OAuth credentials even though the providers are faked.
             ["OAuth:Google:ClientId"] = "test-google-client",
@@ -168,6 +173,7 @@ namespace DevStart.IntegrationTests.Infrastructure
                 Replace<IBackgroundJobScheduler>(services, BackgroundJobs);
                 Replace<IOAuthStateStore>(services, OAuthStateStore);
                 Replace<IPendingRegistrationStore>(services, PendingRegistrations);
+                Replace<IPendingTwoFactorStore>(services, PendingTwoFactor);
 
                 // The external auth providers are registered as a multi-binding (Google + GitHub) behind a
                 // factory, so swap the whole set.

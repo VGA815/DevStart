@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Auth.OAuth;
 using DevStart.Application.Auth.OAuth.Callback;
+using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.UserConsents;
 using DevStart.Application.Users.Register;
 using DevStart.Domain.ExternalLogins;
@@ -25,6 +26,7 @@ namespace DevStart.UnitTests.Auth.OAuth
         private readonly FakeConsentService _consentService = new();
         private readonly FakeExternalAuthProvider _provider = new() { Provider = ExternalLoginProvider.Google };
         private readonly FixedDateTimeProvider _clock = new();
+        private readonly InMemoryPendingTwoFactorStore _twoFactorStore = new();
         private readonly HandleOAuthCallbackCommandHandler _sut;
 
         public HandleOAuthCallbackCommandHandlerTests()
@@ -40,6 +42,7 @@ namespace DevStart.UnitTests.Auth.OAuth
                 new StubTokenProvider(),
                 refreshSvc,
                 _consentService,
+                new TwoFactorLoginGate(_db, _twoFactorStore),
                 _clock,
                 NullLogger<HandleOAuthCallbackCommandHandler>.Instance);
         }

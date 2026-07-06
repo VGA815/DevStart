@@ -2,6 +2,7 @@ using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Auth.OAuth;
+using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.UserConsents;
 using DevStart.Domain.Users;
 using DevStart.SharedKernel;
@@ -17,6 +18,7 @@ namespace DevStart.Application.Users.Login
         IRefreshTokenService refreshTokenService,
         IConsentService consentService,
         IPendingRegistrationStore pendingStore,
+        ITwoFactorLoginGate twoFactorGate,
         IDateTimeProvider dateTimeProvider) : ICommandHandler<LoginUserCommand, OAuthAuthResult>
     {
         private static readonly TimeSpan PendingTtl = TimeSpan.FromMinutes(15);
@@ -55,6 +57,15 @@ namespace DevStart.Application.Users.Login
             if (user.IsCurrentlyBanned(dateTimeProvider.UtcNow))
             {
                 return Result.Failure<OAuthAuthResult>(UserErrors.Banned);
+            }
+
+            // Second factor comes before the consent gate: identity must be fully proven first.
+            // The verify/confirm handlers re-run the consent check after the code is accepted.
+            OAuthAuthResult? twoFactorChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
+                user, command.IpAddress, command.UserAgent, cancellationToken);
+            if (twoFactorChallenge is not null)
+            {
+                return twoFactorChallenge;
             }
 
             // Re-consent gate: if mandatory consents are outdated (e.g. an admin activated a new document

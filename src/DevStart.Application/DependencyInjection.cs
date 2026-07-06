@@ -52,6 +52,10 @@ namespace DevStart.Application
             services.AddScoped<UserConsents.IConsentService, UserConsents.ConsentService>();
             services.AddScoped<Startups.IStartupAuthorizationService, Startups.StartupAuthorizationService>();
 
+            services.AddScoped<Auth.TwoFactor.ITwoFactorLoginGate, Auth.TwoFactor.TwoFactorLoginGate>();
+            services.AddScoped<Auth.TwoFactor.ITwoFactorEnrollmentService, Auth.TwoFactor.TwoFactorEnrollmentService>();
+            services.AddScoped<Auth.TwoFactor.ITwoFactorCodeVerifier, Auth.TwoFactor.TwoFactorCodeVerifier>();
+
             return services;
         }
     }

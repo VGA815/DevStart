@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.UserConsents;
 using DevStart.Domain.ExternalLogins;
 using DevStart.Domain.Profiles;
@@ -18,17 +19,18 @@ namespace DevStart.Application.Auth.OAuth.Complete
         IConsentService consentService,
         ITokenProvider tokenProvider,
         IRefreshTokenService refreshTokenService,
+        ITwoFactorLoginGate twoFactorGate,
         IDateTimeProvider dateTimeProvider)
-        : ICommandHandler<CompleteOAuthRegistrationCommand, TokenPair>
+        : ICommandHandler<CompleteOAuthRegistrationCommand, OAuthAuthResult>
     {
-        public async Task<Result<TokenPair>> Handle(
+        public async Task<Result<OAuthAuthResult>> Handle(
             CompleteOAuthRegistrationCommand command,
             CancellationToken cancellationToken)
         {
             PendingExternalRegistration? pending = await pendingStore.ConsumeAsync(command.PendingToken, cancellationToken);
             if (pending is null)
             {
-                return Result.Failure<TokenPair>(ExternalLoginErrors.InvalidState);
+                return Result.Failure<OAuthAuthResult>(ExternalLoginErrors.InvalidState);
             }
 
             DateTime now = dateTimeProvider.UtcNow;
@@ -40,14 +42,14 @@ namespace DevStart.Application.Auth.OAuth.Complete
                     .FirstOrDefaultAsync(u => u.Id == existingUserId, cancellationToken);
                 if (existingUser is null)
                 {
-                    return Result.Failure<TokenPair>(ExternalLoginErrors.NotFound);
+                    return Result.Failure<OAuthAuthResult>(ExternalLoginErrors.NotFound);
                 }
 
                 Result<List<UserConsent>> consentsResult = await consentService.BuildAcceptedConsentsAsync(
                     existingUser.Id, command.Consents, now, cancellationToken);
                 if (consentsResult.IsFailure)
                 {
-                    return Result.Failure<TokenPair>(consentsResult.Error);
+                    return Result.Failure<OAuthAuthResult>(consentsResult.Error);
                 }
 
                 context.UserConsents.AddRange(consentsResult.Value);
@@ -57,7 +59,7 @@ namespace DevStart.Application.Auth.OAuth.Complete
             {
                 if (await context.Users.AnyAsync(u => u.Email == pending.Email, cancellationToken))
                 {
-                    return Result.Failure<TokenPair>(UserErrors.EmailNotUnique);
+                    return Result.Failure<OAuthAuthResult>(UserErrors.EmailNotUnique);
                 }
 
                 string username = await GenerateUniqueUsernameAsync(pending, cancellationToken);
@@ -67,7 +69,7 @@ namespace DevStart.Application.Auth.OAuth.Complete
                     newUser.Id, command.Consents, now, cancellationToken);
                 if (consentsResult.IsFailure)
                 {
-                    return Result.Failure<TokenPair>(consentsResult.Error);
+                    return Result.Failure<OAuthAuthResult>(consentsResult.Error);
                 }
 
                 newUser.Raise(new UserRegisteredDomainEvent(newUser.Id, newUser.Email));
@@ -92,16 +94,33 @@ namespace DevStart.Application.Auth.OAuth.Complete
             // A re-consenting existing user could have been banned in the meantime.
             if (user.IsCurrentlyBanned(now))
             {
-                return Result.Failure<TokenPair>(UserErrors.Banned);
+                return Result.Failure<OAuthAuthResult>(UserErrors.Banned);
             }
 
+            // Persist the accepted consents before any further challenge, so a 2FA round-trip
+            // does not ask the user to re-accept them.
             await context.SaveChangesAsync(cancellationToken);
+
+            // Existing users are re-challenged unless this pending record was created after the 2FA
+            // gate had already been passed (login → 2FA → consent). Covers the edge case of 2FA
+            // being enabled between the consent challenge and its completion. Brand-new users
+            // cannot have 2FA yet.
+            if (pending.ExistingUserId is not null && !pending.TwoFactorSatisfied)
+            {
+                OAuthAuthResult? twoFactorChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
+                    user, command.IpAddress, command.UserAgent, cancellationToken);
+                if (twoFactorChallenge is not null)
+                {
+                    return twoFactorChallenge;
+                }
+            }
 
             string accessToken = tokenProvider.CreateAccessToken(user);
             IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
                 user, command.IpAddress, command.UserAgent, cancellationToken);
 
-            return new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds);
+            return OAuthAuthResult.Authenticated(
+                new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds));
         }
 
         private async Task<string> GenerateUniqueUsernameAsync(

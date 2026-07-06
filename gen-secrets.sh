@@ -34,6 +34,9 @@ MINIO_ROOT_PASSWORD=$(gen 24)
 # JWT — HS256 needs >=32 chars; 64 hex = 256-bit
 JWT_SECRET=$(gen 32)
 
+# 2FA — AES-256 key for TOTP secrets at rest (must be base64 of exactly 32 bytes)
+TWO_FACTOR_ENCRYPTION_KEY=$(openssl rand -base64 32)
+
 # Grafana
 GRAFANA_ADMIN_PASSWORD=$(gen 12)
 

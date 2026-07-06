@@ -10,6 +10,7 @@ using DevStart.Application.Subscriptions;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.Authentication.OAuth;
 using DevStart.Infrastructure.Authentication.RefreshTokens;
+using DevStart.Infrastructure.Authentication.TwoFactor;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
 using DevStart.Infrastructure.Caching;
@@ -183,6 +184,18 @@ namespace DevStart.Infrastructure
             services.AddSingleton<IPkceGenerator, PkceGenerator>();
             services.AddSingleton<IOAuthStateStore, RedisOAuthStateStore>();
             services.AddSingleton<IPendingRegistrationStore, RedisPendingRegistrationStore>();
+
+            services.AddOptions<TwoFactorOptions>()
+                .Bind(configuration.GetSection(TwoFactorOptions.SectionName))
+                .Validate(o => o.HasValidKey,
+                    "TwoFactor:EncryptionKey is missing or invalid. Configure a base64-encoded 32-byte key, " +
+                    "e.g. via the TwoFactor__EncryptionKey environment variable.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.Issuer), "TwoFactor:Issuer is required")
+                .ValidateOnStart();
+            services.AddSingleton<ITotpProvider, TotpProvider>();
+            services.AddSingleton<ITwoFactorSecretProtector, AesGcmTwoFactorSecretProtector>();
+            services.AddSingleton<IRecoveryCodeGenerator, RecoveryCodeGenerator>();
+            services.AddSingleton<IPendingTwoFactorStore, RedisPendingTwoFactorStore>();
 
             services.AddOptions<GoogleOAuthOptions>()
                 .Bind(configuration.GetSection("OAuth:Google"))

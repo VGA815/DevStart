@@ -20,6 +20,7 @@ namespace DevStart.Application.Users.GetById
                     Email = u.Email,
                     IsVerified = u.IsVerified,
                     Role = u.Role,
+                    TwoFactorEnabled = context.UserTwoFactors.Any(t => t.UserId == u.Id && t.IsEnabled),
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 

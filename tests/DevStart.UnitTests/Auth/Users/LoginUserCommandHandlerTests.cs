@@ -1,5 +1,6 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Auth.OAuth;
+using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.UserConsents;
 using DevStart.Application.Users.Login;
 using DevStart.Application.Users.Register;
@@ -21,6 +22,7 @@ namespace DevStart.UnitTests.Auth.Users
         private readonly IPasswordHasher _hasher = new PasswordHasher();
         private readonly FakeConsentService _consentService = new();
         private readonly InMemoryPendingRegistrationStore _pendingStore = new();
+        private readonly InMemoryPendingTwoFactorStore _twoFactorStore = new();
         private readonly LoginUserCommandHandler _sut;
 
         public LoginUserCommandHandlerTests()
@@ -28,7 +30,8 @@ namespace DevStart.UnitTests.Auth.Users
             var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
             var refreshSvc = new RefreshTokenService(_db, _clock, refreshOptions);
             _sut = new LoginUserCommandHandler(
-                _db, _hasher, new StubTokenProvider(), refreshSvc, _consentService, _pendingStore, _clock);
+                _db, _hasher, new StubTokenProvider(), refreshSvc, _consentService, _pendingStore,
+                new TwoFactorLoginGate(_db, _twoFactorStore), _clock);
         }
 
         [Fact]
@@ -115,6 +118,50 @@ namespace DevStart.UnitTests.Auth.Users
         }
 
         [Fact]
+        public async Task TwoFactorEnabledUser_GetsTwoFactorChallenge_NotTokens()
+        {
+            string password = "S3cret!";
+            User user = User.Create("mila", "mila@example.com", _hasher.Hash(password), _clock.UtcNow);
+            user.IsVerified = true;
+            _db.Users.Add(user);
+            (DevStart.Domain.TwoFactor.UserTwoFactor twoFactor, _) = TwoFactorTestKit.CreateEnabled(user.Id, _clock.UtcNow);
+            _db.UserTwoFactors.Add(twoFactor);
+            await _db.SaveChangesAsync();
+
+            var cmd = new LoginUserCommand(user.Email, password, "1.1.1.1", "ua");
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Tokens);
+            Assert.Null(result.Value.Consent);
+            Assert.NotNull(result.Value.TwoFactor);
+            var pending = _twoFactorStore.Items.Values.Single();
+            Assert.Equal(user.Id, pending.UserId);
+            Assert.False(pending.SetupRequired);
+        }
+
+        [Fact]
+        public async Task AdminWithoutTwoFactor_GetsSetupChallenge()
+        {
+            string password = "S3cret!";
+            User admin = User.Create("boss", "boss@example.com", _hasher.Hash(password), _clock.UtcNow);
+            admin.IsVerified = true;
+            admin.Role = UserSystemRole.Admin;
+            _db.Users.Add(admin);
+            await _db.SaveChangesAsync();
+
+            var cmd = new LoginUserCommand(admin.Email, password, null, null);
+            Result<OAuthAuthResult> result = await _sut.Handle(cmd, default);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Tokens);
+            Assert.NotNull(result.Value.TwoFactorSetup);
+            var pending = _twoFactorStore.Items.Values.Single();
+            Assert.Equal(admin.Id, pending.UserId);
+            Assert.True(pending.SetupRequired);
+        }
+
+        [Fact]
         public async Task UnknownEmail_StillInvokesVerify_ToEqualizeTiming()
         {
             // No user is seeded. The verifier must still run (against a dummy hash) so the response time
@@ -123,7 +170,7 @@ namespace DevStart.UnitTests.Auth.Users
             var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
             var sut = new LoginUserCommandHandler(
                 _db, recordingHasher, new StubTokenProvider(), new RefreshTokenService(_db, _clock, refreshOptions),
-                _consentService, _pendingStore, _clock);
+                _consentService, _pendingStore, new TwoFactorLoginGate(_db, _twoFactorStore), _clock);
 
             var cmd = new LoginUserCommand("nobody@example.com", "whatever", null, null);
             Result<OAuthAuthResult> result = await sut.Handle(cmd, default);

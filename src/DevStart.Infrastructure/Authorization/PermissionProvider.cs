@@ -190,6 +190,7 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.AdminUsersRead,
                 Permissions.AdminUsersBan,
+                Permissions.AdminUsersTwoFactorReset,
                 Permissions.AdminStartupsRead,
                 Permissions.AdminStartupsBan,
                 Permissions.AdminSubscriptionsRead,

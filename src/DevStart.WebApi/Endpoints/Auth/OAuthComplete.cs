@@ -1,5 +1,5 @@
-using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Auth.OAuth;
 using DevStart.Application.Auth.OAuth.Complete;
 using DevStart.Application.Users.Register;
 using DevStart.Domain.UserConsents;
@@ -28,7 +28,7 @@ namespace DevStart.WebApi.Endpoints.Auth
             app.MapPost("api/auth/oauth/complete", async (
                 [FromBody] Request request,
                 HttpContext httpContext,
-                ICommandHandler<CompleteOAuthRegistrationCommand, TokenPair> handler,
+                ICommandHandler<CompleteOAuthRegistrationCommand, OAuthAuthResult> handler,
                 CancellationToken cancellationToken) =>
             {
                 string? ip = httpContext.Connection.RemoteIpAddress?.ToString();
@@ -40,7 +40,7 @@ namespace DevStart.WebApi.Endpoints.Auth
 
                 var command = new CompleteOAuthRegistrationCommand(request.PendingToken, consents, ip, ua);
 
-                Result<TokenPair> result = await handler.Handle(command, cancellationToken);
+                Result<OAuthAuthResult> result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
             .WithTags(Tags.Auth)
