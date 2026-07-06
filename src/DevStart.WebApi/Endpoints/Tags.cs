@@ -10,6 +10,7 @@
         public const string StartupProducts = "StartupProducts";
         public const string StartupMetrics = "StartupMetrics";
         public const string StartupMembers = "StartupMembers";
+        public const string StartupEquity = "StartupEquity";
         public const string StartupInvestors = "StartupInvestors";
         public const string StartupFollowers = "StartupFollowers";
         public const string StartupDocumentFiles = "StartupDocumentFiles";

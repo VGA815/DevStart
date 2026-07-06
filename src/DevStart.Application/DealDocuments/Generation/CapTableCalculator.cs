@@ -6,6 +6,7 @@ namespace DevStart.Application.DealDocuments.Generation
     internal sealed class CapTableCalculator : ICapTableCalculator
     {
         private const string SeverityWarning = "warning";
+        private const string SeverityInfo = "info";
         private const decimal FoundersFloorPct = 40m;
         private const decimal InvestorCeilingPct = 30m;
 
@@ -24,6 +25,9 @@ namespace DevStart.Application.DealDocuments.Generation
             decimal dilutionFactor = 1m - investorShareFraction;
 
             List<CapTableEntry> entries = new(holdersBefore.Count + 1);
+            // Vested fraction per entry, kept parallel to `entries` so VestedPctAfter can be recomputed
+            // after the after-column is normalized. The investor's stake is fully vested (fraction 1).
+            List<decimal> vestedFractions = new(holdersBefore.Count + 1);
             foreach (EquityHolderInput holder in holdersBefore)
             {
                 decimal pctAfter = Math.Round(holder.SharePct * dilutionFactor, 2, MidpointRounding.AwayFromZero);
@@ -33,6 +37,7 @@ namespace DevStart.Application.DealDocuments.Generation
                     PartyType: holder.Type,
                     SharePctBefore: holder.SharePct,
                     SharePctAfter: pctAfter));
+                vestedFractions.Add(ClampFraction(holder.VestedFraction));
             }
 
             entries.Add(new CapTableEntry(
@@ -41,17 +46,29 @@ namespace DevStart.Application.DealDocuments.Generation
                 PartyType: "Investor",
                 SharePctBefore: 0m,
                 SharePctAfter: investorSharePct));
+            vestedFractions.Add(1m);
 
             // Each row's after-share is rounded independently, so the column can drift off 100%
             // (e.g. 99.99% / 100.02%). Absorb that rounding residual into the largest holder so the
             // cap table presented in the term sheet always totals exactly 100%.
             NormalizeAfterColumn(entries);
 
+            // Vested amounts derive from the final (normalized) after-share, so compute them last.
+            for (int i = 0; i < entries.Count; i++)
+            {
+                decimal vestedPctAfter = Math.Round(
+                    entries[i].SharePctAfter * vestedFractions[i], 2, MidpointRounding.AwayFromZero);
+                entries[i] = entries[i] with { VestedPctAfter = vestedPctAfter };
+            }
+
             // Recompute headline figures from the normalized entries to keep them consistent.
             investorSharePct = entries[^1].SharePctAfter;
             decimal foundersTotalAfter = entries
                 .Where(e => string.Equals(e.PartyType, "Founder", StringComparison.OrdinalIgnoreCase))
                 .Sum(e => e.SharePctAfter);
+            decimal foundersUnvestedAfter = entries
+                .Where(e => string.Equals(e.PartyType, "Founder", StringComparison.OrdinalIgnoreCase))
+                .Sum(e => e.SharePctAfter - e.VestedPctAfter);
 
             List<DealTermsFlag> warnings = new();
             if (shareCapped)
@@ -75,12 +92,26 @@ namespace DevStart.Application.DealDocuments.Generation
                     SeverityWarning,
                     $"New investor share ({investorSharePct:0.##}%) exceeds the {InvestorCeilingPct}% threshold."));
             }
+            if (foundersUnvestedAfter > 0.01m)
+            {
+                warnings.Add(new DealTermsFlag(
+                    "cap_table.founder_unvested",
+                    SeverityInfo,
+                    $"Founders hold {foundersUnvestedAfter:0.##}% of equity that is not yet vested as of the term-sheet date; this is subject to their vesting schedules."));
+            }
 
             return new CapTableResult(
                 Entries: entries,
                 InvestorSharePct: investorSharePct,
                 FoundersTotalAfterPct: Math.Round(foundersTotalAfter, 2, MidpointRounding.AwayFromZero),
                 Warnings: warnings);
+        }
+
+        private static decimal ClampFraction(decimal fraction)
+        {
+            if (fraction < 0m) return 0m;
+            if (fraction > 1m) return 1m;
+            return fraction;
         }
 
         // Largest-remainder normalization: nudge the biggest holder by the rounding residual so the

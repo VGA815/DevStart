@@ -144,6 +144,41 @@ public sealed class CapTableCalculatorTests
         result.Warnings.Select(warning => warning.Code).ShouldContain("cap_table.share_capped");
     }
 
+    [Fact]
+    public void Compute_ShouldTreatFullyVestedHolders_VestedEqualsAfter()
+    {
+        // Default VestedFraction (1) ⇒ every row's vested share equals its after share, and no
+        // unvested-founder note is emitted.
+        InvestmentDeal deal = CreateDeal(InvestmentInstrument.Safe, amount: 10_000_000m, valuationCap: 50_000_000m);
+
+        CapTableResult result = _calculator.Compute(deal, [
+            new EquityHolderInput(Guid.NewGuid(), "Founder 1", "Founder", 60m),
+            new EquityHolderInput(Guid.NewGuid(), "Founder 2", "Founder", 40m)
+        ]);
+
+        result.Entries.ShouldAllBe(e => e.VestedPctAfter == e.SharePctAfter);
+        result.Warnings.Select(w => w.Code).ShouldNotContain("cap_table.founder_unvested");
+    }
+
+    [Fact]
+    public void Compute_ShouldProrateVestedShare_AndFlagFounderUnvested()
+    {
+        // 20% investor ⇒ 0.8 dilution. Founder 1 is half-vested: after = 60*0.8 = 48, vested = 24.
+        InvestmentDeal deal = CreateDeal(InvestmentInstrument.Safe, amount: 10_000_000m, valuationCap: 50_000_000m);
+
+        CapTableResult result = _calculator.Compute(deal, [
+            new EquityHolderInput(Guid.NewGuid(), "Founder 1", "Founder", 60m, VestedFraction: 0.5m),
+            new EquityHolderInput(Guid.NewGuid(), "Founder 2", "Founder", 40m)
+        ]);
+
+        result.Entries[0].SharePctAfter.ShouldBe(48m);
+        result.Entries[0].VestedPctAfter.ShouldBe(24m);
+        result.Entries[1].VestedPctAfter.ShouldBe(32m);
+        // Investor row is always fully vested.
+        result.Entries[2].VestedPctAfter.ShouldBe(20m);
+        result.Warnings.Select(w => w.Code).ShouldContain("cap_table.founder_unvested");
+    }
+
     private static InvestmentDeal CreateDeal(
         InvestmentInstrument instrument,
         decimal amount,

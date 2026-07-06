@@ -35,10 +35,14 @@
 
 {{cap_table_md_table}}
 
+## Founders & vesting
+
+{{founders_breakdown}}
+
 ## Standard terms (not negotiable in this template)
 
 - **Anti-dilution:** Broad-Based Weighted Average (BBWA)
-- **Founder vesting:** 4 years with 1 year cliff
+- **Founder vesting:** per the Founders & vesting section above (default: 4 years with a 1-year cliff)
 - **Pro-rata rights:** as marked above
 - **Exclusivity:** 30 days, legally binding
 - **Confidentiality:** standard

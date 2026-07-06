@@ -13,6 +13,9 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string StartupMembersChangeVisibility   = "startup_members::change_visibility";
         public const string StartupMembersUpdateProfile      = "startup_members::update_profile";
 
+        public const string StartupEquityRead                = "startup_equity::read";
+        public const string StartupEquityManage              = "startup_equity::manage";
+
         public const string StartupCompetitorsCreate         = "startup_competitors::create";
         public const string StartupCompetitorsUpdate         = "startup_competitors::update";
         public const string StartupCompetitorsDelete         = "startup_competitors::delete";

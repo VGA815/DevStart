@@ -1,8 +1,11 @@
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Application.Scoring;
+using DevStart.Application.StartupEquity;
+using DevStart.Application.StartupEquity.Vesting;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.InvestmentDeals;
+using DevStart.Domain.StartupEquity;
 using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
 using System.Globalization;
@@ -12,6 +15,7 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
 {
     internal sealed class TermSheetGenerator(
         IFileStorage fileStorage,
+        IVestingCalculator vestingCalculator,
         IDateTimeProvider dateTimeProvider) : ITermSheetGenerator
     {
         public async Task<string> RenderAsync(
@@ -19,6 +23,8 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
             Startup startup,
             ScoreResult score,
             CapTableResult capTable,
+            IReadOnlyList<FoundingCapTableHolder> foundingHolders,
+            DateTime asOf,
             CancellationToken cancellationToken)
         {
             string slug = deal.Instrument switch
@@ -77,6 +83,7 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
                     : na,
                 ["calculated_at"] = scoreAvailable ? score.CalculatedAt.ToString("yyyy-MM-dd HH:mm 'UTC'", c) : na,
                 ["cap_table_md_table"] = BuildCapTableMarkdown(capTable),
+                ["founders_breakdown"] = BuildFoundersBreakdown(foundingHolders, asOf),
                 ["flags_section"] = BuildFlagsSection(capTable.Warnings),
                 ["generated_at"] = dateTimeProvider.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'", c)
             };
@@ -92,13 +99,50 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
         private static string BuildCapTableMarkdown(CapTableResult capTable)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("| Party | Type | Before, % | After, % |");
-            sb.AppendLine("|---|---|---:|---:|");
+            sb.AppendLine("| Party | Type | Before, % | After, % | Vested, % |");
+            sb.AppendLine("|---|---|---:|---:|---:|");
             CultureInfo c = CultureInfo.InvariantCulture;
             foreach (CapTableEntry e in capTable.Entries)
             {
-                sb.AppendLine($"| {e.PartyName} | {e.PartyType} | {e.SharePctBefore.ToString("0.##", c)} | {e.SharePctAfter.ToString("0.##", c)} |");
+                sb.AppendLine($"| {e.PartyName} | {e.PartyType} | {e.SharePctBefore.ToString("0.##", c)} | {e.SharePctAfter.ToString("0.##", c)} | {e.VestedPctAfter.ToString("0.##", c)} |");
             }
+            return sb.ToString();
+        }
+
+        // Per-founder breakdown with each founder's pre-deal stake and vesting schedule. Founders
+        // without an explicit schedule fall back to the platform's standard vesting boilerplate.
+        private string BuildFoundersBreakdown(IReadOnlyList<FoundingCapTableHolder> foundingHolders, DateTime asOf)
+        {
+            List<FoundingCapTableHolder> founders = foundingHolders
+                .Where(h => h.HolderType == EquityHolderType.Founder)
+                .ToList();
+
+            if (founders.Count == 0)
+            {
+                return "_No founders on record._";
+            }
+
+            CultureInfo c = CultureInfo.InvariantCulture;
+            var sb = new StringBuilder();
+            foreach (FoundingCapTableHolder f in founders)
+            {
+                string equity = f.EquityPercentage.ToString("0.##", c);
+
+                if (f.VestingStartDate is { } start && f.VestingMonths is { } months && months > 0)
+                {
+                    decimal fraction = vestingCalculator.VestedFraction(f.VestingStartDate, f.VestingMonths, f.CliffMonths, asOf);
+                    string vested = (f.EquityPercentage * fraction).ToString("0.##", c);
+                    int cliff = f.CliffMonths ?? 0;
+                    sb.AppendLine(
+                        $"- **{f.Name}** — {equity}% equity; vesting over {months} months with a {cliff}-month cliff from {start.ToString("yyyy-MM-dd", c)}; {vested}% vested as of {asOf.ToString("yyyy-MM-dd", c)}.");
+                }
+                else
+                {
+                    sb.AppendLine(
+                        $"- **{f.Name}** — {equity}% equity; standard vesting: 4 years with a 1-year cliff.");
+                }
+            }
+
             return sb.ToString();
         }
 

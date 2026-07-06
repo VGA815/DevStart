@@ -3,6 +3,8 @@ using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Notifications;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Application.Scoring;
+using DevStart.Application.StartupEquity;
+using DevStart.Application.StartupEquity.Vesting;
 using DevStart.Application.Startups.GetScore;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.InvestmentDeals;
@@ -26,6 +28,8 @@ namespace DevStart.Infrastructure.DealDocuments
         IApplicationDbContext context,
         ICapTableCalculator capTableCalculator,
         ITermSheetGenerator termSheetGenerator,
+        IFoundingCapTableProvider capTableProvider,
+        IVestingCalculator vestingCalculator,
         IFileStorage fileStorage,
         INotificationService notificationService,
         IDateTimeProvider dateTimeProvider,
@@ -92,15 +96,27 @@ namespace DevStart.Infrastructure.DealDocuments
                     score.CalculatedAt));
             }
 
-            // 3. Build holdersBefore: founders split (100 - 10% ESOP) equally; previous
-            //    completed deals applied cumulatively.
-            List<EquityHolderInput> holdersBefore = await BuildHoldersBeforeAsync(deal, cancellationToken);
+            // 3. Resolve the startup's founding cap table (explicit per-founder equity + vesting when
+            //    set; equal-split + default ESOP fallback otherwise) and map it into calculator inputs,
+            //    resolving each holder's vested fraction as of now.
+            DateTime asOf = dateTimeProvider.UtcNow;
+            IReadOnlyList<FoundingCapTableHolder> foundingHolders =
+                await capTableProvider.GetEffectiveHoldersAsync(deal.StartupId, cancellationToken);
+            List<EquityHolderInput> holdersBefore = foundingHolders
+                .Select(h => new EquityHolderInput(
+                    h.ProfileId,
+                    h.Name,
+                    h.HolderType.ToString(),
+                    h.EquityPercentage,
+                    vestingCalculator.VestedFraction(h.VestingStartDate, h.VestingMonths, h.CliffMonths, asOf)))
+                .ToList();
 
             // 4. Compute cap table
             CapTableResult capTable = capTableCalculator.Compute(deal, holdersBefore);
 
             // 5. Render markdown
-            string markdown = await termSheetGenerator.RenderAsync(deal, startup, score, capTable, cancellationToken);
+            string markdown = await termSheetGenerator.RenderAsync(
+                deal, startup, score, capTable, foundingHolders, asOf, cancellationToken);
 
             // 6. Upload markdown
             string termSheetKey = DealDocumentBuckets.TermSheetObjectKey(dealId);
@@ -162,53 +178,6 @@ namespace DevStart.Infrastructure.DealDocuments
             }
 
             logger.LogInformation("Generated deal documents for {DealId}", dealId);
-        }
-
-        // MVP rule: founders split (100 - 10% ESOP) equally if no prior completed deals.
-        // Otherwise, take the latest completed deal's cap table (we can't easily reconstruct
-        // since cap-tables aren't stored relationally — this is a known MVP limitation).
-        private async Task<List<EquityHolderInput>> BuildHoldersBeforeAsync(
-            InvestmentDeal deal,
-            CancellationToken cancellationToken)
-        {
-            const decimal esopPct = 10m;
-            const decimal foundersPoolPct = 100m - esopPct;
-
-            // Personal data lives on the shared Profile (keyed by UserId == StartupMember.ProfileId).
-            // Left-join so a founder without a profile row still gets a row in the cap table.
-            var founders = await (
-                from sm in context.StartupMembers.AsNoTracking()
-                join p in context.Profiles.AsNoTracking() on sm.ProfileId equals p.UserId into profiles
-                from profile in profiles.DefaultIfEmpty()
-                where sm.StartupId == deal.StartupId && sm.Role == StartupRole.Founder
-                select new { sm.ProfileId, Name = profile != null ? profile.Name : null })
-                .ToListAsync(cancellationToken);
-
-            var holders = new List<EquityHolderInput>();
-
-            if (founders.Count == 0)
-            {
-                holders.Add(new EquityHolderInput(null, "Founders pool", "Founder", foundersPoolPct));
-            }
-            else
-            {
-                decimal perFounder = Math.Round(foundersPoolPct / founders.Count, 2, MidpointRounding.AwayFromZero);
-                // Per-founder rounding leaves a tiny residual; fold it into the first founder so the
-                // founders pool sums to exactly (100 - ESOP) and the cap table totals 100%.
-                decimal residual = foundersPoolPct - (perFounder * founders.Count);
-                for (int i = 0; i < founders.Count; i++)
-                {
-                    decimal share = i == 0 ? perFounder + residual : perFounder;
-                    string name = string.IsNullOrWhiteSpace(founders[i].Name)
-                        ? $"Founder {i + 1}"
-                        : founders[i].Name!;
-                    holders.Add(new EquityHolderInput(founders[i].ProfileId, name, "Founder", share));
-                }
-            }
-
-            holders.Add(new EquityHolderInput(null, "ESOP pool", "Esop", esopPct));
-
-            return holders;
         }
     }
 }

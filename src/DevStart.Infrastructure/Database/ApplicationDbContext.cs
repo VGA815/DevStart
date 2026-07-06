@@ -22,6 +22,7 @@ using DevStart.Domain.PasswordResetTokens;
 using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupDocumentFiles;
+using DevStart.Domain.StartupEquity;
 using DevStart.Domain.StartupFollowers;
 using DevStart.Domain.StartupInvestors;
 using DevStart.Domain.StartupMembers;
@@ -59,6 +60,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<StartupMetric> StartupMetrics { get; set; }
 
         public DbSet<StartupMember> StartupMembers { get; set; }
+
+        public DbSet<StartupEquityHolder> StartupEquityHolders { get; set; }
 
         public DbSet<StartupInvestor> StartupInvestors { get; set; }
 

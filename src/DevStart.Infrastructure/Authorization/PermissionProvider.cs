@@ -22,6 +22,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupMembersChangeVisibility,
                 Permissions.StartupMembersUpdateProfile,
 
+                Permissions.StartupEquityRead,
+                Permissions.StartupEquityManage,
+
                 Permissions.StartupCompetitorsCreate,
                 Permissions.StartupCompetitorsUpdate,
                 Permissions.StartupCompetitorsDelete,
@@ -108,6 +111,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupMembersChangeRole,
                 Permissions.StartupMembersChangeVisibility,
                 Permissions.StartupMembersUpdateProfile,
+
+                Permissions.StartupEquityRead,
+                Permissions.StartupEquityManage,
 
                 Permissions.StartupCompetitorsCreate,
                 Permissions.StartupCompetitorsUpdate,
