@@ -44,6 +44,7 @@ namespace DevStart.Application
             services.AddOptions<ValuationOptions>();
 
             services.AddSingleton<IScoringEngine, ScoringEngine>();
+            services.AddSingleton<CommunityStandards.ICommunityStandardsEvaluator, CommunityStandards.CommunityStandardsEvaluator>();
             services.AddSingleton<IValuationCalculator, ValuationCalculator>();
             services.AddSingleton<IDealTermsValidator, DealTermsValidator>();
             services.AddSingleton<ICapTableCalculator, CapTableCalculator>();
@@ -53,6 +54,9 @@ namespace DevStart.Application
             services.AddScoped<StartupEquity.IFoundingCapTableProvider, StartupEquity.FoundingCapTableProvider>();
             services.AddScoped<UserConsents.IConsentService, UserConsents.ConsentService>();
             services.AddScoped<Startups.IStartupAuthorizationService, Startups.StartupAuthorizationService>();
+
+            services.AddScoped<CommunityStandards.ICommunityStandardsDataProvider, CommunityStandards.CommunityStandardsDataProvider>();
+            services.AddScoped<CommunityStandards.ICommunityStandardsRefresher, CommunityStandards.CommunityStandardsRefresher>();
 
             services.AddScoped<Auth.TwoFactor.ITwoFactorLoginGate, Auth.TwoFactor.TwoFactorLoginGate>();
             services.AddScoped<Auth.TwoFactor.ITwoFactorEnrollmentService, Auth.TwoFactor.TwoFactorEnrollmentService>();

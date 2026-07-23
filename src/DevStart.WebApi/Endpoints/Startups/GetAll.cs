@@ -1,5 +1,6 @@
 ﻿using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Startups.GetAll;
+using DevStart.Domain.StartupCommunityStandards;
 using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
 using DevStart.WebApi.Extensions;
@@ -19,9 +20,10 @@ namespace DevStart.WebApi.Endpoints.Startups
                 CancellationToken cancellationToken,
                 [FromQuery] StartupStage? stage = null,
                 [FromQuery] StartupLocation? location = null,
-                [FromQuery] bool? isStopped = null) =>
+                [FromQuery] bool? isStopped = null,
+                [FromQuery] CommunityStandardsLevel? minCommunityStandards = null) =>
             {
-                GetStartupsQuery query = new(page, pageSize, stage, location, isStopped);
+                GetStartupsQuery query = new(page, pageSize, stage, location, isStopped, minCommunityStandards);
 
                 Result<List<StartupResponse>> result = await handler.Handle(query, cancellationToken);
 

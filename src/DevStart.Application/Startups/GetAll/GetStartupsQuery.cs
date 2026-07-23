@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Messaging;
+using DevStart.Domain.StartupCommunityStandards;
 using DevStart.Domain.Startups;
 
 namespace DevStart.Application.Startups.GetAll
@@ -8,5 +9,6 @@ namespace DevStart.Application.Startups.GetAll
         int PageSize,
         StartupStage? Stage = null,
         StartupLocation? Location = null,
-        bool? IsStopped = null) : IQuery<List<StartupResponse>>;
+        bool? IsStopped = null,
+        CommunityStandardsLevel? MinCommunityStandardsLevel = null) : IQuery<List<StartupResponse>>;
 }

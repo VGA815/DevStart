@@ -1176,6 +1176,85 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.ToTable("refresh_tokens", "public");
                 });
 
+            modelBuilder.Entity("DevStart.Domain.StartupCommunityStandards.StartupCommunityDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("StartupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("startup_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_startup_community_documents");
+
+                    b.HasIndex("StartupId", "Type")
+                        .IsUnique()
+                        .HasDatabaseName("ix_startup_community_documents_startup_id_type");
+
+                    b.ToTable("startup_community_documents", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.StartupCommunityStandards.StartupCommunityStandards", b =>
+                {
+                    b.Property<Guid>("StartupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("startup_id");
+
+                    b.Property<int>("CompletedCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("completed_count");
+
+                    b.Property<DateTime>("ComputedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("computed_at");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer")
+                        .HasColumnName("level");
+
+                    b.Property<int>("TotalCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_count");
+
+                    b.HasKey("StartupId")
+                        .HasName("pk_startup_community_standards");
+
+                    b.HasIndex("Level")
+                        .HasDatabaseName("ix_startup_community_standards_level");
+
+                    b.ToTable("startup_community_standards", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.StartupCompetitors.StartupCompetitor", b =>
                 {
                     b.Property<Guid>("Id")

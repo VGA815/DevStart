@@ -19,6 +19,7 @@ using DevStart.Domain.Messages;
 using DevStart.Domain.Notifications;
 using DevStart.Domain.PasswordResetTokens;
 using DevStart.Domain.Profiles;
+using DevStart.Domain.StartupCommunityStandards;
 using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupEquity;
@@ -51,6 +52,8 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<StartupInvestor> StartupInvestors { get; }
         DbSet<StartupFollower> StartupFollowers { get; }
         DbSet<StartupDocumentFile> StartupDocumentsFiles { get; }
+        DbSet<StartupCommunityDocument> StartupCommunityDocuments { get; }
+        DbSet<StartupCommunityStandards> StartupCommunityStandards { get; }
         DbSet<Profile> Profiles { get; }
         DbSet<MediaFile> MediaFiles { get; }
         DbSet<EmailVerificationToken> EmailVerificationTokens { get; }

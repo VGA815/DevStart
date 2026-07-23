@@ -37,6 +37,8 @@ namespace DevStart.Application.Abstractions.Authorization
 
         public const string StartupProductsUpdate            = "startup_products::update";
 
+        public const string CommunityDocumentsManage         = "community_documents::manage";
+
         public const string ProfilesCreate                   = "profiles::create";
         public const string ProfilesUpdate                   = "profiles::update";
         public const string ProfilesDelete                   = "profiles::delete";

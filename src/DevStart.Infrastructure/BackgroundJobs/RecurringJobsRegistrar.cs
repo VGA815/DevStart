@@ -1,3 +1,4 @@
+using DevStart.Infrastructure.CommunityStandards;
 using DevStart.Infrastructure.Moderation;
 using DevStart.Infrastructure.Payments;
 using DevStart.Infrastructure.Subscriptions;
@@ -28,6 +29,11 @@ namespace DevStart.Infrastructure.BackgroundJobs
                 "ban-expiry",
                 job => job.RunAsync(CancellationToken.None),
                 Cron.Hourly());
+
+            recurringJobManager.AddOrUpdate<CommunityStandardsRefreshJob>(
+                "community-standards-refresh",
+                job => job.RunAsync(CancellationToken.None),
+                Cron.Daily());
 
             return Task.CompletedTask;
         }

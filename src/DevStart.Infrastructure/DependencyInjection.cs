@@ -14,6 +14,7 @@ using DevStart.Infrastructure.Authentication.TwoFactor;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
 using DevStart.Infrastructure.Caching;
+using DevStart.Infrastructure.CommunityStandards;
 using DevStart.Infrastructure.Database;
 using DevStart.Infrastructure.Diagnostics;
 using DevStart.Infrastructure.ConsentDocuments;
@@ -84,6 +85,11 @@ namespace DevStart.Infrastructure
 
             services.AddScoped<Application.Scoring.IValuationBenchmarkProvider, ValuationBenchmarkProvider>();
             services.AddHostedService<ValuationBenchmarksSeeder>();
+
+            // The community-document starter texts are embedded resources, so one instance can serve all.
+            services.AddSingleton<
+                Application.CommunityStandards.ICommunityDocumentTemplateProvider,
+                Infrastructure.CommunityStandards.CommunityDocumentTemplateProvider>();
 
             return services;
         }
@@ -308,6 +314,7 @@ namespace DevStart.Infrastructure
             services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
             services.AddScoped<TermSheetGenerationJob>();
             services.AddScoped<BanExpiryJob>();
+            services.AddScoped<CommunityStandardsRefreshJob>();
 
             return services;
         }

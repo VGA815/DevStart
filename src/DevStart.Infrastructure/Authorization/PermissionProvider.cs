@@ -46,6 +46,8 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.StartupProductsUpdate,
 
+                Permissions.CommunityDocumentsManage,
+
                 Permissions.ProfilesCreate,
                 Permissions.ProfilesUpdate,
                 Permissions.ProfilesDelete,
@@ -135,6 +137,8 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupRoadmapItemsDelete,
 
                 Permissions.StartupProductsUpdate,
+
+                Permissions.CommunityDocumentsManage,
 
                 Permissions.ProfilesCreate,
                 Permissions.ProfilesUpdate,

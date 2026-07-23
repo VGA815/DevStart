@@ -20,5 +20,6 @@ namespace DevStart.Domain.Notifications
         SubscriptionExpiringSoon = 15,
         SubscriptionExpired = 16,
         PaymentRefunded = 17,
+        CommunityStandardsIncomplete = 18,
     }
 }

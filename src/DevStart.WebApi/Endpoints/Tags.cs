@@ -14,6 +14,7 @@
         public const string StartupInvestors = "StartupInvestors";
         public const string StartupFollowers = "StartupFollowers";
         public const string StartupDocumentFiles = "StartupDocumentFiles";
+        public const string CommunityStandards = "CommunityStandards";
         public const string Profiles = "Profiles";
         public const string MediaFiles = "MediaFiles";
         public const string EmailVerification = "EmailVerification";

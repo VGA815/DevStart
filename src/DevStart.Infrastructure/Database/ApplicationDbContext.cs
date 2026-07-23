@@ -20,6 +20,7 @@ using DevStart.Domain.Messages;
 using DevStart.Domain.Notifications;
 using DevStart.Domain.PasswordResetTokens;
 using DevStart.Domain.Profiles;
+using DevStart.Domain.StartupCommunityStandards;
 using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupEquity;
@@ -52,6 +53,10 @@ namespace DevStart.Infrastructure.Database
         public DbSet<Startup> Startups { get; set; }
 
         public DbSet<StartupValuationSnapshot> StartupValuationSnapshots { get; set; }
+
+        public DbSet<StartupCommunityDocument> StartupCommunityDocuments { get; set; }
+
+        public DbSet<StartupCommunityStandards> StartupCommunityStandards { get; set; }
 
         public DbSet<StartupRoadmapItem> StartupRoadmapItems { get; set; }
 
