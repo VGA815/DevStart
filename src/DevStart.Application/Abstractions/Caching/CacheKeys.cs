@@ -31,5 +31,12 @@ namespace DevStart.Application.Abstractions.Caching
         public static string SubscriptionActiveByUser(Guid userId) => $"{Version}:subscriptions:{userId}:active";
 
         public static string ValuationBenchmarks() => $"{Version}:valuation-benchmarks:all";
+
+        /// <summary>
+        /// Prefix covering every cached startup entry, including the computed scores. Used when a
+        /// change is platform-wide rather than per-startup (a new valuation benchmark version feeds
+        /// both the competition sub-score and the valuation of every startup in the sector).
+        /// </summary>
+        public static string StartupsPrefix() => $"{Version}:startups:";
     }
 }

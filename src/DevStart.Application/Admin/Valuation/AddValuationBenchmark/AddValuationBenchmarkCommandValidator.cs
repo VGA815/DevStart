@@ -47,6 +47,21 @@ namespace DevStart.Application.Admin.Valuation.AddValuationBenchmark
                     .Null()
                     .WithMessage("A revenue multiple is dimensionless and must not carry a currency.");
             });
+
+            // Competition intensity is sector-only, dimensionless and lives on a fixed 0..100 scale
+            // (100 = maximally crowded) — the scoring engine reads it as 100 − value.
+            When(c => c.MetricType == BenchmarkMetricType.CompetitionIntensity, () =>
+            {
+                RuleFor(c => c.Stage)
+                    .Null()
+                    .WithMessage("Competition intensity is sector-only and must not specify a stage.");
+                RuleFor(c => c.Currency)
+                    .Null()
+                    .WithMessage("Competition intensity is dimensionless and must not carry a currency.");
+                RuleFor(c => c.Value)
+                    .InclusiveBetween(0m, 100m)
+                    .WithMessage("Competition intensity must be between 0 and 100 (100 = maximally crowded sector).");
+            });
         }
     }
 }

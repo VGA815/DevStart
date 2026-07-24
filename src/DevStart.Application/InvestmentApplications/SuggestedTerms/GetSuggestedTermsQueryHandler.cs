@@ -57,10 +57,11 @@ namespace DevStart.Application.InvestmentApplications.SuggestedTerms
             }
 
             ScoreResult score = scoreResult.Value;
-            if (score.MethodsUsed.Count == 0 || score.ValuationHigh <= 0m)
+            if (score.MethodsUsed.Count == 0 || score.ValuationHigh <= 0m || score.TotalScore is null)
             {
                 // No usable valuation (empty ensemble, or e.g. a pre-revenue startup whose target
-                // round wipes out the VC pre-money) — never suggest a ₽0 cap as if it were real.
+                // round wipes out the VC pre-money) or no scoring factor with data — never suggest a
+                // ₽0 cap or a fabricated score reference as if they were real.
                 return Result.Failure<SuggestedTermsResponse>(ValuationErrors.InsufficientData);
             }
 
@@ -118,7 +119,7 @@ namespace DevStart.Application.InvestmentApplications.SuggestedTerms
                     ? Math.Round(share * 100m, 2, MidpointRounding.AwayFromZero)
                     : null,
                 Warnings = warnings,
-                ScoreReference = score.TotalScore,
+                ScoreReference = score.TotalScore.Value,
                 ValuationLowReference = score.ValuationLow,
                 ValuationHighReference = score.ValuationHigh
             };

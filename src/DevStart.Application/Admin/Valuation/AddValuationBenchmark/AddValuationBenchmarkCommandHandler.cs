@@ -55,8 +55,12 @@ namespace DevStart.Application.Admin.Valuation.AddValuationBenchmark
 
             await context.SaveChangesAsync(cancellationToken);
 
-            // Invalidate the cached benchmark set so the next valuation reads the new version.
+            // Invalidate the cached benchmark set so the next valuation reads the new version, and the
+            // cached startup scores with it: a benchmark row feeds both the competition sub-score and
+            // the valuation, so leaving them would serve the old figures for up to an hour. Benchmark
+            // writes are quarterly, so the broad eviction costs nothing in practice.
             await cacheService.RemoveAsync(CacheKeys.ValuationBenchmarks(), cancellationToken);
+            await cacheService.RemoveByPrefixAsync(CacheKeys.StartupsPrefix(), cancellationToken);
 
             return benchmark.Id;
         }

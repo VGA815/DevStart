@@ -19,7 +19,12 @@ namespace DevStart.Domain.Startups
         public decimal MarketScore { get; set; }
         public decimal ProductScore { get; set; }
         public decimal TractionScore { get; set; }
-        public decimal CompetitionScore { get; set; }
+
+        /// <summary>
+        /// <c>null</c> when the competition factor had no data and was excluded from the weighting —
+        /// a snapshot must not record "no data" as a 0 that reads like the worst possible outcome.
+        /// </summary>
+        public decimal? CompetitionScore { get; set; }
 
         public decimal ValuationLow { get; set; }
         public decimal ValuationHigh { get; set; }
@@ -41,7 +46,7 @@ namespace DevStart.Domain.Startups
             decimal marketScore,
             decimal productScore,
             decimal tractionScore,
-            decimal competitionScore,
+            decimal? competitionScore,
             decimal valuationLow,
             decimal valuationHigh,
             decimal valuationPoint,

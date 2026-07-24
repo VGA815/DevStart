@@ -15,27 +15,32 @@ namespace DevStart.Application.Scoring
         DateTime EffectiveFrom);
 
     /// <summary>
-    /// An immutable, as-of snapshot of the valuation benchmarks the engine reads: pre-money medians by
-    /// sector/stage and revenue multiples by sector. Built from the versioned rows by keeping, per key,
-    /// the latest version with <c>EffectiveFrom ≤ asOf</c>. A missing value is an explicit "no data"
-    /// signal (<c>null</c>) — the consuming method then drops out of the ensemble.
+    /// An immutable, as-of snapshot of the benchmarks the engines read: pre-money medians by
+    /// sector/stage, revenue multiples by sector and competition intensity by sector. Built from the
+    /// versioned rows by keeping, per key, the latest version with <c>EffectiveFrom ≤ asOf</c>. A
+    /// missing value is an explicit "no data" signal (<c>null</c>) — the consuming valuation method
+    /// then drops out of the ensemble, and the scoring factor falls back to its own-data component.
     /// </summary>
     public sealed class ValuationBenchmarkSet
     {
         private readonly IReadOnlyDictionary<(Industry Industry, StartupStage Stage), decimal> _medians;
         private readonly IReadOnlyDictionary<Industry, decimal> _revenueMultiples;
+        private readonly IReadOnlyDictionary<Industry, decimal> _competitionIntensities;
 
         public ValuationBenchmarkSet(
             IReadOnlyDictionary<(Industry Industry, StartupStage Stage), decimal> medians,
-            IReadOnlyDictionary<Industry, decimal> revenueMultiples)
+            IReadOnlyDictionary<Industry, decimal> revenueMultiples,
+            IReadOnlyDictionary<Industry, decimal>? competitionIntensities = null)
         {
             _medians = medians;
             _revenueMultiples = revenueMultiples;
+            _competitionIntensities = competitionIntensities ?? new Dictionary<Industry, decimal>();
         }
 
         /// <summary>An empty set — every lookup returns "no data".</summary>
         public static readonly ValuationBenchmarkSet Empty = new(
             new Dictionary<(Industry, StartupStage), decimal>(),
+            new Dictionary<Industry, decimal>(),
             new Dictionary<Industry, decimal>());
 
         /// <summary>
@@ -48,6 +53,8 @@ namespace DevStart.Application.Scoring
             var medianEffective = new Dictionary<(Industry, StartupStage), DateTime>();
             var multiples = new Dictionary<Industry, decimal>();
             var multipleEffective = new Dictionary<Industry, DateTime>();
+            var intensities = new Dictionary<Industry, decimal>();
+            var intensityEffective = new Dictionary<Industry, DateTime>();
 
             foreach (ValuationBenchmarkRow row in rows)
             {
@@ -73,9 +80,17 @@ namespace DevStart.Application.Scoring
                         multiples[row.Industry] = row.Value;
                     }
                 }
+                else if (row.MetricType == BenchmarkMetricType.CompetitionIntensity)
+                {
+                    if (!intensityEffective.TryGetValue(row.Industry, out DateTime current) || row.EffectiveFrom > current)
+                    {
+                        intensityEffective[row.Industry] = row.EffectiveFrom;
+                        intensities[row.Industry] = row.Value;
+                    }
+                }
             }
 
-            return new ValuationBenchmarkSet(medians, multiples);
+            return new ValuationBenchmarkSet(medians, multiples, intensities);
         }
 
         /// <summary>
@@ -98,6 +113,21 @@ namespace DevStart.Application.Scoring
         /// <summary>EV/Revenue multiple for the sector; <c>null</c> when none is on file.</summary>
         public decimal? RevenueMultiple(Industry industry) =>
             _revenueMultiples.TryGetValue(industry, out decimal m) ? m : null;
+
+        /// <summary>
+        /// Competition intensity of the sector (0..100, 100 = maximally crowded): the sector-specific
+        /// value when present, otherwise the general (<see cref="Industry.Other"/>) one — the same
+        /// fallback as <see cref="Median"/>, so a single general row keeps the scoring factor backed by
+        /// external data for every sector. <c>null</c> when neither exists.
+        /// </summary>
+        public decimal? CompetitionIntensity(Industry industry)
+        {
+            if (industry != Industry.Other && _competitionIntensities.TryGetValue(industry, out decimal sector))
+            {
+                return sector;
+            }
+            return _competitionIntensities.TryGetValue(Industry.Other, out decimal general) ? general : null;
+        }
     }
 
     /// <summary>

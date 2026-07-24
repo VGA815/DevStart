@@ -6,12 +6,12 @@ namespace DevStart.Application.StartupCompetitors.Create
     {
         public Guid StartupId { get; set; }
         public string Name { get; set; } = null!;
-        public string? Website { get; set; }
+        public string Website { get; set; } = null!;
         public string? Description { get; set; }
         public string? StrengthsVsUs { get; set; }
         public string? WeaknessesVsUs { get; set; }
 
-        public CreateStartupCompetitorCommand(Guid startupId, string name, string? website, string? description,
+        public CreateStartupCompetitorCommand(Guid startupId, string name, string website, string? description,
             string? strengthsVsUs, string? weaknessesVsUs)
         {
             StartupId = startupId;

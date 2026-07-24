@@ -40,10 +40,7 @@ namespace DevStart.Application.Scoring
                     sm.PreviousStartupsCount))
                 .ToListAsync(cancellationToken);
 
-            int competitorsCount = await context.StartupCompetitors
-                .AsNoTracking()
-                .CountAsync(c => c.StartupId == startupId, cancellationToken);
-
+            CompetitorSignals competitors = await BuildCompetitorsAsync(startupId, cancellationToken);
             TractionSignals traction = await BuildTractionAsync(startupId, cancellationToken);
             ProductSignals product = await BuildProductAsync(startupId, cancellationToken);
             RoadmapSignals roadmap = await BuildRoadmapAsync(startupId, cancellationToken);
@@ -56,7 +53,7 @@ namespace DevStart.Application.Scoring
                 Som: startup.Som,
                 MarketGrowthRate: startup.MarketGrowthRate,
                 HasPatents: startup.HasPatents,
-                CompetitorsCount: competitorsCount,
+                Competitors: competitors,
                 Members: members,
                 Traction: traction,
                 Product: product,
@@ -66,6 +63,25 @@ namespace DevStart.Application.Scoring
                 HasStrategicPartnerships: startup.HasStrategicPartnerships);
 
             return inputs;
+        }
+
+        // A card counts as "well documented" when it carries an actual analysis: a website plus at
+        // least one of strengths/weaknesses vs us. The total is carried for transparency only — the
+        // score is driven by the documented count, so adding an empty card is worth nothing and
+        // deleting one cannot raise the score (docs/scoring-methodology.md).
+        private async Task<CompetitorSignals> BuildCompetitorsAsync(Guid startupId, CancellationToken cancellationToken)
+        {
+            var cards = await context.StartupCompetitors
+                .AsNoTracking()
+                .Where(c => c.StartupId == startupId)
+                .Select(c => new { c.Website, c.StrengthsVsUs, c.WeaknessesVsUs })
+                .ToListAsync(cancellationToken);
+
+            int wellDocumented = cards.Count(c =>
+                !string.IsNullOrWhiteSpace(c.Website)
+                && (!string.IsNullOrWhiteSpace(c.StrengthsVsUs) || !string.IsNullOrWhiteSpace(c.WeaknessesVsUs)));
+
+            return new CompetitorSignals(cards.Count, wellDocumented);
         }
 
         // Latest snapshot per consumed metric type. Only the consumed types are pulled (not the whole

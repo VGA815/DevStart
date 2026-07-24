@@ -16,8 +16,10 @@ namespace DevStart.Application.Scoring
     ///   Berkus          5 factors (idea, prototype, team, partnerships, traction), each a 0..1 signal ×
     ///                   a RUB ceiling; partnerships → 0 when absent.
     ///   Scorecard       stage/sector median × Σ(weightᵢ × multiplierᵢ), multiplierᵢ = clamp(0.5 + subᵢ/100,
-    ///                   0.5..1.5). "Sales" factor is proxied by the traction sub-score. No median on file
-    ///                   → the method drops out of the ensemble (insufficient data, not a hardcoded floor).
+    ///                   0.5..1.5). "Sales" factor is proxied by the traction sub-score. A sub-score with
+    ///                   no data drops out and the factor weights are renormalized — feeding 0 in would
+    ///                   silently apply the floor multiplier. No median on file → the method drops out of
+    ///                   the ensemble (insufficient data, not a hardcoded floor).
     ///   VC Method       TV = exitRevenue × sector multiple; post-money = TV / (1+IRR)^n; pre-money =
     ///                   post-money − target round amount (when known). Exit revenue = ARR × growth, or a
     ///                   stage default when pre-revenue.
@@ -171,22 +173,34 @@ namespace DevStart.Application.Scoring
         private Method Scorecard(ScoreResult score, ScoringInputs inputs, decimal median, bool sectorMedian, decimal baseWeight)
         {
             ScorecardOptions s = _o.Scorecard;
+            const decimal neutral = 1.0m; // financing & "other": no direct signal
 
-            decimal mTeam = Multiplier(score.TeamScore, s);
-            decimal mMarket = Multiplier(score.MarketScore, s);
-            decimal mProduct = Multiplier(score.ProductScore, s);
-            decimal mCompetition = Multiplier(score.CompetitionScore, s);
-            decimal mSales = Multiplier(score.TractionScore, s); // proxy: traction stands in for sales/marketing
-            const decimal neutral = 1.0m;                          // financing & "other": no direct signal
+            // A sub-score that is null means "no data", not "worst case". Feeding 0 in would silently
+            // hand that factor the floor multiplier (0.5) and drag the valuation down, so a no-data
+            // factor is dropped and the Bill-Payne weights are renormalized over the rest — the same
+            // rule the ensemble applies to its methods and the scoring engine to its factors.
+            (string Name, decimal? Sub, decimal Weight)[] factors =
+            [
+                ("team", score.TeamScore, s.TeamWeight),
+                ("market", score.MarketScore, s.MarketWeight),
+                ("product", score.ProductScore, s.ProductWeight),
+                ("competition", score.CompetitionScore, s.CompetitionWeight),
+                ("sales", score.TractionScore, s.SalesWeight), // proxy: traction stands in for sales/marketing
+            ];
 
-            decimal composite =
-                s.TeamWeight * mTeam +
-                s.MarketWeight * mMarket +
-                s.ProductWeight * mProduct +
-                s.CompetitionWeight * mCompetition +
-                s.SalesWeight * mSales +
-                s.FinancingWeight * neutral +
-                s.OtherWeight * neutral;
+            string[] dropped = factors.Where(f => f.Sub is null).Select(f => f.Name).ToArray();
+            decimal droppedWeight = factors.Where(f => f.Sub is null).Sum(f => f.Weight);
+            decimal keptWeight = factors.Where(f => f.Sub is not null).Sum(f => f.Weight)
+                + s.FinancingWeight + s.OtherWeight;
+
+            // Renormalize the surviving weights back to the original total so a dropped factor neither
+            // shrinks nor inflates the composite.
+            decimal renorm = keptWeight > 0m ? (keptWeight + droppedWeight) / keptWeight : 1m;
+
+            decimal composite = renorm * (
+                factors.Where(f => f.Sub is not null).Sum(f => f.Weight * Multiplier(f.Sub!.Value, s))
+                + s.FinancingWeight * neutral
+                + s.OtherWeight * neutral);
 
             decimal value = RoundRub(median * composite);
 
@@ -195,6 +209,10 @@ namespace DevStart.Application.Scoring
                 $"median ₽{median:N0} ({(sectorMedian ? $"{inputs.Industry} {inputs.Stage}" : $"{inputs.Stage} (stage-only)")})",
                 $"composite multiplier {composite:0.###}; sales proxied by traction"
             };
+            if (dropped.Length > 0)
+            {
+                assumptions.Add($"no data for {string.Join(", ", dropped)} — factor(s) dropped, weights renormalized");
+            }
 
             return new Method("Scorecard", Math.Max(0m, value), baseWeight, assumptions);
         }

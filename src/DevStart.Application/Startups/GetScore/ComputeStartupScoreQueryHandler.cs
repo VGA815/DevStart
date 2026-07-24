@@ -24,12 +24,15 @@ namespace DevStart.Application.Startups.GetScore
             ScoringInputs inputs = inputsResult.Value;
 
             DateTime utcNow = dateTimeProvider.UtcNow;
-            ScoreResult baseScore = scoringEngine.Compute(inputs, utcNow);
+
+            // One as-of benchmark set for both engines: the scoring engine reads the sector competition
+            // intensity from it, the valuation ensemble the pre-money medians / revenue multiples.
+            ValuationBenchmarkSet benchmarks = await benchmarkProvider.GetAsync(utcNow, cancellationToken);
+
+            ScoreResult baseScore = scoringEngine.Compute(inputs, benchmarks, utcNow);
 
             // The valuation ensemble reads the engine sub-scores plus the raw signals (stage, industry,
-            // ARR, target round amount, partnerships) the provider already resolved, and the pre-money
-            // medians / revenue multiples as of the valuation date.
-            ValuationBenchmarkSet benchmarks = await benchmarkProvider.GetAsync(utcNow, cancellationToken);
+            // ARR, target round amount, partnerships) the provider already resolved.
             ValuationResult valuation = valuationCalculator.Compute(baseScore, inputs, benchmarks);
 
             return baseScore with

@@ -32,7 +32,7 @@ public sealed class ValuationCalculatorTests
 
     private static ScoreResult Score(
         decimal total = 50m, decimal team = 50m, decimal market = 50m,
-        decimal product = 50m, decimal traction = 50m, decimal competition = 50m) =>
+        decimal product = 50m, decimal traction = 50m, decimal? competition = 50m) =>
         new(total, team, market, product, traction, competition, 0m, 0m, [], Now);
 
     private static ScoringInputs Inputs(
@@ -48,7 +48,7 @@ public sealed class ValuationCalculatorTests
             stage,
             Tam: null, Sam: null, Som: null, MarketGrowthRate: null,
             HasPatents: patents,
-            CompetitorsCount: 0,
+            Competitors: CompetitorSignals.None,
             Members: [],
             Traction: TractionSignals.From(mrr, 0m, 0m),
             Product: new ProductSignals(articulated),
@@ -101,6 +101,30 @@ public sealed class ValuationCalculatorTests
             Inputs(StartupStage.Seed, Industry.Saas));
 
         MethodValue(r, "Scorecard").ShouldBe(446_000_000m);
+    }
+
+    [Fact]
+    public void Scorecard_DropsANoDataSubScore_InsteadOfApplyingTheFloorMultiplier()
+    {
+        ScoringInputs inputs = Inputs(StartupStage.Seed, Industry.Saas);
+
+        // Same startup as the worked example, but the competition factor had no data.
+        ValuationResult noData = Compute(
+            Score(team: 70m, market: 80m, product: 50m, traction: 30m, competition: null), inputs);
+
+        // Reading "no data" as a 0 sub-score would silently apply the floor multiplier (0.5) and
+        // knock ₽20M off the valuation — the leak this rule closes.
+        ValuationResult asZero = Compute(
+            Score(team: 70m, market: 80m, product: 50m, traction: 30m, competition: 0m), inputs);
+
+        MethodValue(noData, "Scorecard").ShouldBeGreaterThan(MethodValue(asZero, "Scorecard"));
+
+        // Kept weights (0.90 of the total) renormalized back to 1.0:
+        // (0.30*1.2 + 0.25*1.3 + 0.15*1.0 + 0.10*0.8 + 0.05 + 0.05) / 0.90 × ₽400M
+        MethodValue(noData, "Scorecard").ShouldBe(451_111_111m);
+
+        noData.Methods.Single(m => m.Method == "Scorecard").Assumptions
+            .ShouldContain(a => a.Contains("no data for competition"));
     }
 
     [Fact]

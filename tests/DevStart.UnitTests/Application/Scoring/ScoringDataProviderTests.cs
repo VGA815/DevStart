@@ -48,14 +48,16 @@ public sealed class ScoringDataProviderTests
     }
 
     [Fact]
-    public async Task GetInputsAsync_AssemblesStartupFieldsMembersAndCompetitorCount()
+    public async Task GetInputsAsync_AssemblesStartupFieldsMembersAndCompetitorSignals()
     {
         SeedStartup(StartupStage.Mvp, tam: 1_000_000_000m, sam: 500_000_000m, som: 100_000_000m);
         _db.StartupMembers.Add(StartupMember.Create(
             Guid.NewGuid(), _startupId, StartupRole.Founder, isPublic: true, Now,
             StartupPosition.CEO, yearsOfExperience: 5, hasPriorExit: true, previousStartupsCount: 2));
-        _db.StartupCompetitors.Add(StartupCompetitor.Create(_startupId, "Rival", null, null, null, null, Now));
-        _db.StartupCompetitors.Add(StartupCompetitor.Create(_startupId, "Rival2", null, null, null, null, Now));
+        _db.StartupCompetitors.Add(StartupCompetitor.Create(
+            _startupId, "Rival", "https://rival.com", null, "Bigger sales team", null, Now));
+        _db.StartupCompetitors.Add(StartupCompetitor.Create(
+            _startupId, "Rival2", "https://rival2.com", null, null, null, Now));
         await _db.SaveChangesAsync();
 
         ScoringInputs inputs = (await CreateSut().GetInputsAsync(_startupId, CancellationToken.None)).Value;
@@ -65,9 +67,33 @@ public sealed class ScoringDataProviderTests
         inputs.Sam.ShouldBe(500_000_000m);
         inputs.Som.ShouldBe(100_000_000m);
         inputs.HasPatents.ShouldBeTrue();
-        inputs.CompetitorsCount.ShouldBe(2);
+        inputs.Competitors.TotalCount.ShouldBe(2);
+        // Only the card carrying an analysis counts — a website alone is not enough.
+        inputs.Competitors.WellDocumentedCount.ShouldBe(1);
         inputs.Members.Count.ShouldBe(1);
         inputs.Members[0].HasPriorExit.ShouldBe(true);
+    }
+
+    [Theory]
+    // website + strengths, website + weaknesses → documented
+    [InlineData("https://rival.com", "Bigger sales team", null, 1)]
+    [InlineData("https://rival.com", null, "No mobile app", 1)]
+    [InlineData("https://rival.com", "Bigger sales team", "No mobile app", 1)]
+    // website alone, or an analysis with no website → not documented
+    [InlineData("https://rival.com", null, null, 0)]
+    [InlineData("https://rival.com", "   ", "  ", 0)]
+    public async Task GetInputsAsync_CountsOnlyCardsCarryingAnAnalysis(
+        string website, string? strengths, string? weaknesses, int expected)
+    {
+        SeedStartup();
+        _db.StartupCompetitors.Add(StartupCompetitor.Create(
+            _startupId, "Rival", website, null, strengths, weaknesses, Now));
+        await _db.SaveChangesAsync();
+
+        ScoringInputs inputs = (await CreateSut().GetInputsAsync(_startupId, CancellationToken.None)).Value;
+
+        inputs.Competitors.TotalCount.ShouldBe(1);
+        inputs.Competitors.WellDocumentedCount.ShouldBe(expected);
     }
 
     [Fact]

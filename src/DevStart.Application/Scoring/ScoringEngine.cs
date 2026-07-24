@@ -6,38 +6,140 @@ namespace DevStart.Application.Scoring
 {
     internal sealed class ScoringEngine : IScoringEngine
     {
-        public ScoreResult Compute(ScoringInputs inputs, DateTime calculatedAt)
+        public ScoreResult Compute(ScoringInputs inputs, ValuationBenchmarkSet benchmarks, DateTime calculatedAt)
         {
+            ScoreWeights w = WeightsFor(inputs.Stage);
+
             decimal team = ComputeTeamScore(inputs.Members);
             decimal market = ComputeMarketScore(inputs.Tam, inputs.Sam, inputs.Som, inputs.MarketGrowthRate);
             decimal product = ComputeProductScore(inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap);
             decimal traction = ComputeTractionScore(inputs.Traction);
-            decimal competition = ComputeCompetitionScore(inputs.CompetitorsCount);
+            CompetitionFactor competition = ComputeCompetitionScore(inputs.Competitors, inputs.Industry, benchmarks);
 
-            ScoreWeights w = WeightsFor(inputs.Stage);
+            ScoreFactor[] factors =
+            [
+                new("Team", team, w.Team,
+                    inputs.Members.Count > 0 ? ScoreFactorSource.SelfReported : ScoreFactorSource.None,
+                    [inputs.Members.Count > 0
+                        ? $"{inputs.Members.Count} member(s) on file"
+                        : "no members on file — scored 0"]),
 
-            decimal total = Round2(
-                team * w.Team +
-                market * w.Market +
-                product * w.Product +
-                traction * w.Traction +
-                competition * w.Competition);
+                new("Market", market, w.Market,
+                    inputs.Tam is > 0m ? ScoreFactorSource.SelfReported : ScoreFactorSource.None,
+                    [inputs.Tam is > 0m
+                        ? $"TAM ₽{inputs.Tam:N0}"
+                        : "no TAM on file — scored 0"]),
 
-            return new ScoreResult(
-                TotalScore: total,
-                TeamScore: Round2(team),
-                MarketScore: Round2(market),
-                ProductScore: Round2(product),
-                TractionScore: Round2(traction),
-                CompetitionScore: Round2(competition),
-                ValuationLow: 0m,
-                ValuationHigh: 0m,
-                MethodsUsed: Array.Empty<string>(),
-                CalculatedAt: calculatedAt);
+                // Stage is mandatory on a startup, so this factor always has a basis; the roadmap part
+                // is platform data (item count), the rest is declared by the startup.
+                new("Product", product, w.Product,
+                    ScoreFactorSource.SelfReported | ScoreFactorSource.PlatformDerived,
+                    [$"stage {inputs.Stage}, {inputs.Roadmap.ItemCount} roadmap item(s)"]),
+
+                new("Traction", traction, w.Traction,
+                    inputs.Traction.HasData ? ScoreFactorSource.SelfReported : ScoreFactorSource.None,
+                    [inputs.Traction.HasData
+                        ? $"MRR ₽{inputs.Traction.Mrr:N0}, MAU {inputs.Traction.Mau:N0}, MoM {inputs.Traction.MomGrowth:0.##}%"
+                        : "no metrics on file — scored 0"]),
+
+                new("Competition", competition.Score, w.Competition, competition.Source, competition.Notes,
+                    Floor: CompetitionBaselineWithoutBenchmark),
+            ];
+
+            return Combine(factors, calculatedAt);
         }
 
+        /// <summary>
+        /// Combines the factors into a total: factors with no data (<c>Score is null</c>) drop out and
+        /// the remaining weights are renormalized to sum 1.0 — the same rule the valuation ensemble
+        /// applies to its methods.
+        ///
+        /// Renormalization makes "no data" equal to the weighted average of the other factors, which on
+        /// the boundary "one competitor card → none" could sit *above* the real outcome and reward
+        /// deleting the last card. So a dropped-out factor is also capped: the total can never exceed
+        /// what it would have been with that factor scored at its floor. "No data" is therefore neutral
+        /// but never better than the worst outcome the factor can actually produce.
+        /// </summary>
+        internal static ScoreResult Combine(IReadOnlyList<ScoreFactor> factors, DateTime calculatedAt)
+        {
+            ScoreFactor[] participating = factors.Where(f => f.Score.HasValue).ToArray();
+            if (participating.Length == 0)
+            {
+                return ScoreResult.InsufficientData(calculatedAt);
+            }
+
+            // Degenerate weights (all zero) — fall back to equal shares so we never divide by 0.
+            bool degenerate = participating.Sum(f => f.BaseWeight) <= 0m;
+            decimal WeightOf(ScoreFactor f) => degenerate ? 1m : f.BaseWeight;
+
+            decimal totalWeight = participating.Sum(WeightOf);
+            decimal weightedSum = participating.Sum(f => f.Score!.Value * WeightOf(f));
+            decimal total = weightedSum / totalWeight;
+
+            // Ceiling rule for every factor that dropped out (see summary).
+            foreach (ScoreFactor absent in factors.Where(f => !f.Score.HasValue && f.Floor.HasValue))
+            {
+                decimal absentWeight = WeightOf(absent);
+                total = Math.Min(
+                    total,
+                    (weightedSum + absent.Floor!.Value * absentWeight) / (totalWeight + absentWeight));
+            }
+
+            // Round each displayed weight to 2dp but hand the last participant the residual, so the
+            // breakdown weights always sum to exactly 1.0. The total above uses the unrounded weights.
+            var breakdown = new List<ScoreFactorBreakdown>(factors.Count);
+            decimal weightAccumulator = 0m;
+            int participantsSeen = 0;
+            foreach (ScoreFactor f in factors)
+            {
+                if (!f.Score.HasValue)
+                {
+                    breakdown.Add(new ScoreFactorBreakdown(f.Name, null, 0m, f.Source, f.Notes));
+                    continue;
+                }
+
+                participantsSeen++;
+                decimal weight = participantsSeen == participating.Length
+                    ? 1.0m - weightAccumulator
+                    : Round2(WeightOf(f) / totalWeight);
+                weightAccumulator += weight;
+                breakdown.Add(new ScoreFactorBreakdown(f.Name, Round2(f.Score.Value), weight, f.Source, f.Notes));
+            }
+
+            decimal? Score(string name) => breakdown.Single(b => b.Factor == name).Score;
+
+            return new ScoreResult(
+                TotalScore: Round2(total),
+                TeamScore: Score("Team") ?? 0m,
+                MarketScore: Score("Market") ?? 0m,
+                ProductScore: Score("Product") ?? 0m,
+                TractionScore: Score("Traction") ?? 0m,
+                CompetitionScore: Score("Competition"),
+                ValuationLow: 0m,
+                ValuationHigh: 0m,
+                MethodsUsed: [],
+                CalculatedAt: calculatedAt)
+            {
+                Factors = breakdown
+            };
+        }
+
+        /// <summary>
+        /// One factor on the way into <see cref="Combine"/>. <see cref="Score"/> is <c>null</c> for
+        /// "no data"; <see cref="Floor"/> is the lowest score the factor can produce when it *does*
+        /// have data, and backs the ceiling rule for the dropped-out case.
+        /// </summary>
+        internal readonly record struct ScoreFactor(
+            string Name,
+            decimal? Score,
+            decimal BaseWeight,
+            ScoreFactorSource Source,
+            IReadOnlyList<string> Notes,
+            decimal? Floor = null);
+
         // Stage-aware weights: team/product matter most early, traction/market most later.
-        // Each stage's weights sum to 1.00 (guarded by ScoringEngineTests). Proposed defaults — tunable.
+        // Each stage's weights sum to 1.00 (guarded by ScoringEngineTests); they are renormalized over
+        // the factors that actually participate. Proposed defaults — tunable.
         internal readonly record struct ScoreWeights(
             decimal Team, decimal Market, decimal Product, decimal Traction, decimal Competition);
 
@@ -235,13 +337,82 @@ namespace DevStart.Application.Scoring
             return 50m;
         }
 
-        // Spec: 0 competitors = BlueOcean (85), 1–3 = Niche (60), 4+ = High (35).
-        private static decimal ComputeCompetitionScore(int competitorsCount)
+        // ---- Competition ------------------------------------------------------------------------
+
+        /// <summary>
+        /// Baseline when no sector intensity benchmark is on file: the middle of the scale. We know
+        /// nothing about how crowded the sector is, so the level is neutral and only the startup's own
+        /// analysis moves it. Also the factor's floor — see the ceiling rule in <see cref="Combine"/>.
+        /// </summary>
+        private const decimal CompetitionBaselineWithoutBenchmark = 50m;
+
+        /// <summary>Bonus per well-documented competitor card, saturating at three. Proposed defaults — tunable.</summary>
+        private static decimal DocumentationBonus(int wellDocumentedCount) => wellDocumentedCount switch
         {
-            if (competitorsCount == 0) return 85m;
-            if (competitorsCount <= 3) return 60m;
-            return 35m;
+            <= 0 => 0m,
+            1 => 10m,
+            2 => 20m,
+            _ => 30m
+        };
+
+        /// <summary>
+        /// Competition factor. Two independent components, neither of which is the number of cards:
+        ///   (a) quality of the startup's own analysis — the count of *well-documented* cards
+        ///       (saturating at 3), never the total count and never their share. Adding a card can only
+        ///       help, deleting one can only hurt, and an unanalysed card is worth exactly nothing.
+        ///   (b) how crowded the sector is — the external <c>CompetitionIntensity</c> benchmark
+        ///       (0..100, 100 = maximally crowded), which the startup cannot edit.
+        /// With no cards at all and no benchmark the factor has no data and drops out of the weighting
+        /// (capped by the ceiling rule so an empty list is never better than an unanalysed one).
+        /// See docs/scoring-methodology.md.
+        /// </summary>
+        private static CompetitionFactor ComputeCompetitionScore(
+            CompetitorSignals competitors, Industry industry, ValuationBenchmarkSet benchmarks)
+        {
+            decimal? intensity = benchmarks.CompetitionIntensity(industry);
+
+            if (intensity is null && competitors.TotalCount == 0)
+            {
+                return new CompetitionFactor(
+                    null,
+                    ScoreFactorSource.None,
+                    ["no competitor cards and no sector intensity benchmark — factor excluded, weights renormalized"]);
+            }
+
+            decimal baseScore = intensity is { } value
+                ? Clamp(100m - value)
+                : CompetitionBaselineWithoutBenchmark;
+
+            decimal bonus = DocumentationBonus(competitors.WellDocumentedCount);
+
+            ScoreFactorSource source = ScoreFactorSource.None;
+            var notes = new List<string>();
+
+            if (intensity is { } i)
+            {
+                source |= ScoreFactorSource.ExternalBenchmark;
+                notes.Add($"sector intensity {i:0.##}/100 → base {baseScore:0.##}");
+            }
+            else
+            {
+                notes.Add($"no sector intensity benchmark → neutral base {baseScore:0.##}");
+            }
+
+            if (competitors.TotalCount > 0)
+            {
+                source |= ScoreFactorSource.SelfReported;
+            }
+            notes.Add(
+                $"{competitors.WellDocumentedCount} of {competitors.TotalCount} competitor card(s) documented → +{bonus:0.##}"
+                + " (count of cards is not a scoring driver)");
+
+            return new CompetitionFactor(Clamp(baseScore + bonus), source, notes);
         }
+
+        private readonly record struct CompetitionFactor(
+            decimal? Score, ScoreFactorSource Source, IReadOnlyList<string> Notes);
+
+        // ---- Helpers ----------------------------------------------------------------------------
 
         private static decimal Clamp(decimal value) =>
             value < 0m ? 0m : (value > 100m ? 100m : value);

@@ -40,6 +40,28 @@ namespace DevStart.Application.StartupCompetitors.Create
                 return Result.Failure<Guid>(UserErrors.Unauthorized());
             }
 
+            string? domain = StartupCompetitor.NormalizeDomain(command.Website);
+            if (domain is null)
+            {
+                return Result.Failure<Guid>(StartupCompetitorErrors.InvalidWebsite);
+            }
+
+            // Hygiene: the quality-of-analysis half of the competition score would otherwise be
+            // farmable by cloning one competitor under several URLs. The unique index on
+            // (startup_id, normalized_domain) is the race backstop behind this check.
+            if (await context.StartupCompetitors.AnyAsync(
+                    c => c.StartupId == command.StartupId && c.NormalizedDomain == domain, cancellationToken))
+            {
+                return Result.Failure<Guid>(StartupCompetitorErrors.DuplicateDomain);
+            }
+
+            int existingCount = await context.StartupCompetitors
+                .CountAsync(c => c.StartupId == command.StartupId, cancellationToken);
+            if (existingCount >= StartupCompetitor.MaxPerStartup)
+            {
+                return Result.Failure<Guid>(StartupCompetitorErrors.LimitReached);
+            }
+
             StartupCompetitor competitor = StartupCompetitor.Create(
                 command.StartupId,
                 command.Name,

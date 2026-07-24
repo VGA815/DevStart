@@ -47,9 +47,10 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
 
             CultureInfo c = CultureInfo.InvariantCulture;
 
-            // The score job falls back to an all-zero ScoreResult with no methods when scoring fails.
-            // Render "N/A" in that case so the term sheet never presents a fabricated 0/100 score or
-            // a ₽0 valuation range as if it were real.
+            // The score job falls back to an insufficient-data ScoreResult with no methods when scoring
+            // fails. Render "N/A" in that case so the term sheet never presents a fabricated 0/100
+            // score or a ₽0 valuation range as if it were real. A null total/competition sub-score
+            // means "no data" for the same reason and renders N/A too.
             const string na = "N/A";
             bool scoreAvailable = score.MethodsUsed.Count > 0;
 
@@ -69,12 +70,12 @@ namespace DevStart.Infrastructure.DealDocuments.Generation
                 ["pro_rata_rights"] = deal.ProRataRights ? "Yes" : "No",
                 ["investor_share_pct"] = capTable.InvestorSharePct.ToString("0.##", c),
                 ["founders_total_after_pct"] = capTable.FoundersTotalAfterPct.ToString("0.##", c),
-                ["score_total"] = scoreAvailable ? score.TotalScore.ToString("0.##", c) : na,
+                ["score_total"] = scoreAvailable ? score.TotalScore?.ToString("0.##", c) ?? na : na,
                 ["score_team"] = scoreAvailable ? score.TeamScore.ToString("0.##", c) : na,
                 ["score_market"] = scoreAvailable ? score.MarketScore.ToString("0.##", c) : na,
                 ["score_product"] = scoreAvailable ? score.ProductScore.ToString("0.##", c) : na,
                 ["score_traction"] = scoreAvailable ? score.TractionScore.ToString("0.##", c) : na,
-                ["score_competition"] = scoreAvailable ? score.CompetitionScore.ToString("0.##", c) : na,
+                ["score_competition"] = scoreAvailable ? score.CompetitionScore?.ToString("0.##", c) ?? na : na,
                 ["valuation_low"] = scoreAvailable ? score.ValuationLow.ToString("N2", c) : na,
                 ["valuation_high"] = scoreAvailable ? score.ValuationHigh.ToString("N2", c) : na,
                 ["methods_used"] = scoreAvailable ? string.Join(", ", score.MethodsUsed) : na,

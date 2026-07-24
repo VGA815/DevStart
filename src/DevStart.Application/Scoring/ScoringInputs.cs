@@ -10,7 +10,7 @@ namespace DevStart.Application.Scoring
         decimal? Som,
         decimal? MarketGrowthRate,
         bool HasPatents,
-        int CompetitorsCount,
+        CompetitorSignals Competitors,
         IReadOnlyList<MemberInput> Members,
         TractionSignals Traction,
         ProductSignals Product,
@@ -26,14 +26,22 @@ namespace DevStart.Application.Scoring
     /// <see cref="MrrIsProxy"/> marks an MRR that was substituted from the generic Revenue metric
     /// (period undefined) — good enough for the traction score tiers, but never annualized into ARR.
     /// </summary>
-    public sealed record TractionSignals(decimal Mrr, decimal Mau, decimal MomGrowth, bool MrrIsProxy = false)
+    public sealed record TractionSignals(
+        decimal Mrr, decimal Mau, decimal MomGrowth, bool MrrIsProxy = false, bool HasData = false)
     {
         /// <summary>
         /// Builds the signals, flooring MRR/MAU at 0 (dirty-input guard). MoM growth stays signed —
-        /// a negative value legitimately means a declining business.
+        /// a negative value legitimately means a declining business. <see cref="HasData"/> records
+        /// whether any metric was actually on file, so "reported 0" can be told apart from "never
+        /// reported" in the score's provenance flag (the score itself is 0 either way).
         /// </summary>
         public static TractionSignals From(decimal? mrr, decimal? mau, decimal? momGrowth, bool mrrIsProxy = false) =>
-            new(Math.Max(0m, mrr ?? 0m), Math.Max(0m, mau ?? 0m), momGrowth ?? 0m, mrrIsProxy);
+            new(
+                Math.Max(0m, mrr ?? 0m),
+                Math.Max(0m, mau ?? 0m),
+                momGrowth ?? 0m,
+                mrrIsProxy,
+                HasData: mrr.HasValue || mau.HasValue || momGrowth.HasValue);
 
         public static readonly TractionSignals Empty = new(0m, 0m, 0m);
 
@@ -43,6 +51,17 @@ namespace DevStart.Application.Scoring
         /// the valuation's revenue anchor up to 12×; the valuation then treats the startup as pre-revenue.
         /// </summary>
         public decimal AnnualRecurringRevenue => MrrIsProxy ? 0m : Mrr * 12m;
+    }
+
+    /// <summary>
+    /// Competitor-landscape signals. <see cref="TotalCount"/> is carried for transparency only — it is
+    /// deliberately NOT a scoring driver, because the startup controls it by adding and deleting cards.
+    /// The score is driven by <see cref="WellDocumentedCount"/>: cards that actually carry an analysis
+    /// (a website plus at least one of strengths/weaknesses vs us). See docs/scoring-methodology.md.
+    /// </summary>
+    public sealed record CompetitorSignals(int TotalCount, int WellDocumentedCount)
+    {
+        public static readonly CompetitorSignals None = new(0, 0);
     }
 
     /// <summary>Structural product signals derived from the startup's product description.</summary>

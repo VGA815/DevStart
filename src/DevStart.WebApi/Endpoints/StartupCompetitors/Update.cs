@@ -13,7 +13,7 @@ namespace DevStart.WebApi.Endpoints.StartupCompetitors
     {
         public sealed record Request(
             [property: JsonPropertyName("name")] string Name,
-            [property: JsonPropertyName("website")] string? Website,
+            [property: JsonPropertyName("website")] string Website,
             [property: JsonPropertyName("description")] string? Description,
             [property: JsonPropertyName("strengths_vs_us")] string? StrengthsVsUs,
             [property: JsonPropertyName("weaknesses_vs_us")] string? WeaknessesVsUs);

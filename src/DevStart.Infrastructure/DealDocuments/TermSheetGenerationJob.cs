@@ -74,12 +74,12 @@ namespace DevStart.Infrastructure.DealDocuments
                 cancellationToken);
             ScoreResult score = scoreResult.IsSuccess
                 ? scoreResult.Value
-                : new ScoreResult(0, 0, 0, 0, 0, 0, 0, 0, Array.Empty<string>(), dateTimeProvider.UtcNow);
+                : ScoreResult.InsufficientData(dateTimeProvider.UtcNow);
 
             // Persist a valuation snapshot for history/backtesting and document provenance. Only when
             // scoring actually produced a valuation (methods present) — never store a fabricated 0/0.
             // Saved together with the DealDocument at step 8.
-            if (scoreResult.IsSuccess && score.MethodsUsed.Count > 0)
+            if (scoreResult.IsSuccess && score.MethodsUsed.Count > 0 && score.TotalScore is { } totalScore)
             {
                 string? breakdownJson = score.ValuationMethods is { Count: > 0 }
                     ? JsonSerializer.Serialize(score.ValuationMethods, ValuationSnapshotJson.Options)
@@ -87,7 +87,7 @@ namespace DevStart.Infrastructure.DealDocuments
 
                 context.StartupValuationSnapshots.Add(StartupValuationSnapshot.Create(
                     startup.Id,
-                    score.TotalScore, score.TeamScore, score.MarketScore, score.ProductScore,
+                    totalScore, score.TeamScore, score.MarketScore, score.ProductScore,
                     score.TractionScore, score.CompetitionScore,
                     score.ValuationLow, score.ValuationHigh, score.ValuationPoint,
                     string.Join(",", score.MethodsUsed),

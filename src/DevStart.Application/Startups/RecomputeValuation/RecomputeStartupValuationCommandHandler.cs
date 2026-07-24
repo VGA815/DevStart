@@ -24,9 +24,10 @@ namespace DevStart.Application.Startups.RecomputeValuation
             }
 
             ScoreResult score = scoreResult.Value;
-            if (score.MethodsUsed.Count == 0)
+            if (score.MethodsUsed.Count == 0 || score.TotalScore is null)
             {
-                // No method applied to the stage — don't store a fabricated 0/0 snapshot.
+                // No valuation method applied to the stage, or no scoring factor had data — don't
+                // store a fabricated 0/0 snapshot.
                 return Result.Failure<Guid>(ValuationErrors.InsufficientData);
             }
 
@@ -36,7 +37,7 @@ namespace DevStart.Application.Startups.RecomputeValuation
 
             StartupValuationSnapshot snapshot = StartupValuationSnapshot.Create(
                 command.StartupId,
-                score.TotalScore, score.TeamScore, score.MarketScore, score.ProductScore,
+                score.TotalScore.Value, score.TeamScore, score.MarketScore, score.ProductScore,
                 score.TractionScore, score.CompetitionScore,
                 score.ValuationLow, score.ValuationHigh, score.ValuationPoint,
                 string.Join(",", score.MethodsUsed),

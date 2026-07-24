@@ -83,4 +83,36 @@ public sealed class ValuationBenchmarkSetTests
         set.RevenueMultiple(Industry.Saas).ShouldBe(6m);
         set.RevenueMultiple(Industry.Fintech).ShouldBeNull();
     }
+
+    [Fact]
+    public void CompetitionIntensity_PicksLatestVersionNotAfterAsOf()
+    {
+        var set = ValuationBenchmarkSet.FromRows(
+        [
+            Intensity(Industry.Saas, 40m, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)),
+            Intensity(Industry.Saas, 75m, new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc)),
+            Intensity(Industry.Saas, 90m, new DateTime(2026, 12, 1, 0, 0, 0, DateTimeKind.Utc)),
+        ], AsOf);
+
+        set.CompetitionIntensity(Industry.Saas).ShouldBe(75m);
+    }
+
+    [Fact]
+    public void CompetitionIntensity_PrefersSectorRow_ThenFallsBackToOther_ThenNull()
+    {
+        var general = ValuationBenchmarkSet.FromRows([Intensity(Industry.Other, 30m, AsOf)], AsOf);
+        general.CompetitionIntensity(Industry.Fintech).ShouldBe(30m);
+
+        var sectorSpecific = ValuationBenchmarkSet.FromRows(
+        [
+            Intensity(Industry.Other, 30m, AsOf),
+            Intensity(Industry.Fintech, 85m, AsOf),
+        ], AsOf);
+        sectorSpecific.CompetitionIntensity(Industry.Fintech).ShouldBe(85m);
+
+        ValuationBenchmarkSet.Empty.CompetitionIntensity(Industry.Fintech).ShouldBeNull();
+    }
+
+    private static ValuationBenchmarkRow Intensity(Industry industry, decimal value, DateTime effectiveFrom) =>
+        new(BenchmarkMetricType.CompetitionIntensity, industry, null, value, effectiveFrom);
 }

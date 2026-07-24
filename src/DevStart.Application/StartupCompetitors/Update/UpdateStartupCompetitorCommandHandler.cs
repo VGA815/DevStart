@@ -1,4 +1,5 @@
 using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupCompetitors;
@@ -11,7 +12,8 @@ namespace DevStart.Application.StartupCompetitors.Update
     internal sealed class UpdateStartupCompetitorCommandHandler(
         IApplicationDbContext context,
         IUserContext userContext,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        ICacheService cacheService)
         : ICommandHandler<UpdateStartupCompetitorCommand>
     {
         public async Task<Result> Handle(UpdateStartupCompetitorCommand command, CancellationToken cancellationToken)
@@ -34,6 +36,21 @@ namespace DevStart.Application.StartupCompetitors.Update
                 return Result.Failure(StartupCompetitorErrors.Unauthorized);
             }
 
+            string? domain = StartupCompetitor.NormalizeDomain(command.Website);
+            if (domain is null)
+            {
+                return Result.Failure(StartupCompetitorErrors.InvalidWebsite);
+            }
+
+            if (await context.StartupCompetitors.AnyAsync(
+                    c => c.StartupId == competitor.StartupId
+                        && c.Id != competitor.Id
+                        && c.NormalizedDomain == domain,
+                    cancellationToken))
+            {
+                return Result.Failure(StartupCompetitorErrors.DuplicateDomain);
+            }
+
             competitor.Update(
                 command.Name,
                 command.Website,
@@ -43,6 +60,10 @@ namespace DevStart.Application.StartupCompetitors.Update
                 dateTimeProvider.UtcNow);
 
             await context.SaveChangesAsync(cancellationToken);
+
+            // An edit changes how well the card is documented, which changes the competition factor —
+            // the cached score has to go, just as it does on create and delete.
+            await cacheService.RemoveAsync(CacheKeys.StartupScore(competitor.StartupId), cancellationToken);
 
             return Result.Success();
         }
