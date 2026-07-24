@@ -7,39 +7,38 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.Hangfire" Version="9.0.0" />
-    <PackageReference Include="EFCore.NamingConventions" Version="10.0.0" />
-    <PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.21" />
-    <PackageReference Include="Hangfire.Core" Version="1.8.21" />
-    <PackageReference Include="Hangfire.PostgreSql" Version="1.20.12" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="10.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" />
+    <PackageReference Include="AspNetCore.HealthChecks.Hangfire" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="FluentEmail.Smtp" />
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.Core" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.15.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.15.0" />
-    <PackageReference Include="Minio" Version="7.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Npgsql" Version="10.0.1" />
-    <PackageReference Include="Npgsql.DependencyInjection" Version="10.0.1" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
-    <PackageReference Include="Npgsql.Json.NET" Version="10.0.1" />
-    <PackageReference Include="Otp.NET" Version="1.4.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.11.0" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Minio" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.DependencyInjection" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.Json.NET" />
+    <PackageReference Include="Otp.NET" />
+    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 
   <ItemGroup>

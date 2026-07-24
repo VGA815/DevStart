@@ -11,25 +11,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" Version="1.15.1-beta.2" />
-    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.3-beta.1" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
-    <PackageReference Include="Npgsql.OpenTelemetry" Version="10.0.1" />
-    <PackageReference Include="Microsoft.OpenApi" Version="2.3.9" />
-    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-    <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Seq" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
 
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
-    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Serilog" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Advisories land without anyone touching the repo, so audit on a timer too.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore DevStart.slnx
+
+      - name: Build
+        run: dotnet build DevStart.slnx -c Release --no-restore
+
+      # Integration tests spin up PostgreSQL via Testcontainers; ubuntu runners ship with Docker.
+      - name: Test
+        run: dotnet test DevStart.slnx -c Release --no-build
+
+  audit:
+    name: Vulnerable dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Audit NuGet dependencies
+        # shell: bash adds -o pipefail, so a failing dotnet is not masked by tee's exit code.
+        shell: bash
+        run: |
+          dotnet restore DevStart.slnx -p:NuGetAuditMode=all 2>&1 | tee audit.txt
+          dotnet list DevStart.slnx package --vulnerable --include-transitive 2>&1 | tee -a audit.txt
+          if grep -qE "has the following vulnerable packages|warning NU19" audit.txt; then
+            echo "::error::Vulnerable NuGet packages detected - see log above"
+            exit 1
+          fi
+          echo "No known vulnerabilities."
