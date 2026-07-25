@@ -15,6 +15,12 @@ namespace DevStart.Infrastructure.Payments
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.UserId).HasColumnName("user_id");
             builder.Property(x => x.SubscriptionId).HasColumnName("subscription_id");
+            builder.Property(x => x.ServiceOrderId).HasColumnName("service_order_id");
+            builder.Property(x => x.Purpose)
+                .HasConversion<int>()
+                .IsRequired()
+                .HasDefaultValue(DevStart.Domain.Payments.PaymentPurpose.Subscription)
+                .HasColumnName("purpose");
             builder.Property(x => x.Provider)
                 .HasConversion<int>()
                 .IsRequired()
@@ -49,6 +55,7 @@ namespace DevStart.Infrastructure.Payments
             builder.Property(x => x.PaidAt).HasColumnName("paid_at");
 
             builder.HasIndex(x => x.SubscriptionId).HasDatabaseName("ix_payments_subscription_id");
+            builder.HasIndex(x => x.ServiceOrderId).HasDatabaseName("ix_payments_service_order_id");
             builder.HasIndex(x => new { x.Provider, x.ProviderPaymentId })
                 .IsUnique()
                 .HasFilter("provider_payment_id IS NOT NULL")
@@ -56,16 +63,25 @@ namespace DevStart.Infrastructure.Payments
             builder.HasIndex(x => new { x.UserId, x.Status }).HasDatabaseName("ix_payments_user_status");
             builder.HasIndex(x => new { x.Status, x.CreatedAt }).HasDatabaseName("ix_payments_status_created");
 
-            // At most one in-flight (Pending = 0) payment per user, so a concurrent/double-clicked
-            // checkout cannot create a second payment and charge the user twice.
+            // At most one in-flight (Pending = 0) *subscription* (purpose = 0) payment per user, so a
+            // concurrent/double-clicked subscription checkout cannot create a second payment and charge
+            // the user twice. One-time service orders (purpose = 1) are not constrained — each is a
+            // distinct purchase.
             builder.HasIndex(x => x.UserId)
                 .IsUnique()
-                .HasFilter("status = 0")
+                .HasFilter("status = 0 AND purpose = 0")
                 .HasDatabaseName("ux_payments_user_pending");
 
             builder.HasOne<DevStart.Domain.Subscriptions.Subscription>()
                 .WithMany()
                 .HasForeignKey(x => x.SubscriptionId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne<DevStart.Domain.ServiceOrders.ServiceOrder>()
+                .WithMany()
+                .HasForeignKey(x => x.ServiceOrderId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasIndex(x => x.PromoCodeId).HasDatabaseName("ix_payments_promo_code_id");

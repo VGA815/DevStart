@@ -42,7 +42,7 @@ public sealed class CheckoutPromoCodeTests
         _db.SaveChanges();
 
         _sut = new CreateCheckoutCommandHandler(
-            _db, new TestUserContext(_userId), clock, _provider, plans, checkout, sync,
+            _db, new TestUserContext(_userId), clock, _provider, new FakeNpdIncomeService(), plans, checkout, sync,
             NullLogger<CreateCheckoutCommandHandler>.Instance);
     }
 

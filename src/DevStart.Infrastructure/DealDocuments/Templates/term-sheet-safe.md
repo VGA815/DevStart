@@ -43,14 +43,20 @@
 - **Exclusivity:** 30 days, legally binding
 - **Confidentiality:** standard
 
-## Platform score & valuation reference
+## Platform score & indicative range (informational)
 
 - **Total score:** {{score_total}} / 100
 - Team {{score_team}} · Market {{score_market}} · Product {{score_product}} · Traction {{score_traction}} · Competition {{score_competition}}
-- **Valuation range (platform estimate):** ₽{{valuation_low}} – ₽{{valuation_high}}
+- **Расчётный ориентир диапазона стоимости (информационно):** ₽{{valuation_low}} – ₽{{valuation_high}}
 - **Methods used:** {{methods_used}}
 - **Methodology version:** {{methodology_version}}
 - **Calculated at:** {{calculated_at}}
+
+> **Дисклеймер.** Указанный диапазон носит информационно-аналитический характер, рассчитан
+> алгоритмически по данным платформы и **не является отчётом об оценке** в значении Федерального
+> закона № 135-ФЗ «Об оценочной деятельности в Российской Федерации», а также **не является
+> индивидуальной инвестиционной рекомендацией** в значении Федерального закона № 39-ФЗ «О рынке
+> ценных бумаг». Итоговые условия сделки определяются сторонами самостоятельно.
 
 ## Warnings
 

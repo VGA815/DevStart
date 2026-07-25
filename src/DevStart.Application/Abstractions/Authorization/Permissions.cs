@@ -89,6 +89,8 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string SubscriptionsCheckout            = "subscriptions::checkout";
         public const string SubscriptionsRead                = "subscriptions::read";
 
+        public const string ServiceOrdersCheckout            = "service_orders::checkout";
+
         public const string PaymentsRefund                   = "payments::refund";
 
         public const string ConsentsRead                     = "consents::read";
@@ -116,5 +118,7 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string AdminAuditRead                   = "admin_audit::read";
 
         public const string AdminObservabilityRead           = "admin_observability::read";
+
+        public const string AdminNpdRead                     = "admin_npd::read";
     }
 }

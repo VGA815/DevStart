@@ -20,6 +20,8 @@ namespace DevStart.Application.Admin.Subscriptions.GetUserPayments
                 {
                     Id = p.Id,
                     SubscriptionId = p.SubscriptionId,
+                    ServiceOrderId = p.ServiceOrderId,
+                    Purpose = p.Purpose,
                     Amount = p.Amount,
                     DiscountAmount = p.DiscountAmount,
                     RefundedAmount = p.RefundedAmount,

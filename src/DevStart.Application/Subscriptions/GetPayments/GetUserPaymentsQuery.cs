@@ -9,7 +9,8 @@ namespace DevStart.Application.Subscriptions.GetPayments
     public sealed class PaymentHistoryResponse
     {
         public Guid Id { get; init; }
-        public Guid SubscriptionId { get; init; }
+        public Guid? SubscriptionId { get; init; }
+        public PaymentPurpose Purpose { get; init; }
         public SubscriptionPlan Plan { get; init; }
         public decimal Amount { get; init; }
         public decimal RefundedAmount { get; init; }

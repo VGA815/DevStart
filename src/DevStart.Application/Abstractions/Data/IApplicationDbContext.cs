@@ -10,6 +10,7 @@ using DevStart.Domain.ExpertCollaborationRequests;
 using DevStart.Domain.Experts;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.Payments;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.Subscriptions;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.Domain.Investors;
@@ -73,6 +74,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<DealDocument> DealDocuments { get; }
         DbSet<Subscription> Subscriptions { get; }
         DbSet<Payment> Payments { get; }
+        DbSet<ServiceOrder> ServiceOrders { get; }
         DbSet<UserConsent> UserConsents { get; }
         DbSet<ConsentDocument> ConsentDocuments { get; }
         DbSet<ExternalLogin> ExternalLogins { get; }

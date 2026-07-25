@@ -10,6 +10,7 @@ using DevStart.Domain.EmailVerificationTokens;
 using DevStart.Domain.ExpertCollaborationRequests;
 using DevStart.Domain.Experts;
 using DevStart.Domain.Payments;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.Subscriptions;
 using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.InvestmentDeals;
@@ -111,6 +112,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<Subscription> Subscriptions { get; set; }
 
         public DbSet<Payment> Payments { get; set; }
+
+        public DbSet<ServiceOrder> ServiceOrders { get; set; }
 
         public DbSet<UserConsent> UserConsents { get; set; }
 

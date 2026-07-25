@@ -29,6 +29,7 @@
         public const string InvestmentDeals = "InvestmentDeals";
         public const string DealDocuments = "DealDocuments";
         public const string Subscriptions = "Subscriptions";
+        public const string ServiceOrders = "ServiceOrders";
         public const string Payments = "Payments";
         public const string Consents = "Consents";
         public const string ConsentDocuments = "ConsentDocuments";

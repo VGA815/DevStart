@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Payments;
@@ -17,6 +18,7 @@ namespace DevStart.Application.Payments.Refund
         IPaymentProvider paymentProvider,
         IDateTimeProvider dateTimeProvider,
         IOptions<PlansOptions> plansOptions,
+        ICacheService cacheService,
         ILogger<RefundPaymentCommandHandler> logger)
         : ICommandHandler<RefundPaymentCommand>
     {
@@ -35,7 +37,32 @@ namespace DevStart.Application.Payments.Refund
             }
 
             decimal refundableBalance = payment.Amount - payment.RefundedAmount;
-            decimal amount = command.Amount ?? refundableBalance;
+
+            // SC-48: a proportional refund returns the unused part of the subscription period
+            // (offer §6.2): refund = paid × remaining/total, capped at the refundable balance.
+            Subscription? subscription = null;
+            decimal amount;
+            if (command.Proportional)
+            {
+                subscription = await context.Subscriptions
+                    .SingleOrDefaultAsync(s => s.Id == payment.SubscriptionId, cancellationToken);
+
+                int totalDays = plansOptions.Value.Pro.DurationDays;
+                double remainingDays = subscription is null
+                    ? 0d
+                    : Math.Max(0d, (subscription.ExpiresAt - dateTimeProvider.UtcNow).TotalDays);
+                decimal fraction = totalDays <= 0
+                    ? 0m
+                    : (decimal)Math.Min(1d, remainingDays / totalDays);
+                amount = Math.Min(
+                    refundableBalance,
+                    Math.Round(payment.Amount * fraction, 2, MidpointRounding.AwayFromZero));
+            }
+            else
+            {
+                amount = command.Amount ?? refundableBalance;
+            }
+
             if (amount <= 0m || amount > refundableBalance)
             {
                 return Result.Failure(PaymentErrors.RefundAmountInvalid(refundableBalance));
@@ -85,11 +112,18 @@ namespace DevStart.Application.Payments.Refund
                 DateTime utcNow = dateTimeProvider.UtcNow;
                 decimal newTotal = payment.RefundedAmount + amount;
                 payment.MarkRefunded(newTotal, utcNow);
-                if (newTotal >= payment.Amount)
+
+                // A full refund cancels access; a proportional refund also ends it (the remaining
+                // period has been paid back). MarkRefunded only raises the domain event on a *full*
+                // refund, so clear the active-Pro cache here to cover the proportional (partial) case.
+                bool endsAccess = newTotal >= payment.Amount || command.Proportional;
+                if (endsAccess)
                 {
-                    Subscription? subscription = await context.Subscriptions
+                    subscription ??= await context.Subscriptions
                         .SingleOrDefaultAsync(s => s.Id == payment.SubscriptionId, cancellationToken);
                     subscription?.MarkCancelled(utcNow);
+                    await cacheService.RemoveAsync(
+                        CacheKeys.SubscriptionActiveByUser(payment.UserId), cancellationToken);
                 }
                 await context.SaveChangesAsync(cancellationToken);
             }

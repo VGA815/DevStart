@@ -341,6 +341,11 @@ namespace DevStart.Infrastructure
             services.Configure<YooKassaReceiptOptions>(configuration.GetSection("YooKassa:Receipt"));
             services.Configure<PlansOptions>(configuration.GetSection("Plans"));
             services.Configure<BillingMaintenanceOptions>(configuration.GetSection("Billing"));
+            services.Configure<Application.Payments.Npd.NpdOptions>(configuration.GetSection("Npd"));
+            services.Configure<Application.ServiceOrders.ServiceCatalogOptions>(configuration.GetSection("Services"));
+
+            // SC-42: self-employed (НПД) annual income-limit tracking + hard stop.
+            services.AddScoped<Application.Abstractions.Payments.INpdIncomeService, Payments.NpdIncomeService>();
 
             services.AddTransient<YooKassaResilienceHandler>();
             services.AddHttpClient<IPaymentProvider, YooKassaPaymentProvider>(client =>

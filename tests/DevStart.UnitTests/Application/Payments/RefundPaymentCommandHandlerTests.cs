@@ -29,7 +29,7 @@ public sealed class RefundPaymentCommandHandlerTests
             Pro = new PlanOptions { Price = Amount, Currency = "RUB", DurationDays = 30, Description = "DevStart Pro" },
         });
         _sut = new RefundPaymentCommandHandler(
-            _db, _provider, new FixedDateTimeProvider { UtcNow = Now }, plans,
+            _db, _provider, new FixedDateTimeProvider { UtcNow = Now }, plans, new RecordingCacheService(),
             NullLogger<RefundPaymentCommandHandler>.Instance);
     }
 
@@ -129,6 +129,39 @@ public sealed class RefundPaymentCommandHandlerTests
         Result result = await _sut.Handle(new RefundPaymentCommand(payment.Id, null), CancellationToken.None);
 
         result.IsFailure.ShouldBeTrue();
+        _provider.LastRefundInput.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ProportionalRefund_HalfPeriodRemaining_RefundsHalfAndEndsAccess()
+    {
+        (Subscription subscription, Payment payment) = await SeedAsync();
+        // 15 of 30 days remaining → refund half of the amount.
+        subscription.ExpiresAt = Now.AddDays(15);
+        await _db.SaveChangesAsync();
+        _provider.RefundSucceededToReturn = true;
+
+        Result result = await _sut.Handle(
+            new RefundPaymentCommand(payment.Id, null, Proportional: true), CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        payment.RefundedAmount.ShouldBe(495m); // 990 × 15/30
+        _provider.LastRefundInput!.Amount.ShouldBe(495m);
+        subscription.Status.ShouldBe(SubscriptionStatus.Cancelled);
+    }
+
+    [Fact]
+    public async Task ProportionalRefund_ExpiredSubscription_FailsWithNothingToRefund()
+    {
+        (Subscription subscription, Payment payment) = await SeedAsync();
+        subscription.ExpiresAt = Now.AddDays(-1); // already expired → 0 remaining
+        await _db.SaveChangesAsync();
+
+        Result result = await _sut.Handle(
+            new RefundPaymentCommand(payment.Id, null, Proportional: true), CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.Code.ShouldBe("Payments.RefundAmountInvalid");
         _provider.LastRefundInput.ShouldBeNull();
     }
 }

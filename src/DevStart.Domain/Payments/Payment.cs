@@ -6,7 +6,14 @@ namespace DevStart.Domain.Payments
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
-        public Guid SubscriptionId { get; set; }
+
+        /// <summary>Set for a subscription payment; <c>null</c> for a one-time service order.</summary>
+        public Guid? SubscriptionId { get; set; }
+
+        /// <summary>Set for a one-time service order; <c>null</c> for a subscription payment.</summary>
+        public Guid? ServiceOrderId { get; set; }
+
+        public PaymentPurpose Purpose { get; set; }
         public PaymentProvider Provider { get; set; }
         public string? ProviderPaymentId { get; set; }
         public string? ConfirmationUrl { get; set; }
@@ -35,6 +42,8 @@ namespace DevStart.Domain.Payments
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 SubscriptionId = subscriptionId,
+                ServiceOrderId = null,
+                Purpose = PaymentPurpose.Subscription,
                 Provider = provider,
                 ProviderPaymentId = null,
                 ConfirmationUrl = null,
@@ -44,6 +53,33 @@ namespace DevStart.Domain.Payments
                 Status = PaymentStatus.Pending,
                 PromoCodeId = promoCodeId,
                 DiscountAmount = discountAmount,
+                CreatedAt = utcNow,
+                PaidAt = null,
+            };
+
+        public static Payment CreatePendingForServiceOrder(
+            Guid userId,
+            Guid serviceOrderId,
+            PaymentProvider provider,
+            decimal amount,
+            string currency,
+            DateTime utcNow)
+            => new()
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                SubscriptionId = null,
+                ServiceOrderId = serviceOrderId,
+                Purpose = PaymentPurpose.ServiceOrder,
+                Provider = provider,
+                ProviderPaymentId = null,
+                ConfirmationUrl = null,
+                Amount = amount,
+                RefundedAmount = 0m,
+                Currency = currency,
+                Status = PaymentStatus.Pending,
+                PromoCodeId = null,
+                DiscountAmount = 0m,
                 CreatedAt = utcNow,
                 PaidAt = null,
             };
@@ -67,6 +103,7 @@ namespace DevStart.Domain.Payments
             }
             Status = PaymentStatus.Succeeded;
             PaidAt = paidAt;
+            Raise(new PaymentSucceededDomainEvent(Id, UserId, Amount, paidAt));
             return Result.Success();
         }
 
@@ -110,7 +147,13 @@ namespace DevStart.Domain.Payments
             if (totalRefundedAmount >= Amount && Status != PaymentStatus.Refunded)
             {
                 Status = PaymentStatus.Refunded;
-                Raise(new PaymentRefundedDomainEvent(Id, UserId, SubscriptionId, totalRefundedAmount));
+                // The refund event is subscription-oriented (drops the active-Pro cache, notifies the
+                // user of deactivation). A service-order payment has no subscription; its order status
+                // is handled by the sync/refund handlers directly, so no event is raised here.
+                if (SubscriptionId is Guid subscriptionId)
+                {
+                    Raise(new PaymentRefundedDomainEvent(Id, UserId, subscriptionId, totalRefundedAmount));
+                }
             }
             return Result.Success();
         }

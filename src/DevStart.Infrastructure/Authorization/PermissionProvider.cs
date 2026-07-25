@@ -84,6 +84,8 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.SubscriptionsCheckout,
                 Permissions.SubscriptionsRead,
 
+                Permissions.ServiceOrdersCheckout,
+
                 Permissions.ConsentsRead,
                 Permissions.ConsentsRevoke,
 
@@ -176,6 +178,8 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.SubscriptionsCheckout,
                 Permissions.SubscriptionsRead,
 
+                Permissions.ServiceOrdersCheckout,
+
                 Permissions.ConsentsRead,
                 Permissions.ConsentsRevoke,
 
@@ -211,6 +215,7 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.AdminValuationBenchmarksManage,
                 Permissions.AdminAuditRead,
                 Permissions.AdminObservabilityRead,
+                Permissions.AdminNpdRead,
             },
         };
 

@@ -18,6 +18,7 @@ namespace DevStart.Application.Subscriptions.Checkout
         IUserContext userContext,
         IDateTimeProvider dateTimeProvider,
         IPaymentProvider paymentProvider,
+        INpdIncomeService npdIncomeService,
         IOptions<PlansOptions> plansOptions,
         IOptions<CheckoutOptions> checkoutOptions,
         ICommandHandler<SyncPaymentStatusCommand> syncHandler,
@@ -127,7 +128,8 @@ namespace DevStart.Application.Subscriptions.Checkout
 
             // 2. Reuse an existing Pending payment+subscription if the user retries checkout.
             Payment? pendingPayment = await context.Payments
-                .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending)
+                .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending
+                         && p.Purpose == PaymentPurpose.Subscription)
                 .OrderByDescending(p => p.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -168,7 +170,7 @@ namespace DevStart.Application.Subscriptions.Checkout
                 if (existing is null)
                 {
                     return Result.Failure<CheckoutResponse>(
-                        SubscriptionErrors.NotFound(pendingPayment.SubscriptionId));
+                        SubscriptionErrors.NotFound(pendingPayment.SubscriptionId.GetValueOrDefault()));
                 }
                 subscription = existing;
                 payment = pendingPayment;
@@ -187,6 +189,15 @@ namespace DevStart.Application.Subscriptions.Checkout
             }
             else
             {
+                // SC-42: hard stop — do not create a new paid operation once accepting this charge
+                // would cross the self-employed (НПД) annual income cap.
+                Result incomeGate = await npdIncomeService.EnsureCanAcceptPaymentAsync(
+                    chargeAmount, cancellationToken);
+                if (incomeGate.IsFailure)
+                {
+                    return Result.Failure<CheckoutResponse>(incomeGate.Error);
+                }
+
                 subscription = Subscription.CreatePending(userId, command.Plan, utcNow);
                 payment = Payment.CreatePending(
                     userId,
@@ -213,7 +224,8 @@ namespace DevStart.Application.Subscriptions.Checkout
                     context.Subscriptions.Remove(subscription);
 
                     Payment? winner = await context.Payments
-                        .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending)
+                        .Where(p => p.UserId == userId && p.Status == PaymentStatus.Pending
+                         && p.Purpose == PaymentPurpose.Subscription)
                         .OrderByDescending(p => p.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken);
                     Subscription? winnerSubscription = winner is null

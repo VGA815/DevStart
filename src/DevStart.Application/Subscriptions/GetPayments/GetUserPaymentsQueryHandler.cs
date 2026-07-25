@@ -26,7 +26,8 @@ namespace DevStart.Application.Subscriptions.GetPayments
                 .ToListAsync(cancellationToken);
 
             List<Guid> subscriptionIds = payments
-                .Select(p => p.SubscriptionId)
+                .Where(p => p.SubscriptionId.HasValue)
+                .Select(p => p.SubscriptionId!.Value)
                 .Distinct()
                 .ToList();
 
@@ -40,7 +41,10 @@ namespace DevStart.Application.Subscriptions.GetPayments
                 {
                     Id = p.Id,
                     SubscriptionId = p.SubscriptionId,
-                    Plan = plans.TryGetValue(p.SubscriptionId, out SubscriptionPlan plan) ? plan : SubscriptionPlan.Pro,
+                    Purpose = p.Purpose,
+                    Plan = p.SubscriptionId is Guid sid && plans.TryGetValue(sid, out SubscriptionPlan plan)
+                        ? plan
+                        : SubscriptionPlan.Pro,
                     Amount = p.Amount,
                     RefundedAmount = p.RefundedAmount,
                     Currency = p.Currency,

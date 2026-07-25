@@ -80,6 +80,36 @@ namespace DevStart.IntegrationTests.Subscriptions
             });
         }
 
+        [Fact]
+        public async Task Checkout_WhenAnnualNpdLimitReached_ReturnsConflict_AndCreatesNoNewPayment()
+        {
+            User user = await SeedUserAsync();
+
+            // Seed near-limit confirmed income for the current year: a new 990 ₽ payment would cross 2.4M ₽.
+            await ExecuteDbAsync(async db =>
+            {
+                Payment seeded = Payment.CreatePending(
+                    user.Id, Guid.NewGuid(), PaymentProvider.YooKassa, 2_399_500m, "RUB", DateTime.UtcNow);
+                seeded.SubscriptionId = null; // no FK target needed; the income counter is purpose-agnostic
+                seeded.Status = PaymentStatus.Succeeded;
+                seeded.PaidAt = DateTime.UtcNow;
+                db.Payments.Add(seeded);
+                await db.SaveChangesAsync();
+            });
+
+            HttpClient client = CreateAuthenticatedClient(user);
+            HttpResponseMessage response = await client.PostAsJsonAsync("api/subscriptions/checkout", new { });
+
+            response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+            // The gate runs before any new subscription/payment is created — only the seeded row remains.
+            await ExecuteDbAsync(async db =>
+            {
+                (await db.Payments.CountAsync(p => p.UserId == user.Id)).ShouldBe(1);
+                (await db.Subscriptions.AnyAsync(s => s.UserId == user.Id)).ShouldBeFalse();
+            });
+        }
+
         private async Task SeedFreePromoCodeAsync(string code, int days)
         {
             await ExecuteDbAsync(async db =>

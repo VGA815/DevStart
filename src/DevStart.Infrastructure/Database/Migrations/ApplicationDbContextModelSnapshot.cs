@@ -897,17 +897,27 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("provider_payment_id");
 
+                    b.Property<int>("Purpose")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("purpose");
+
                     b.Property<decimal>("RefundedAmount")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("numeric(10,2)")
                         .HasDefaultValue(0m)
                         .HasColumnName("refunded_amount");
 
+                    b.Property<Guid?>("ServiceOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_order_id");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
-                    b.Property<Guid>("SubscriptionId")
+                    b.Property<Guid?>("SubscriptionId")
                         .HasColumnType("uuid")
                         .HasColumnName("subscription_id");
 
@@ -921,13 +931,16 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.HasIndex("PromoCodeId")
                         .HasDatabaseName("ix_payments_promo_code_id");
 
+                    b.HasIndex("ServiceOrderId")
+                        .HasDatabaseName("ix_payments_service_order_id");
+
                     b.HasIndex("SubscriptionId")
                         .HasDatabaseName("ix_payments_subscription_id");
 
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasDatabaseName("ux_payments_user_pending")
-                        .HasFilter("status = 0");
+                        .HasFilter("status = 0 AND purpose = 0");
 
                     b.HasIndex("Provider", "ProviderPaymentId")
                         .IsUnique()
@@ -1174,6 +1187,56 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasDatabaseName("ix_refresh_tokens_user_id");
 
                     b.ToTable("refresh_tokens", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.ServiceOrders.ServiceOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateTime?>("FulfilledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fulfilled_at");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("paid_at");
+
+                    b.Property<int>("ServiceType")
+                        .HasColumnType("integer")
+                        .HasColumnName("service_type");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_service_orders");
+
+                    b.HasIndex("UserId", "Status")
+                        .HasDatabaseName("ix_service_orders_user_status");
+
+                    b.ToTable("service_orders", "public");
                 });
 
             modelBuilder.Entity("DevStart.Domain.StartupCommunityStandards.StartupCommunityDocument", b =>
@@ -2212,11 +2275,16 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_payments_promo_codes_promo_code_id");
 
+                    b.HasOne("DevStart.Domain.ServiceOrders.ServiceOrder", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_payments_service_orders_service_order_id");
+
                     b.HasOne("DevStart.Domain.Subscriptions.Subscription", null)
                         .WithMany()
                         .HasForeignKey("SubscriptionId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("fk_payments_subscriptions_subscription_id");
                 });
 

@@ -21,5 +21,7 @@ namespace DevStart.Domain.Notifications
         SubscriptionExpired = 16,
         PaymentRefunded = 17,
         CommunityStandardsIncomplete = 18,
+        IncomeLimitWarning = 19,
+        ServiceOrderFulfilled = 20,
     }
 }

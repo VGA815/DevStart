@@ -8,7 +8,9 @@ namespace DevStart.Application.Admin.Subscriptions.GetUserPayments
     public sealed class AdminPaymentResponse
     {
         public Guid Id { get; init; }
-        public Guid SubscriptionId { get; init; }
+        public Guid? SubscriptionId { get; init; }
+        public Guid? ServiceOrderId { get; init; }
+        public PaymentPurpose Purpose { get; init; }
         public decimal Amount { get; init; }
         public decimal DiscountAmount { get; init; }
         public decimal RefundedAmount { get; init; }

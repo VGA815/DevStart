@@ -48,5 +48,12 @@ namespace DevStart.Domain.Payments
         public static Error RefundAmountInvalid(decimal max) => Error.Problem(
             "Payments.RefundAmountInvalid",
             $"Refund amount must be greater than zero and not exceed the refundable balance ({max}).");
+
+        // Hard stop for the self-employed (НПД, ФЗ-422) annual income cap: once the calendar-year net
+        // income reaches the limit, no new paid operation may be created until the next year.
+        public static readonly Error IncomeLimitReached = Error.Conflict(
+            "Payments.IncomeLimitReached",
+            "The annual self-employed (НПД) income limit has been reached. " +
+            "No new paid operations can be created until the next calendar year.");
     }
 }

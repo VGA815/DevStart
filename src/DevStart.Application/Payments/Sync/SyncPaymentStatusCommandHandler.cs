@@ -4,6 +4,7 @@ using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
 using DevStart.Domain.PromoCodes;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -46,8 +47,16 @@ namespace DevStart.Application.Payments.Sync
                 return Result.Failure(PaymentErrors.NotFoundByProviderId(command.ProviderPaymentId));
             }
 
-            Subscription? subscription = await context.Subscriptions
-                .SingleOrDefaultAsync(s => s.Id == payment.SubscriptionId, cancellationToken);
+            bool isServiceOrder = payment.Purpose == PaymentPurpose.ServiceOrder;
+
+            Subscription? subscription = isServiceOrder
+                ? null
+                : await context.Subscriptions
+                    .SingleOrDefaultAsync(s => s.Id == payment.SubscriptionId, cancellationToken);
+            ServiceOrder? order = isServiceOrder
+                ? await context.ServiceOrders
+                    .SingleOrDefaultAsync(o => o.Id == payment.ServiceOrderId, cancellationToken)
+                : null;
 
             DateTime utcNow = dateTimeProvider.UtcNow;
             bool fullyRefunded = snapshot.RefundedAmount > 0m && snapshot.RefundedAmount >= payment.Amount;
@@ -60,6 +69,7 @@ namespace DevStart.Application.Payments.Sync
                 }
                 payment.MarkRefunded(snapshot.RefundedAmount, utcNow);
                 subscription?.MarkCancelled(utcNow);
+                order?.MarkRefunded(utcNow);
             }
             else if (snapshot.Status == PaymentStatus.Succeeded)
             {
@@ -68,35 +78,51 @@ namespace DevStart.Application.Payments.Sync
                 {
                     return paid;
                 }
-                if (subscription is null)
+
+                if (isServiceOrder)
                 {
-                    return Result.Failure(SubscriptionErrors.NotFound(payment.SubscriptionId));
-                }
-                if (subscription.Status == SubscriptionStatus.Pending)
-                {
-                    Result activated = subscription.Activate(utcNow, plansOptions.Value.Pro.DurationDays);
-                    if (activated.IsFailure)
+                    if (order is null)
                     {
-                        return activated;
+                        return Result.Failure(
+                            ServiceOrderErrors.NotFound(payment.ServiceOrderId ?? Guid.Empty));
+                    }
+                    if (order.Status == ServiceOrderStatus.Pending)
+                    {
+                        order.MarkPaid(utcNow);
                     }
                 }
-
-                // Finalize a promo redemption only once the payment actually succeeded, so an abandoned
-                // discounted checkout never burns the code. Idempotent across webhook/reconciliation replays.
-                if (payment.PromoCodeId is Guid promoCodeId)
+                else
                 {
-                    bool alreadyRedeemed = await context.PromoCodeRedemptions
-                        .AnyAsync(r => r.PromoCodeId == promoCodeId && r.UserId == payment.UserId, cancellationToken);
-                    if (!alreadyRedeemed)
+                    if (subscription is null)
                     {
-                        PromoCode? promo = await context.PromoCodes
-                            .SingleOrDefaultAsync(p => p.Id == promoCodeId, cancellationToken);
-                        if (promo is not null)
+                        return Result.Failure(SubscriptionErrors.NotFound(payment.SubscriptionId ?? Guid.Empty));
+                    }
+                    if (subscription.Status == SubscriptionStatus.Pending)
+                    {
+                        Result activated = subscription.Activate(utcNow, plansOptions.Value.Pro.DurationDays);
+                        if (activated.IsFailure)
                         {
-                            context.PromoCodeRedemptions.Add(PromoCodeRedemption.Create(
-                                promoCodeId, payment.UserId, payment.SubscriptionId, payment.Id,
-                                payment.DiscountAmount, utcNow));
-                            promo.RegisterRedemption();
+                            return activated;
+                        }
+                    }
+
+                    // Finalize a promo redemption only once the payment actually succeeded, so an abandoned
+                    // discounted checkout never burns the code. Idempotent across webhook/reconciliation replays.
+                    if (payment.PromoCodeId is Guid promoCodeId)
+                    {
+                        bool alreadyRedeemed = await context.PromoCodeRedemptions
+                            .AnyAsync(r => r.PromoCodeId == promoCodeId && r.UserId == payment.UserId, cancellationToken);
+                        if (!alreadyRedeemed)
+                        {
+                            PromoCode? promo = await context.PromoCodes
+                                .SingleOrDefaultAsync(p => p.Id == promoCodeId, cancellationToken);
+                            if (promo is not null)
+                            {
+                                context.PromoCodeRedemptions.Add(PromoCodeRedemption.Create(
+                                    promoCodeId, payment.UserId, subscription.Id, payment.Id,
+                                    payment.DiscountAmount, utcNow));
+                                promo.RegisterRedemption();
+                            }
                         }
                     }
                 }
@@ -111,6 +137,7 @@ namespace DevStart.Application.Payments.Sync
             {
                 payment.MarkCancelled(utcNow);
                 subscription?.MarkCancelled(utcNow);
+                order?.MarkCancelled(utcNow);
             }
             // Pending → nothing to do yet.
 

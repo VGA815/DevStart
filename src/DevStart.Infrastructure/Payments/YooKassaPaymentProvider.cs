@@ -61,12 +61,7 @@ namespace DevStart.Infrastructure.Payments
                 },
                 Description = Trim(input.Description, 128),
                 Receipt = BuildReceipt(input.CustomerEmail, input.Description, input.Amount, input.Currency),
-                Metadata = new Dictionary<string, string>
-                {
-                    ["payment_id"] = input.PaymentId.ToString(),
-                    ["subscription_id"] = input.SubscriptionId.ToString(),
-                    ["user_id"] = input.UserId.ToString(),
-                },
+                Metadata = BuildMetadata(input),
             };
 
             YooKassaPaymentResponse parsed = await SendAsync<YooKassaPaymentResponse>(
@@ -81,6 +76,26 @@ namespace DevStart.Infrastructure.Payments
             }
 
             return new CreatedPayment(parsed.Id, parsed.Confirmation.ConfirmationUrl);
+        }
+
+        // Attaches our identifiers as provider metadata so a webhook/reconciliation pass can always map
+        // back to our records. Only the reference that applies is included (subscription or service order).
+        private static Dictionary<string, string> BuildMetadata(CreatePaymentInput input)
+        {
+            var metadata = new Dictionary<string, string>
+            {
+                ["payment_id"] = input.PaymentId.ToString(),
+                ["user_id"] = input.UserId.ToString(),
+            };
+            if (input.SubscriptionId is Guid subscriptionId)
+            {
+                metadata["subscription_id"] = subscriptionId.ToString();
+            }
+            if (input.ServiceOrderId is Guid serviceOrderId)
+            {
+                metadata["service_order_id"] = serviceOrderId.ToString();
+            }
+            return metadata;
         }
 
         public async Task<ProviderPaymentSnapshot?> GetPaymentAsync(string providerPaymentId, CancellationToken ct)

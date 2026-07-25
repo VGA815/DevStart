@@ -123,7 +123,11 @@ namespace DevStart.Infrastructure.Payments
                 return;
             }
 
-            List<Guid> subscriptionIds = stillPending.Select(p => p.SubscriptionId).Distinct().ToList();
+            List<Guid> subscriptionIds = stillPending
+                .Where(p => p.SubscriptionId.HasValue)
+                .Select(p => p.SubscriptionId!.Value)
+                .Distinct()
+                .ToList();
             List<Subscription> subscriptions = await context.Subscriptions
                 .Where(s => subscriptionIds.Contains(s.Id))
                 .ToListAsync(cancellationToken);

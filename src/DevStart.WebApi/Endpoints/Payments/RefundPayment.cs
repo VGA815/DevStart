@@ -9,7 +9,7 @@ namespace DevStart.WebApi.Endpoints.Payments
 {
     internal sealed class RefundPayment : IEndpoint
     {
-        public sealed record Request(decimal? Amount);
+        public sealed record Request(decimal? Amount, bool Proportional = false);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -19,7 +19,8 @@ namespace DevStart.WebApi.Endpoints.Payments
                 ICommandHandler<RefundPaymentCommand> handler,
                 CancellationToken cancellationToken) =>
             {
-                var command = new RefundPaymentCommand(paymentId, request?.Amount);
+                var command = new RefundPaymentCommand(
+                    paymentId, request?.Amount, request?.Proportional ?? false);
                 Result result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })

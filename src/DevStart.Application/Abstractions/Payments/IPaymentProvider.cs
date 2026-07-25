@@ -24,8 +24,9 @@ namespace DevStart.Application.Abstractions.Payments
         string IdempotenceKey,
         string CustomerEmail,
         Guid PaymentId,
-        Guid SubscriptionId,
-        Guid UserId);
+        Guid UserId,
+        Guid? SubscriptionId = null,
+        Guid? ServiceOrderId = null);
 
     /// <summary>
     /// Input for refunding (fully or partially) a captured payment. A refund receipt is registered

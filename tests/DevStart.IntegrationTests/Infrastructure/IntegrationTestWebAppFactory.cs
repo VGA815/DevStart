@@ -120,6 +120,12 @@ namespace DevStart.IntegrationTests.Infrastructure
             ["Billing:ReconcileMaxAgeHours"] = "72",
             ["Billing:ReminderDaysBefore"] = "3",
 
+            // SC-49 one-time service catalog (only ScoringReport priced in tests).
+            ["Services:Items:0:ServiceType"] = "ScoringReport",
+            ["Services:Items:0:Price"] = "490.00",
+            ["Services:Items:0:Currency"] = "RUB",
+            ["Services:Items:0:Description"] = "Scoring report (test)",
+
             // AddSmtp reads/parses these eagerly at registration time, so they must be present & valid.
             ["Smtp:Host"] = "localhost",
             ["Smtp:Port"] = "25",
