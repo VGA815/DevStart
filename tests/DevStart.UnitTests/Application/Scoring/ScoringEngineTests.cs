@@ -408,7 +408,7 @@ public sealed class ScoringEngineTests
     // ---- Helpers ------------------------------------------------------------------------------
 
     private static ScoringEngine.ScoreFactor Factor(string name, decimal score, decimal weight, bool absent) =>
-        new(name, absent ? null : score, weight, ScoreFactorSource.SelfReported, []);
+        new(name, absent ? null : score, weight, ScoreFactorSource.SelfReported, ScoreFactorDetail.Empty);
 
     private static ValuationBenchmarkSet Benchmarks(Industry industry, decimal intensity) =>
         ValuationBenchmarkSet.FromRows(

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using DevStart.Application.Scoring;
 using DevStart.Domain.Startups;
 using DevStart.Domain.Users;
 using DevStart.Domain.Valuation;
@@ -67,8 +68,16 @@ namespace DevStart.IntegrationTests.Startups
             low.ShouldBeLessThanOrEqualTo(point);
             point.ShouldBeLessThanOrEqualTo(high);
 
-            // Methodology version + the stage-applicable methods are surfaced.
-            GetProperty(root, "methodologyVersion").GetString().ShouldNotBeNullOrEmpty();
+            // The version string names the *code* that produced these numbers, so configuration must
+            // never disagree with the code default: a drifted config silently mislabels every snapshot
+            // and term sheet it stamps, and mislabelled rows are indistinguishable from genuine ones.
+            // This host boots the real appsettings.json, so the assertion catches exactly that drift —
+            // it is why the v5 release shipping with a v4-pinned config went unnoticed. A legitimate
+            // version bump needs no change here, only the two places that must move together.
+            GetProperty(root, "methodologyVersion").GetString()
+                .ShouldBe(new ValuationOptions().MethodologyVersion);
+
+            // The stage-applicable methods are surfaced.
 
             string[] methods = GetProperty(root, "methodsUsed")
                 .EnumerateArray().Select(e => e.GetString()!).ToArray();
@@ -103,6 +112,80 @@ namespace DevStart.IntegrationTests.Startups
             GetProperty(root, "factors").EnumerateArray()
                 .Sum(f => GetProperty(f, "weight").GetDecimal())
                 .ShouldBe(1.0m);
+
+            // A dropped-out factor has no components to show, but the reader still sees what is
+            // missing and what bringing it back would be worth.
+            JsonElement detail = GetProperty(competition, "detail");
+            GetProperty(detail, "components").GetArrayLength().ShouldBe(0);
+            GetProperty(detail, "inputs").GetArrayLength().ShouldBeGreaterThan(0);
+
+            JsonElement hint = GetProperty(detail, "hints").EnumerateArray().Single();
+            GetProperty(hint, "code").GetString().ShouldBe("competition.hint.first_documented_card");
+            GetProperty(hint, "enablesFactor").GetBoolean().ShouldBeTrue();
+            // Neutral base 50 plus the first documented card (+10) — the score it would have, not a delta.
+            GetProperty(hint, "points").GetDecimal().ShouldBe(60m);
+        }
+
+        // ---- Per-factor detail over the wire ---------------------------------------------------
+
+        [Fact]
+        public async Task GetScore_ReturnsPerFactorDetail_WithComponentsSummingToTheScore()
+        {
+            User owner = await SeedUserAsync();
+            Guid startupId = await CreateStartupAsync(owner, "Detailed Co");
+
+            JsonElement root = await GetScoreAsync(CreateAuthenticatedClient(owner), startupId);
+
+            foreach (JsonElement factor in GetProperty(root, "factors").EnumerateArray())
+            {
+                string name = GetProperty(factor, "factor").GetString()!;
+                JsonElement detail = GetProperty(factor, "detail");
+
+                // Raw values only — the client owns units and locale, so nothing arrives pre-formatted.
+                GetProperty(detail, "inputs").GetArrayLength().ShouldBeGreaterThan(0, name);
+
+                JsonElement score = GetProperty(factor, "score");
+                if (score.ValueKind == JsonValueKind.Null)
+                {
+                    continue;
+                }
+
+                GetProperty(detail, "components").EnumerateArray()
+                    .Sum(c => GetProperty(c, "points").GetDecimal())
+                    .ShouldBe(score.GetDecimal(), name);
+            }
+
+            // The Mvp seed startup fills value proposition and differentiators, so the product factor
+            // shows the positioning bonus earned and advises the roadmap it has not filled in.
+            JsonElement product = GetProperty(Factor(root, "Product"), "detail");
+            GetProperty(product, "components").EnumerateArray()
+                .Select(c => GetProperty(c, "code").GetString())
+                .ShouldBe(["product.base.stage_mvp", "product.bonus.positioning"]);
+            GetProperty(product, "hints").EnumerateArray()
+                .Select(h => GetProperty(h, "code").GetString())
+                .ShouldContain("product.hint.roadmap");
+
+            // Enum-as-integer, like every other enum on the wire: 5 = Code, carrying "stage.mvp".
+            JsonElement stage = GetProperty(product, "inputs").EnumerateArray()
+                .Single(i => GetProperty(i, "code").GetString() == "product.input.stage");
+            GetProperty(GetProperty(stage, "value"), "kind").GetInt32().ShouldBe(5);
+            GetProperty(GetProperty(stage, "value"), "code").GetString().ShouldBe("stage.mvp");
+        }
+
+        [Fact]
+        public async Task GetScore_NoLongerReturnsTheLegacyNotesArray()
+        {
+            User owner = await SeedUserAsync();
+            Guid startupId = await CreateStartupAsync(owner, "No Notes Co");
+
+            JsonElement root = await GetScoreAsync(CreateAuthenticatedClient(owner), startupId);
+
+            foreach (JsonElement factor in GetProperty(root, "factors").EnumerateArray())
+            {
+                factor.EnumerateObject()
+                    .Select(p => p.Name.Replace("_", ""))
+                    .ShouldNotContain(n => string.Equals(n, "notes", StringComparison.OrdinalIgnoreCase));
+            }
         }
 
         [Fact]

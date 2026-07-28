@@ -125,7 +125,7 @@ Run the architecture tests after moving types between projects — a failure mea
 
 Clean Architecture with CQRS across four layers (`WebApi → Application → Domain`, with `Infrastructure` and a shared `SharedKernel`). Handlers return a `Result` / `Result<T>` railway type, and endpoints self-register via `IEndpoint`.
 
-The startup valuation engine and its data sourcing are documented in **[docs/valuation-methodology.md](docs/valuation-methodology.md)**.
+The startup scoring engine is documented in **[docs/scoring-methodology.md](docs/scoring-methodology.md)**, and the valuation engine with its data sourcing in **[docs/valuation-methodology.md](docs/valuation-methodology.md)**.
 
 ## Documentation
 
@@ -134,6 +134,7 @@ The startup valuation engine and its data sourcing are documented in **[docs/val
 | **[docs/api.md](docs/api.md)** | REST API reference — conventions (auth, errors, pagination, rate limits) and the full endpoint catalog |
 | **[docs/frontend.md](docs/frontend.md)** | Frontend integration guide — auth lifecycle, consent challenge, OAuth, realtime, files, payments |
 | **[docs/business-logic.md](docs/business-logic.md)** | Domain & business rules, lifecycles, and the wire-value status reference |
+| **[docs/scoring-methodology.md](docs/scoring-methodology.md)** | How the startup score is computed, and why no factor rewards withholding data |
 | **[docs/valuation-methodology.md](docs/valuation-methodology.md)** | How startup valuations are computed |
 | **[DEPLOYMENT.md](DEPLOYMENT.md)** | Production deployment & operations |
 

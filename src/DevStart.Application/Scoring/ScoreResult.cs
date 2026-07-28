@@ -27,13 +27,23 @@ namespace DevStart.Application.Scoring
     /// <param name="Score">The 0..100 sub-score, or <c>null</c> when the factor had no data and did not participate.</param>
     /// <param name="Weight">Renormalized weight within the participating set (0 for a factor that dropped out).</param>
     /// <param name="Source">Provenance of the factor's inputs.</param>
-    /// <param name="Notes">Human-readable notes on the signals and proxies applied.</param>
     public sealed record ScoreFactorBreakdown(
         string Factor,
         decimal? Score,
         decimal Weight,
-        ScoreFactorSource Source,
-        IReadOnlyList<string> Notes);
+        ScoreFactorSource Source)
+    {
+        /// <summary>
+        /// How the factor arrived at its score: the components (summing to exactly <see cref="Score"/>),
+        /// the raw inputs the formula read, and the unmet conditions worth points.
+        ///
+        /// Deliberately an init-only property rather than a positional parameter: the query result is
+        /// cached as JSON, and an entry written before this field existed deserializes to
+        /// <see cref="ScoreFactorDetail.Empty"/> (the initializer) instead of <c>null</c> (what a
+        /// missing constructor argument would bind to). Consumers therefore never see a null detail.
+        /// </summary>
+        public ScoreFactorDetail Detail { get; init; } = ScoreFactorDetail.Empty;
+    }
 
     /// <summary>
     /// Result of the scoring engine plus the valuation range computed from it.
@@ -59,8 +69,8 @@ namespace DevStart.Application.Scoring
         string MethodologyVersion = "")
     {
         /// <summary>
-        /// Per-factor breakdown: sub-score, renormalized weight and provenance. Set by the scoring
-        /// engine; empty only on an insufficient-data result.
+        /// Per-factor breakdown: sub-score, renormalized weight, provenance and the detail behind the
+        /// number. Set by the scoring engine; empty only on an insufficient-data result.
         /// </summary>
         public IReadOnlyList<ScoreFactorBreakdown> Factors { get; init; } = [];
 

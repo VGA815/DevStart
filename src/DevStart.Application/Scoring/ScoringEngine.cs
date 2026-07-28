@@ -10,39 +10,19 @@ namespace DevStart.Application.Scoring
         {
             ScoreWeights w = WeightsFor(inputs.Stage);
 
-            decimal team = ComputeTeamScore(inputs.Members);
-            decimal market = ComputeMarketScore(inputs.Tam, inputs.Sam, inputs.Som, inputs.MarketGrowthRate);
-            decimal product = ComputeProductScore(inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap);
-            decimal traction = ComputeTractionScore(inputs.Traction);
-            CompetitionFactor competition = ComputeCompetitionScore(inputs.Competitors, inputs.Industry, benchmarks);
+            FactorOutcome team = ComputeTeamScore(inputs.Members);
+            FactorOutcome market = ComputeMarketScore(inputs.Tam, inputs.Sam, inputs.Som, inputs.MarketGrowthRate);
+            FactorOutcome product = ComputeProductScore(inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap);
+            FactorOutcome traction = ComputeTractionScore(inputs.Traction);
+            FactorOutcome competition = ComputeCompetitionScore(inputs.Competitors, inputs.Industry, benchmarks);
 
             ScoreFactor[] factors =
             [
-                new("Team", team, w.Team,
-                    inputs.Members.Count > 0 ? ScoreFactorSource.SelfReported : ScoreFactorSource.None,
-                    [inputs.Members.Count > 0
-                        ? $"{inputs.Members.Count} member(s) on file"
-                        : "no members on file — scored 0"]),
-
-                new("Market", market, w.Market,
-                    inputs.Tam is > 0m ? ScoreFactorSource.SelfReported : ScoreFactorSource.None,
-                    [inputs.Tam is > 0m
-                        ? $"TAM ₽{inputs.Tam:N0}"
-                        : "no TAM on file — scored 0"]),
-
-                // Stage is mandatory on a startup, so this factor always has a basis; the roadmap part
-                // is platform data (item count), the rest is declared by the startup.
-                new("Product", product, w.Product,
-                    ScoreFactorSource.SelfReported | ScoreFactorSource.PlatformDerived,
-                    [$"stage {inputs.Stage}, {inputs.Roadmap.ItemCount} roadmap item(s)"]),
-
-                new("Traction", traction, w.Traction,
-                    inputs.Traction.HasData ? ScoreFactorSource.SelfReported : ScoreFactorSource.None,
-                    [inputs.Traction.HasData
-                        ? $"MRR ₽{inputs.Traction.Mrr:N0}, MAU {inputs.Traction.Mau:N0}, MoM {inputs.Traction.MomGrowth:0.##}%"
-                        : "no metrics on file — scored 0"]),
-
-                new("Competition", competition.Score, w.Competition, competition.Source, competition.Notes,
+                new("Team", team.Score, w.Team, team.Source, team.Detail),
+                new("Market", market.Score, w.Market, market.Source, market.Detail),
+                new("Product", product.Score, w.Product, product.Source, product.Detail),
+                new("Traction", traction.Score, w.Traction, traction.Source, traction.Detail),
+                new("Competition", competition.Score, w.Competition, competition.Source, competition.Detail,
                     Floor: CompetitionBaselineWithoutBenchmark),
             ];
 
@@ -94,7 +74,7 @@ namespace DevStart.Application.Scoring
             {
                 if (!f.Score.HasValue)
                 {
-                    breakdown.Add(new ScoreFactorBreakdown(f.Name, null, 0m, f.Source, f.Notes));
+                    breakdown.Add(new ScoreFactorBreakdown(f.Name, null, 0m, f.Source) { Detail = f.Detail });
                     continue;
                 }
 
@@ -103,7 +83,8 @@ namespace DevStart.Application.Scoring
                     ? 1.0m - weightAccumulator
                     : Round2(WeightOf(f) / totalWeight);
                 weightAccumulator += weight;
-                breakdown.Add(new ScoreFactorBreakdown(f.Name, Round2(f.Score.Value), weight, f.Source, f.Notes));
+                breakdown.Add(
+                    new ScoreFactorBreakdown(f.Name, Round2(f.Score.Value), weight, f.Source) { Detail = f.Detail });
             }
 
             decimal? Score(string name) => breakdown.Single(b => b.Factor == name).Score;
@@ -134,7 +115,7 @@ namespace DevStart.Application.Scoring
             decimal? Score,
             decimal BaseWeight,
             ScoreFactorSource Source,
-            IReadOnlyList<string> Notes,
+            ScoreFactorDetail Detail,
             decimal? Floor = null);
 
         // Stage-aware weights: team/product matter most early, traction/market most later.
@@ -151,22 +132,132 @@ namespace DevStart.Application.Scoring
             _ => new(0.35m, 0.25m, 0.20m, 0.10m, 0.10m)
         };
 
+        // ---- Factor detail plumbing ---------------------------------------------------------------
+
+        /// <summary>What a factor produced: its score (<c>null</c> = no data), provenance, and detail.</summary>
+        private readonly record struct FactorOutcome(
+            decimal? Score, ScoreFactorSource Source, ScoreFactorDetail Detail);
+
+        /// <summary>
+        /// Assembles a factor from its addends. The factor score *is* the sum of the components, so
+        /// "components sum to the score" is not a rule that could drift — it is the only way the score
+        /// is produced. The scale ceiling is applied as one more component with negative points, which
+        /// keeps that identity true for the clamped factors too (see <see cref="ScoreComponent"/>).
+        ///
+        /// Codes are namespaced by factor here rather than at every call site, so the emitting code
+        /// reads as the rule it implements (<c>Add("bonus.patents", 10m)</c>).
+        /// </summary>
+        private sealed class FactorBuilder(string factor)
+        {
+            private readonly List<ScoreComponent> _components = [];
+            private readonly List<ScoreInput> _inputs = [];
+            private readonly List<(string Code, decimal Points, IReadOnlyList<ScoreValue> Targets)> _hints = [];
+            private decimal _points;
+
+            /// <summary>Adds an addend: a base, a tier selection or a bonus.</summary>
+            public FactorBuilder Add(string name, decimal points)
+            {
+                _components.Add(new ScoreComponent($"{factor}.{name}", points));
+                _points += points;
+                return this;
+            }
+
+            /// <summary>Records a raw value the formula read. Emitted even when the value is absent.</summary>
+            public FactorBuilder In(string name, ScoreValue value)
+            {
+                _inputs.Add(new ScoreInput($"{factor}.input.{name}", value));
+                return this;
+            }
+
+            /// <summary>
+            /// Records an unmet condition and what it is worth on its own. Never call this for a
+            /// condition the founder could satisfy by deleting data or overstating a self-declared
+            /// figure — see docs/scoring-methodology.md and the policy test in the unit suite.
+            /// </summary>
+            public FactorBuilder Hint(string name, decimal points, params ScoreValue[] targets)
+            {
+                _hints.Add(($"{factor}.hint.{name}", points, targets));
+                return this;
+            }
+
+            public FactorOutcome Build(ScoreFactorSource source)
+            {
+                if (_points > 100m)
+                {
+                    _components.Add(new ScoreComponent($"{factor}.clamp", 100m - _points));
+                    _points = 100m;
+                }
+                else if (_points < 0m)
+                {
+                    _components.Add(new ScoreComponent($"{factor}.clamp", -_points));
+                    _points = 0m;
+                }
+
+                // A hint may never promise points the scale cannot deliver, and one worth nothing is
+                // not advice. Biggest win first; LINQ ordering is stable, so ties keep declaration order.
+                decimal headroom = 100m - _points;
+                ScoreHint[] hints = _hints
+                    .Select(h => new ScoreHint(h.Code, Math.Min(h.Points, headroom), h.Targets))
+                    .Where(h => h.Points > 0m)
+                    .OrderByDescending(h => h.Points)
+                    .ToArray();
+
+                return new FactorOutcome(_points, source, new ScoreFactorDetail(_components, _inputs, hints));
+            }
+
+            /// <summary>
+            /// The factor has no data and drops out of the weighting: no score, therefore no components
+            /// and no headroom to cap against. The inputs still ship (so the reader sees *what* is
+            /// missing), and any hint recorded becomes an <see cref="ScoreHint.EnablesFactor"/> one —
+            /// its points are the score the factor would have, not a delta, because bringing the factor
+            /// back changes the renormalization rather than just the sub-score.
+            /// </summary>
+            public FactorOutcome NoData()
+            {
+                ScoreHint[] hints = _hints
+                    .Select(h => new ScoreHint(h.Code, h.Points, h.Targets, EnablesFactor: true))
+                    .Where(h => h.Points > 0m)
+                    .OrderByDescending(h => h.Points)
+                    .ToArray();
+
+                return new FactorOutcome(null, ScoreFactorSource.None, new ScoreFactorDetail([], _inputs, hints));
+            }
+        }
+
+        // ---- Team ---------------------------------------------------------------------------------
+
         // Spec: highest founder tier base, +15 if CEO+CTO+CMO present.
         // No experience = 30, Industry = 60, Serial = 80, Serial with exit = 90.
         // Experience is taken from founders; if a team has no one flagged Founder, fall back to the
         // highest tier among all members so a founder-less team isn't unfairly capped at NoExperience.
-        private static decimal ComputeTeamScore(IReadOnlyList<MemberInput> members)
+        private static FactorOutcome ComputeTeamScore(IReadOnlyList<MemberInput> members)
         {
+            var builder = new FactorBuilder("team");
+
+            // Completeness bonus is role-agnostic: it rewards C-suite coverage regardless of Founder flag.
+            bool hasCeo = members.Any(m => m.Position == StartupPosition.CEO);
+            bool hasCto = members.Any(m => m.Position == StartupPosition.CTO);
+            bool hasCmo = members.Any(m => m.Position == StartupPosition.CMO);
+
+            builder
+                .In("member_count", ScoreValue.Count(members.Count))
+                .In("has_ceo", ScoreValue.Flag(hasCeo))
+                .In("has_cto", ScoreValue.Flag(hasCto))
+                .In("has_cmo", ScoreValue.Flag(hasCmo));
+
             if (members.Count == 0)
             {
-                return 0m;
+                return builder
+                    .In("founder_tier", ScoreValue.Absent)
+                    .In("experience_pool", ScoreValue.Absent)
+                    .Add("base.no_members", 0m)
+                    .Hint("add_members", 30m)
+                    .Build(ScoreFactorSource.None);
             }
 
-            IEnumerable<MemberInput> experiencePool = members.Where(m => m.Role == StartupRole.Founder);
-            if (!experiencePool.Any())
-            {
-                experiencePool = members;
-            }
+            MemberInput[] founders = members.Where(m => m.Role == StartupRole.Founder).ToArray();
+            bool foundersFlagged = founders.Length > 0;
+            IReadOnlyList<MemberInput> experiencePool = foundersFlagged ? founders : members;
 
             FounderExperienceTier highest = FounderExperienceTier.NoExperience;
             foreach (MemberInput m in experiencePool)
@@ -178,22 +269,35 @@ namespace DevStart.Application.Scoring
                 }
             }
 
-            decimal baseScore = highest switch
+            (string tierCode, decimal baseScore) = highest switch
             {
-                FounderExperienceTier.NoExperience => 30m,
-                FounderExperienceTier.IndustryExperience => 60m,
-                FounderExperienceTier.Serial => 80m,
-                FounderExperienceTier.SerialWithExit => 90m,
-                _ => 30m
+                FounderExperienceTier.IndustryExperience => ("industry_experience", 60m),
+                FounderExperienceTier.Serial => ("serial", 80m),
+                FounderExperienceTier.SerialWithExit => ("serial_with_exit", 90m),
+                _ => ("no_experience", 30m)
             };
 
-            // Completeness bonus is role-agnostic: it rewards C-suite coverage regardless of Founder flag.
-            bool hasCeo = members.Any(m => m.Position == StartupPosition.CEO);
-            bool hasCto = members.Any(m => m.Position == StartupPosition.CTO);
-            bool hasCmo = members.Any(m => m.Position == StartupPosition.CMO);
-            decimal completenessBonus = (hasCeo && hasCto && hasCmo) ? 15m : 0m;
+            builder
+                .In("founder_tier", ScoreValue.Of($"founder_tier.{tierCode}"))
+                .In("experience_pool", ScoreValue.Of(foundersFlagged ? "pool.founders" : "pool.all_members"))
+                .Add($"base.{tierCode}", baseScore);
 
-            return Clamp(baseScore + completenessBonus);
+            if (hasCeo && hasCto && hasCmo)
+            {
+                builder.Add("bonus.csuite", 15m);
+            }
+            else
+            {
+                var missing = new List<ScoreValue>(3);
+                if (!hasCeo) missing.Add(ScoreValue.Of("position.ceo"));
+                if (!hasCto) missing.Add(ScoreValue.Of("position.cto"));
+                if (!hasCmo) missing.Add(ScoreValue.Of("position.cmo"));
+                builder.Hint("csuite", 15m, [.. missing]);
+            }
+
+            // Founder experience deliberately carries no hint: the platform never prompts for it, which
+            // is exactly why it is the least gameable input we have (docs/scoring-inputs-audit.md).
+            return builder.Build(ScoreFactorSource.SelfReported);
         }
 
         private static FounderExperienceTier ClassifyFounder(MemberInput m)
@@ -217,39 +321,63 @@ namespace DevStart.Application.Scoring
             return FounderExperienceTier.NoExperience;
         }
 
+        // ---- Market -------------------------------------------------------------------------------
+
         // Spec: Sub1B=20, 1-10B=60, 10B+=90, plus CAGR bump (+10 / +25) and a funnel-consistency bump.
         // Tam/Sam/Som are entered and interpreted in RUB: the tier thresholds are ₽1B / ₽10B —
         // deliberate steps for the RUB-native platform, consistent with the RUB valuation output.
-        private static decimal ComputeMarketScore(decimal? tam, decimal? sam, decimal? som, decimal? cagr)
+        private static FactorOutcome ComputeMarketScore(decimal? tam, decimal? sam, decimal? som, decimal? cagr)
         {
+            var builder = new FactorBuilder("market");
+
+            builder
+                .In("tam", tam is > 0m ? ScoreValue.Money(tam.Value) : ScoreValue.Absent)
+                .In("sam", sam is > 0m ? ScoreValue.Money(sam.Value) : ScoreValue.Absent)
+                .In("som", som is > 0m ? ScoreValue.Money(som.Value) : ScoreValue.Absent)
+                .In("cagr", cagr.HasValue ? ScoreValue.Percent(cagr.Value) : ScoreValue.Absent);
+
             if (tam is null || tam <= 0)
             {
-                return 0m;
+                // The hint promises the *floor* tier, never the top one: filling the field in honestly
+                // is worth advertising, typing a bigger number is not.
+                return builder
+                    .Add("base.no_tam", 0m)
+                    .Hint("fill_tam", 20m)
+                    .Build(ScoreFactorSource.None);
             }
 
-            MarketTamTier tamTier = ClassifyTam(tam.Value);
-            decimal tamBase = tamTier switch
+            (string tamCode, decimal tamBase) = ClassifyTam(tam.Value) switch
             {
-                MarketTamTier.Sub1B => 20m,
-                MarketTamTier.From1To10B => 60m,
-                MarketTamTier.Above10B => 90m,
-                _ => 0m
+                MarketTamTier.From1To10B => ("tam_1_10b", 60m),
+                MarketTamTier.Above10B => ("tam_10b_plus", 90m),
+                _ => ("tam_sub_1b", 20m)
             };
+            builder.Add($"base.{tamCode}", tamBase);
 
-            decimal cagrBump = 0m;
             if (cagr.HasValue)
             {
-                MarketCagrTier cagrTier = ClassifyCagr(cagr.Value);
-                cagrBump = cagrTier switch
+                switch (ClassifyCagr(cagr.Value))
                 {
-                    MarketCagrTier.Below10 => 0m,
-                    MarketCagrTier.From10To20 => 10m,
-                    MarketCagrTier.Above20 => 25m,
-                    _ => 0m
-                };
+                    case MarketCagrTier.From10To20:
+                        builder.Add("bonus.cagr_10_20", 10m);
+                        break;
+                    case MarketCagrTier.Above20:
+                        builder.Add("bonus.cagr_20_plus", 25m);
+                        break;
+                }
             }
 
-            return Clamp(tamBase + cagrBump + FunnelBonus(tam.Value, sam, som));
+            if (FunnelBonus(tam.Value, sam, som) > 0m)
+            {
+                builder.Add("bonus.funnel", 5m);
+            }
+            else
+            {
+                builder.Hint("funnel", 5m);
+            }
+
+            // No hint for the TAM tier or for CAGR — both would read as "type a bigger number".
+            return builder.Build(ScoreFactorSource.SelfReported);
         }
 
         // Proposed default — tunable. Rewards a credibly-scoped market: a defined obtainable slice that
@@ -278,25 +406,63 @@ namespace DevStart.Application.Scoring
             return MarketCagrTier.Below10;
         }
 
+        // ---- Product ------------------------------------------------------------------------------
+
         // Spec: Idea=15, PreSeed=35, Mvp=60, Seed=75, SeriesA=85; +10 for patents.
         // Proposed defaults — tunable: +5 for articulated positioning (value proposition AND
         // differentiators filled in), +5 for evidence of planning (>= 3 roadmap items).
-        private static decimal ComputeProductScore(StartupStage stage, bool hasPatents, ProductSignals product, RoadmapSignals roadmap)
+        private static FactorOutcome ComputeProductScore(
+            StartupStage stage, bool hasPatents, ProductSignals product, RoadmapSignals roadmap)
         {
-            decimal baseScore = stage switch
+            var builder = new FactorBuilder("product");
+
+            (string stageCode, decimal baseScore) = stage switch
             {
-                StartupStage.Idea => 15m,
-                StartupStage.PreSeed => 35m,
-                StartupStage.Mvp => 60m,
-                StartupStage.Seed => 75m,
-                StartupStage.SeriesA => 85m,
-                _ => 15m
+                StartupStage.PreSeed => ("pre_seed", 35m),
+                StartupStage.Mvp => ("mvp", 60m),
+                StartupStage.Seed => ("seed", 75m),
+                StartupStage.SeriesA => ("series_a", 85m),
+                _ => ("idea", 15m)
             };
-            decimal patentBonus = hasPatents ? 10m : 0m;
-            decimal articulationBonus = product.HasArticulatedPositioning ? 5m : 0m;
-            decimal planningBonus = roadmap.ItemCount >= 3 ? 5m : 0m;
-            return Clamp(baseScore + patentBonus + articulationBonus + planningBonus);
+
+            builder
+                .In("stage", ScoreValue.Of($"stage.{stageCode}"))
+                .In("has_patents", ScoreValue.Flag(hasPatents))
+                .In("has_positioning", ScoreValue.Flag(product.HasArticulatedPositioning))
+                .In("roadmap_items", ScoreValue.Count(roadmap.ItemCount))
+                .Add($"base.stage_{stageCode}", baseScore);
+
+            // Patents carry no hint: it is an unverified one-click boolean, and prompting for it would
+            // turn a passive declaration into an active invitation. Revisit once it can be checked.
+            if (hasPatents)
+            {
+                builder.Add("bonus.patents", 10m);
+            }
+
+            if (product.HasArticulatedPositioning)
+            {
+                builder.Add("bonus.positioning", 5m);
+            }
+            else
+            {
+                builder.Hint("positioning", 5m);
+            }
+
+            if (roadmap.ItemCount >= 3)
+            {
+                builder.Add("bonus.roadmap", 5m);
+            }
+            else
+            {
+                builder.Hint("roadmap", 5m, ScoreValue.Count(3));
+            }
+
+            // Stage itself carries no hint either — raising it moves the weights as well as this base,
+            // so prompting a stage change would be prompting a misdeclaration.
+            return builder.Build(ScoreFactorSource.SelfReported | ScoreFactorSource.PlatformDerived);
         }
+
+        // ---- Traction -----------------------------------------------------------------------------
 
         // Spec:
         // - No revenue but MAU > 0: 35
@@ -307,37 +473,101 @@ namespace DevStart.Application.Scoring
         // - MRR >= ₽4M with MoM >= 20%: 95
         // Signals are resolved upstream by IScoringDataProvider (incl. Revenue/Users/GrowthRate
         // fallbacks and the negative-MRR/MAU floor) — the engine just applies the tiers.
-        private static decimal ComputeTractionScore(TractionSignals traction)
+        //
+        // Traction is the one tier-based factor: its score is a rung, not a sum of bonuses. It is
+        // therefore emitted as a *single* component whose points are the score, rather than dressed up
+        // as base + bonuses it does not have.
+        private static FactorOutcome ComputeTractionScore(TractionSignals traction)
         {
-            decimal mrr = traction.Mrr;
-            decimal mau = traction.Mau;
-            decimal mom = traction.MomGrowth;
+            var builder = new FactorBuilder("traction");
 
-            if (mrr <= 0)
-            {
-                return mau > 0 ? 35m : 0m;
-            }
+            builder
+                .In("mrr", traction.HasData ? ScoreValue.Money(traction.Mrr) : ScoreValue.Absent)
+                .In("mrr_is_proxy", ScoreValue.Flag(traction.MrrIsProxy))
+                .In("mau", traction.HasData ? ScoreValue.Count(traction.Mau) : ScoreValue.Absent)
+                .In("mom_growth", traction.HasData ? ScoreValue.Percent(traction.MomGrowth) : ScoreValue.Absent);
 
-            if (mrr >= 4_000_000m && mom >= 20m)
-            {
-                return 95m;
-            }
-            if (mrr >= 1_000_000m && mom >= 10m)
-            {
-                return 80m;
-            }
-            if (mom >= 10m)
-            {
-                return 70m;
-            }
-            if (mom < 0m)
-            {
-                return 25m;
-            }
-            return 50m;
+            (string tierCode, decimal score) = ClassifyTraction(traction);
+            builder.Add($"tier.{tierCode}", score);
+
+            AddTractionHint(builder, tierCode, traction.MomGrowth, score);
+
+            return builder.Build(traction.HasData ? ScoreFactorSource.SelfReported : ScoreFactorSource.None);
         }
 
-        // ---- Competition ------------------------------------------------------------------------
+        /// <summary>
+        /// The traction ladder. The single source of both the score and the hint deltas, so the two can
+        /// never desync. Rung order matches the original tier cascade exactly.
+        /// </summary>
+        private static (string Code, decimal Score) ClassifyTraction(TractionSignals t)
+        {
+            if (t.Mrr <= 0m)
+            {
+                return t.Mau > 0m ? ("users_only", 35m) : ("no_data", 0m);
+            }
+            if (t.Mrr >= 4_000_000m && t.MomGrowth >= 20m)
+            {
+                return ("scaling", 95m);
+            }
+            if (t.Mrr >= 1_000_000m && t.MomGrowth >= 10m)
+            {
+                return ("growing", 80m);
+            }
+            if (t.MomGrowth >= 10m)
+            {
+                return ("early_growth", 70m);
+            }
+            if (t.MomGrowth < 0m)
+            {
+                return ("declining", 25m);
+            }
+            return ("flat", 50m);
+        }
+
+        /// <summary>
+        /// One hint per rung, pointing at the next rung only — the tab is an explanation, not a ladder
+        /// diagram of every remaining step.
+        /// </summary>
+        private static void AddTractionHint(FactorBuilder builder, string tierCode, decimal mom, decimal score)
+        {
+            switch (tierCode)
+            {
+                case "no_data":
+                    builder.Hint("first_users", 35m - score, ScoreValue.Count(1));
+                    break;
+
+                case "users_only":
+                    // Starting to charge moves the startup onto the revenue rungs — which are selected by
+                    // the same single MoM metric, whatever it was measuring pre-revenue. At MoM < 0 that
+                    // lands on "declining" (25), *below* the current 35, so there is no honest gain to
+                    // promise and the hint is suppressed. See docs/scoring-methodology.md.
+                    if (mom >= 0m)
+                    {
+                        builder.Hint("first_revenue", (mom >= 10m ? 70m : 50m) - score);
+                    }
+                    break;
+
+                case "declining":
+                    builder.Hint("stop_decline", 50m - score, ScoreValue.Percent(0m));
+                    break;
+
+                case "flat":
+                    builder.Hint("growth_10", 70m - score, ScoreValue.Percent(10m));
+                    break;
+
+                case "early_growth":
+                    builder.Hint("mrr_1m", 80m - score, ScoreValue.Money(1_000_000m), ScoreValue.Percent(10m));
+                    break;
+
+                case "growing":
+                    builder.Hint("mrr_4m", 95m - score, ScoreValue.Money(4_000_000m), ScoreValue.Percent(20m));
+                    break;
+
+                // "scaling" is the top rung — nothing left to advise.
+            }
+        }
+
+        // ---- Competition --------------------------------------------------------------------------
 
         /// <summary>
         /// Baseline when no sector intensity benchmark is on file: the middle of the scale. We know
@@ -366,51 +596,60 @@ namespace DevStart.Application.Scoring
         /// (capped by the ceiling rule so an empty list is never better than an unanalysed one).
         /// See docs/scoring-methodology.md.
         /// </summary>
-        private static CompetitionFactor ComputeCompetitionScore(
+        private static FactorOutcome ComputeCompetitionScore(
             CompetitorSignals competitors, Industry industry, ValuationBenchmarkSet benchmarks)
         {
+            var builder = new FactorBuilder("competition");
             decimal? intensity = benchmarks.CompetitionIntensity(industry);
+
+            builder
+                .In("total_cards", ScoreValue.Count(competitors.TotalCount))
+                .In("documented_cards", ScoreValue.Count(competitors.WellDocumentedCount))
+                .In("sector_intensity", intensity is { } known ? ScoreValue.Points(known) : ScoreValue.Absent);
 
             if (intensity is null && competitors.TotalCount == 0)
             {
-                return new CompetitionFactor(
-                    null,
-                    ScoreFactorSource.None,
-                    ["no competitor cards and no sector intensity benchmark — factor excluded, weights renormalized"]);
+                // Nothing to score, so the hint states the score the factor would have rather than a
+                // delta — the weights renormalize when it comes back, and no delta is definable.
+                return builder
+                    .Hint(
+                        "first_documented_card",
+                        CompetitionBaselineWithoutBenchmark + DocumentationBonus(1),
+                        ScoreValue.Count(1))
+                    .NoData();
             }
 
-            decimal baseScore = intensity is { } value
-                ? Clamp(100m - value)
-                : CompetitionBaselineWithoutBenchmark;
-
-            decimal bonus = DocumentationBonus(competitors.WellDocumentedCount);
-
             ScoreFactorSource source = ScoreFactorSource.None;
-            var notes = new List<string>();
 
-            if (intensity is { } i)
+            if (intensity is { } value)
             {
                 source |= ScoreFactorSource.ExternalBenchmark;
-                notes.Add($"sector intensity {i:0.##}/100 → base {baseScore:0.##}");
+                builder.Add("base.benchmark", Clamp(100m - value));
             }
             else
             {
-                notes.Add($"no sector intensity benchmark → neutral base {baseScore:0.##}");
+                builder.Add("base.neutral", CompetitionBaselineWithoutBenchmark);
             }
+
+            // Always emitted, including at +0: unlike the boolean bonuses elsewhere this is a graded
+            // axis, and showing the rung the startup is on is what makes the hint below legible.
+            decimal bonus = DocumentationBonus(competitors.WellDocumentedCount);
+            builder.Add("bonus.documented", bonus);
 
             if (competitors.TotalCount > 0)
             {
                 source |= ScoreFactorSource.SelfReported;
             }
-            notes.Add(
-                $"{competitors.WellDocumentedCount} of {competitors.TotalCount} competitor card(s) documented → +{bonus:0.##}"
-                + " (count of cards is not a scoring driver)");
 
-            return new CompetitionFactor(Clamp(baseScore + bonus), source, notes);
+            if (competitors.WellDocumentedCount < 3)
+            {
+                int next = competitors.WellDocumentedCount + 1;
+                builder.Hint("document_card", DocumentationBonus(next) - bonus, ScoreValue.Count(next));
+            }
+
+            // The total number of cards gets no hint — that is precisely the driver v5 removed.
+            return builder.Build(source);
         }
-
-        private readonly record struct CompetitionFactor(
-            decimal? Score, ScoreFactorSource Source, IReadOnlyList<string> Notes);
 
         // ---- Helpers ----------------------------------------------------------------------------
 
