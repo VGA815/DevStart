@@ -48,7 +48,12 @@ jobs:
         shell: bash
         run: |
           dotnet restore DevStart.slnx -p:NuGetAuditMode=all 2>&1 | tee audit.txt
-          dotnet list DevStart.slnx package --vulnerable --include-transitive 2>&1 | tee -a audit.txt
+          # Walk the csproj files instead of the solution: docker-compose.dcproj is not a
+          # PackageReference project, and `dotnet list package` aborts the whole solution on
+          # it with exit 1 before inspecting a single project.
+          for project in $(git ls-files '*.csproj'); do
+            dotnet list "$project" package --vulnerable --include-transitive 2>&1 | tee -a audit.txt
+          done
           if grep -qE "has the following vulnerable packages|warning NU19" audit.txt; then
             echo "::error::Vulnerable NuGet packages detected - see log above"
             exit 1
