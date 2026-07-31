@@ -19,6 +19,10 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+# Central Package Management: PackageReference items carry no Version attribute, so restore
+# fails with NU1015 unless this file lands before it. Copied with the csproj files so the
+# restore layer stays cached until a package version actually changes.
+COPY ["Directory.Packages.props", "./"]
 COPY ["src/DevStart.WebApi/DevStart.WebApi.csproj", "src/DevStart.WebApi/"]
 COPY ["src/DevStart.Infrastructure/DevStart.Infrastructure.csproj", "src/DevStart.Infrastructure/"]
 COPY ["src/DevStart.Application/DevStart.Application.csproj", "src/DevStart.Application/"]
