@@ -1,7 +1,9 @@
 using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Payments.Refund;
+using DevStart.Application.ServiceOrders;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.Subscriptions;
 using DevStart.Domain.Users;
 using DevStart.Infrastructure.Database;
@@ -28,8 +30,23 @@ public sealed class RefundPaymentCommandHandlerTests
         {
             Pro = new PlanOptions { Price = Amount, Currency = "RUB", DurationDays = 30, Description = "DevStart Pro" },
         });
+        var catalog = Options.Create(new ServiceCatalogOptions
+        {
+            Items =
+            [
+                new ServiceCatalogItem
+                {
+                    ServiceType = ServiceType.ScoringReport,
+                    Price = 490m,
+                    Currency = "RUB",
+                    Description = "DevStart — скоринг-отчёт",
+                    AccessDays = 30,
+                },
+            ],
+        });
         _sut = new RefundPaymentCommandHandler(
-            _db, _provider, new FixedDateTimeProvider { UtcNow = Now }, plans, new RecordingCacheService(),
+            _db, _provider, new FixedDateTimeProvider { UtcNow = Now }, plans, catalog,
+            new RecordingCacheService(), new StubServiceEntitlementChecker(),
             NullLogger<RefundPaymentCommandHandler>.Instance);
     }
 

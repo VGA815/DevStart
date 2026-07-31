@@ -33,7 +33,8 @@ public sealed class CreateCheckoutCommandHandlerTests
         });
         var checkout = Options.Create(new CheckoutOptions { ReturnUrl = "https://example.com/return" });
         var sync = new SyncPaymentStatusCommandHandler(
-            _db, _provider, clock, plans, NullLogger<SyncPaymentStatusCommandHandler>.Instance);
+            _db, _provider, clock, plans, new RecordingCacheService(), new StubServiceEntitlementChecker(),
+            NullLogger<SyncPaymentStatusCommandHandler>.Instance);
 
         User user = User.Create("buyer", "buyer@example.com", "hash", Now);
         _userId = user.Id;

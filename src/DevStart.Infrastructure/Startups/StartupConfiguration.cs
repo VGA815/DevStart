@@ -37,11 +37,18 @@ namespace DevStart.Infrastructure.Startups
             builder.Property(x => x.BannedAt).HasColumnName("banned_at");
             builder.Property(x => x.BanExpiresAt).HasColumnName("ban_expires_at");
             builder.Property(x => x.BannedByUserId).HasColumnName("banned_by_user_id");
+            builder.Property(x => x.FeaturedUntil).HasColumnName("featured_until");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
             builder.HasIndex(x => new { x.IsBanned, x.BanExpiresAt })
                 .HasDatabaseName("ix_startups_banned");
+
+            // Public discovery orders by "is featured right now", so the listing can read the few
+            // featured rows from the index instead of scanning every startup.
+            builder.HasIndex(x => x.FeaturedUntil)
+                .HasFilter("featured_until IS NOT NULL")
+                .HasDatabaseName("ix_startups_featured_until");
 
             builder.Property(x => x.SocialMediaLinks)
                 .HasColumnName("social_media_links")

@@ -11,7 +11,10 @@ namespace DevStart.WebApi.Endpoints.ServiceOrders
 {
     internal sealed class Checkout : IEndpoint
     {
-        public sealed record Request(ServiceType ServiceType);
+        /// <param name="TargetId">
+        /// The startup (scoring report, promotion) or deal (term sheet) the service is bought for.
+        /// </param>
+        public sealed record Request(ServiceType ServiceType, Guid? TargetId);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -20,7 +23,7 @@ namespace DevStart.WebApi.Endpoints.ServiceOrders
                 ICommandHandler<CreateServiceOrderCheckoutCommand, ServiceOrderCheckoutResponse> handler,
                 CancellationToken cancellationToken) =>
             {
-                var command = new CreateServiceOrderCheckoutCommand(request.ServiceType);
+                var command = new CreateServiceOrderCheckoutCommand(request.ServiceType, request.TargetId);
                 Result<ServiceOrderCheckoutResponse> result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);
             })

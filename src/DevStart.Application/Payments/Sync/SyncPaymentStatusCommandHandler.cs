@@ -1,10 +1,13 @@
+using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Payments;
+using DevStart.Application.Abstractions.ServiceOrders;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
 using DevStart.Domain.PromoCodes;
 using DevStart.Domain.ServiceOrders;
+using DevStart.Domain.Startups;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +21,8 @@ namespace DevStart.Application.Payments.Sync
         IPaymentProvider paymentProvider,
         IDateTimeProvider dateTimeProvider,
         IOptions<PlansOptions> plansOptions,
+        ICacheService cacheService,
+        IServiceEntitlementChecker entitlementChecker,
         ILogger<SyncPaymentStatusCommandHandler> logger)
         : ICommandHandler<SyncPaymentStatusCommand>
     {
@@ -69,7 +74,13 @@ namespace DevStart.Application.Payments.Sync
                 }
                 payment.MarkRefunded(snapshot.RefundedAmount, utcNow);
                 subscription?.MarkCancelled(utcNow);
-                order?.MarkRefunded(utcNow);
+                if (order is not null)
+                {
+                    // A refund reported by the provider (rather than initiated through the admin refund
+                    // command) has to revoke the delivery just the same.
+                    order.MarkRefunded(utcNow);
+                    await RevokeServiceDeliveryAsync(order, utcNow, cancellationToken);
+                }
             }
             else if (snapshot.Status == PaymentStatus.Succeeded)
             {
@@ -137,12 +148,39 @@ namespace DevStart.Application.Payments.Sync
             {
                 payment.MarkCancelled(utcNow);
                 subscription?.MarkCancelled(utcNow);
-                order?.MarkCancelled(utcNow);
+                if (order is not null)
+                {
+                    order.MarkCancelled(utcNow);
+                    await RevokeServiceDeliveryAsync(order, utcNow, cancellationToken);
+                }
             }
             // Pending → nothing to do yet.
 
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success();
+        }
+
+        /// <summary>
+        /// Takes back what a one-time service delivered once its payment is refunded or cancelled: the
+        /// entitlement the Pro gates read, and the featured placement a promotion bought.
+        /// </summary>
+        private async Task RevokeServiceDeliveryAsync(
+            ServiceOrder order,
+            DateTime utcNow,
+            CancellationToken cancellationToken)
+        {
+            if (order.ServiceType == ServiceType.Promotion)
+            {
+                Startup? startup = await context.Startups
+                    .SingleOrDefaultAsync(s => s.Id == order.TargetId, cancellationToken);
+                if (startup is not null)
+                {
+                    startup.ClearFeature(utcNow);
+                    await cacheService.RemoveAsync(CacheKeys.Startup(startup.Id), cancellationToken);
+                }
+            }
+
+            await entitlementChecker.InvalidateAsync(order.UserId, cancellationToken);
         }
     }
 }

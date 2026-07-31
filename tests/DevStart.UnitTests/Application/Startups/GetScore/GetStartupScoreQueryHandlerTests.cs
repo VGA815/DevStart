@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Scoring;
 using DevStart.Application.Startups.GetScore;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Startups;
 using DevStart.Domain.Subscriptions;
@@ -32,11 +33,15 @@ public sealed class GetStartupScoreQueryHandlerTests
         _db.SaveChanges();
     }
 
-    private (GetStartupScoreQueryHandler Sut, SpyComputeHandler Spy) CreateSut(Guid viewerId, bool hasPro)
+    private (GetStartupScoreQueryHandler Sut, SpyComputeHandler Spy) CreateSut(
+        Guid viewerId,
+        bool hasPro,
+        StubServiceEntitlementChecker? entitlements = null)
     {
         var spy = new SpyComputeHandler();
         var sut = new GetStartupScoreQueryHandler(
-            _db, spy, new TestUserContext(viewerId), new StubSubscriptionChecker(hasPro));
+            _db, spy, new TestUserContext(viewerId), new StubSubscriptionChecker(hasPro),
+            entitlements ?? new StubServiceEntitlementChecker());
         return (sut, spy);
     }
 
@@ -89,6 +94,35 @@ public sealed class GetStartupScoreQueryHandlerTests
 
         result.IsSuccess.ShouldBeTrue();
         spy.CallCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task NonMemberWithoutPro_ButWithPaidScoringReport_ReceivesScore()
+    {
+        Guid viewerId = Guid.NewGuid();
+        var entitlements = new StubServiceEntitlementChecker().Grant(ServiceType.ScoringReport, _startupId);
+        (GetStartupScoreQueryHandler sut, SpyComputeHandler spy) = CreateSut(viewerId, hasPro: false, entitlements);
+
+        Result<ScoreResult> result =
+            await sut.Handle(new GetStartupScoreQuery(_startupId), CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        spy.CallCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task PaidScoringReportForAnotherStartup_DoesNotUnlockThisOne()
+    {
+        Guid viewerId = Guid.NewGuid();
+        var entitlements = new StubServiceEntitlementChecker().Grant(ServiceType.ScoringReport, Guid.NewGuid());
+        (GetStartupScoreQueryHandler sut, SpyComputeHandler spy) = CreateSut(viewerId, hasPro: false, entitlements);
+
+        Result<ScoreResult> result =
+            await sut.Handle(new GetStartupScoreQuery(_startupId), CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe(SubscriptionErrors.ProRequired);
+        spy.CallCount.ShouldBe(0);
     }
 
     [Fact]

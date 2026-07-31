@@ -13,5 +13,6 @@ namespace DevStart.Domain.Admin
         DeactivatePromoCode = 8,
         AddValuationBenchmark = 9,
         ResetUserTwoFactor = 10,
+        CancelServiceOrder = 11,
     }
 }

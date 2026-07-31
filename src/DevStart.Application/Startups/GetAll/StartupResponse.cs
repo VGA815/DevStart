@@ -32,6 +32,12 @@ namespace DevStart.Application.Startups.GetAll
 
         public CommunityStandardsLevel CommunityStandardsLevel { get; init; }
 
+        /// <summary>
+        /// Whether a paid featured placement (the Promotion one-time service) is currently running.
+        /// Featured startups are listed first.
+        /// </summary>
+        public bool IsFeatured { get; init; }
+
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
     }

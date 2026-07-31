@@ -1,10 +1,12 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.ServiceOrders;
 using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.InvestmentDeals;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
@@ -17,7 +19,8 @@ namespace DevStart.Application.DealDocuments.GetTermSheet
         IApplicationDbContext context,
         IUserContext userContext,
         IFileStorage fileStorage,
-        ISubscriptionChecker subscriptionChecker)
+        ISubscriptionChecker subscriptionChecker,
+        IServiceEntitlementChecker entitlementChecker)
         : IQueryHandler<GetTermSheetQuery, TermSheetResponse>
     {
         public async Task<Result<TermSheetResponse>> Handle(GetTermSheetQuery query, CancellationToken cancellationToken)
@@ -43,8 +46,12 @@ namespace DevStart.Application.DealDocuments.GetTermSheet
                 return Result.Failure<TermSheetResponse>(DealDocumentErrors.Unauthorized);
             }
 
-            // Investor side requires Pro to read term sheet; startup-side members do not.
-            if (isInvestor && !await subscriptionChecker.HasActiveProAsync(userId, cancellationToken))
+            // Investor side requires Pro to read term sheet, or a paid one-time term-sheet order for
+            // this deal (SC-49); startup-side members need neither.
+            if (isInvestor
+                && !await subscriptionChecker.HasActiveProAsync(userId, cancellationToken)
+                && !await entitlementChecker.HasAsync(
+                        userId, ServiceType.TermSheet, query.DealId, cancellationToken))
             {
                 return Result.Failure<TermSheetResponse>(SubscriptionErrors.ProRequired);
             }

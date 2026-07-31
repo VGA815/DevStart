@@ -2,8 +2,12 @@ using DevStart.Application.Abstractions.Caching;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Payments;
+using DevStart.Application.Abstractions.ServiceOrders;
+using DevStart.Application.ServiceOrders;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
+using DevStart.Domain.ServiceOrders;
+using DevStart.Domain.Startups;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +22,9 @@ namespace DevStart.Application.Payments.Refund
         IPaymentProvider paymentProvider,
         IDateTimeProvider dateTimeProvider,
         IOptions<PlansOptions> plansOptions,
+        IOptions<ServiceCatalogOptions> catalogOptions,
         ICacheService cacheService,
+        IServiceEntitlementChecker entitlementChecker,
         ILogger<RefundPaymentCommandHandler> logger)
         : ICommandHandler<RefundPaymentCommand>
     {
@@ -36,7 +42,16 @@ namespace DevStart.Application.Payments.Refund
                 return Result.Failure(PaymentErrors.NotRefundable);
             }
 
+            bool isServiceOrder = payment.Purpose == PaymentPurpose.ServiceOrder;
             decimal refundableBalance = payment.Amount - payment.RefundedAmount;
+
+            // A one-time service has no paid period, so there is nothing to prorate. Rejecting here
+            // beats the old behaviour, where the missing subscription silently produced a zero amount
+            // and surfaced as a confusing "refund amount invalid".
+            if (command.Proportional && isServiceOrder)
+            {
+                return Result.Failure(PaymentErrors.ProportionalNotApplicable);
+            }
 
             // SC-48: a proportional refund returns the unused part of the subscription period
             // (offer §6.2): refund = paid × remaining/total, capped at the refundable balance.
@@ -77,12 +92,23 @@ namespace DevStart.Application.Payments.Refund
                 return Result.Failure(PaymentErrors.CustomerEmailMissing);
             }
 
+            // The refund receipt ("возврат прихода", 54-FZ/НПД) has to name what is actually being
+            // refunded, so a service-order refund takes its line from the service catalog rather than
+            // from the Pro plan.
+            ServiceOrder? order = isServiceOrder
+                ? await context.ServiceOrders
+                    .SingleOrDefaultAsync(o => o.Id == payment.ServiceOrderId, cancellationToken)
+                : null;
+            string refundedItem = order is not null
+                ? catalogOptions.Value.Find(order.ServiceType)?.Description ?? order.ServiceType.ToString()
+                : plansOptions.Value.Pro.Description;
+
             string amountKey = amount.ToString("0.00", CultureInfo.InvariantCulture);
             var input = new CreateRefundInput(
                 ProviderPaymentId: payment.ProviderPaymentId!,
                 Amount: amount,
                 Currency: payment.Currency,
-                Description: $"Возврат — {plansOptions.Value.Pro.Description}",
+                Description: $"Возврат — {refundedItem}",
                 CustomerEmail: customerEmail,
                 IdempotenceKey: $"refund:{payment.Id}:{amountKey}");
 
@@ -117,7 +143,24 @@ namespace DevStart.Application.Payments.Refund
                 // period has been paid back). MarkRefunded only raises the domain event on a *full*
                 // refund, so clear the active-Pro cache here to cover the proportional (partial) case.
                 bool endsAccess = newTotal >= payment.Amount || command.Proportional;
-                if (endsAccess)
+                if (endsAccess && order is not null)
+                {
+                    // Refunding a one-time service takes back what it delivered: the entitlement the
+                    // gates read, and the featured placement a promotion bought.
+                    order.MarkRefunded(utcNow);
+                    if (order.ServiceType == ServiceType.Promotion)
+                    {
+                        Startup? startup = await context.Startups
+                            .SingleOrDefaultAsync(s => s.Id == order.TargetId, cancellationToken);
+                        startup?.ClearFeature(utcNow);
+                        if (startup is not null)
+                        {
+                            await cacheService.RemoveAsync(CacheKeys.Startup(startup.Id), cancellationToken);
+                        }
+                    }
+                    await entitlementChecker.InvalidateAsync(payment.UserId, cancellationToken);
+                }
+                else if (endsAccess)
                 {
                     subscription ??= await context.Subscriptions
                         .SingleOrDefaultAsync(s => s.Id == payment.SubscriptionId, cancellationToken);

@@ -11,7 +11,15 @@ namespace DevStart.WebApi.Endpoints.ServiceOrders
     /// </summary>
     internal sealed class GetCatalog : IEndpoint
     {
-        public sealed record Item(ServiceType ServiceType, decimal Price, string Currency, string Description);
+        /// <param name="AccessDays">Length of the granted access, in days; 0 means permanent.</param>
+        /// <param name="TargetKind">What the buyer has to pick before checkout, if anything.</param>
+        public sealed record Item(
+            ServiceType ServiceType,
+            decimal Price,
+            string Currency,
+            string Description,
+            int AccessDays,
+            ServiceTargetKind TargetKind);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -19,7 +27,13 @@ namespace DevStart.WebApi.Endpoints.ServiceOrders
             {
                 List<Item> items = catalogOptions.Value.Items
                     .Where(i => i.Price > 0m)
-                    .Select(i => new Item(i.ServiceType, i.Price, i.Currency, i.Description))
+                    .Select(i => new Item(
+                        i.ServiceType,
+                        i.Price,
+                        i.Currency,
+                        i.Description,
+                        i.AccessDays,
+                        ServiceTargets.KindOf(i.ServiceType)))
                     .ToList();
 
                 return Results.Ok(items);

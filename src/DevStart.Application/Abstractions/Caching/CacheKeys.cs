@@ -30,6 +30,17 @@ namespace DevStart.Application.Abstractions.Caching
 
         public static string SubscriptionActiveByUser(Guid userId) => $"{Version}:subscriptions:{userId}:active";
 
+        /// <summary>
+        /// Whether a user currently holds a paid one-time service entitlement for a given target
+        /// (SC-49). Scoped by target so buying a report about one startup never unlocks another.
+        /// </summary>
+        public static string ServiceEntitlement(Guid userId, int serviceType, Guid targetId)
+            => $"{Version}:service-entitlements:{userId}:{serviceType}:{targetId}";
+
+        /// <summary>Every cached entitlement of one user — cleared when an order is fulfilled, refunded or cancelled.</summary>
+        public static string ServiceEntitlementsByUserPrefix(Guid userId)
+            => $"{Version}:service-entitlements:{userId}:";
+
         public static string ValuationBenchmarks() => $"{Version}:valuation-benchmarks:all";
 
         /// <summary>

@@ -36,6 +36,13 @@ namespace DevStart.Domain.Startups
         public DateTime? BannedAt { get; set; }
         public DateTime? BanExpiresAt { get; set; }
         public Guid? BannedByUserId { get; set; }
+
+        /// <summary>
+        /// End of a paid featured placement (the Promotion one-time service, SC-49). A featured
+        /// startup sorts to the front of public discovery until this passes.
+        /// </summary>
+        public DateTime? FeaturedUntil { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -45,6 +52,30 @@ namespace DevStart.Domain.Startups
         /// </summary>
         public bool IsCurrentlyBanned(DateTime utcNow) =>
             IsBanned && (BanExpiresAt is null || BanExpiresAt > utcNow);
+
+        /// <summary>
+        /// True while a paid featured placement is in force. Expiry is "lazy" like a temporary ban:
+        /// the flag is compared against the clock at query time, so nothing has to sweep it.
+        /// </summary>
+        public bool IsFeatured(DateTime utcNow) => FeaturedUntil is not null && FeaturedUntil > utcNow;
+
+        /// <summary>
+        /// Starts (or tops up) a featured placement. Buying promotion again while one is running adds
+        /// the new days on top of the remaining ones, so nothing already paid for is truncated.
+        /// </summary>
+        public void Feature(int days, DateTime utcNow)
+        {
+            DateTime from = IsFeatured(utcNow) ? FeaturedUntil!.Value : utcNow;
+            FeaturedUntil = from.AddDays(days);
+            UpdatedAt = utcNow;
+        }
+
+        /// <summary>Ends a featured placement — used when the promotion payment is refunded or cancelled.</summary>
+        public void ClearFeature(DateTime utcNow)
+        {
+            FeaturedUntil = null;
+            UpdatedAt = utcNow;
+        }
 
         public Result Ban(string reason, DateTime? expiresAt, Guid byUserId, DateTime utcNow)
         {

@@ -21,6 +21,14 @@ namespace DevStart.Application.Startups.GetById
         public decimal? Som { get; init; }
         public decimal? MarketGrowthRate { get; init; }
         public bool HasPatents { get; init; }
+
+        /// <summary>
+        /// Whether a paid featured placement is currently running. This response is cached for
+        /// <see cref="Abstractions.Caching.CacheTtl.Default"/>; the cache is dropped when a promotion is
+        /// bought or refunded, so only natural expiry can leave the badge up for up to that long.
+        /// </summary>
+        public bool IsFeatured { get; init; }
+
         public DateTime CreatedAt { get; init; }
         public DateTime UpdatedAt { get; init; }
     }

@@ -2,6 +2,7 @@ using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Payments.Sync;
 using DevStart.Domain.Payments;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -132,11 +133,23 @@ namespace DevStart.Infrastructure.Payments
                 .Where(s => subscriptionIds.Contains(s.Id))
                 .ToListAsync(cancellationToken);
 
+            // Abandoned one-time service orders have to be retired alongside their payment; otherwise
+            // they sit Pending forever and clutter the buyer's order list.
+            List<Guid> serviceOrderIds = stillPending
+                .Where(p => p.ServiceOrderId.HasValue)
+                .Select(p => p.ServiceOrderId!.Value)
+                .Distinct()
+                .ToList();
+            List<ServiceOrder> serviceOrders = await context.ServiceOrders
+                .Where(o => serviceOrderIds.Contains(o.Id))
+                .ToListAsync(cancellationToken);
+
             DateTime now = dateTimeProvider.UtcNow;
             foreach (Payment payment in stillPending)
             {
                 payment.MarkCancelled(now);
                 subscriptions.FirstOrDefault(s => s.Id == payment.SubscriptionId)?.MarkCancelled(now);
+                serviceOrders.FirstOrDefault(o => o.Id == payment.ServiceOrderId)?.MarkCancelled(now);
             }
             await context.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Cancelled {Count} abandoned pending payment(s).", stillPending.Count);

@@ -2,6 +2,7 @@ using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Payments.Sync;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.Subscriptions;
 using DevStart.Infrastructure.Database;
 using DevStart.Infrastructure.Payments;
@@ -29,7 +30,8 @@ public sealed class PaymentReconciliationJobTests
             Pro = new PlanOptions { Price = Amount, Currency = "RUB", DurationDays = 30, Description = "DevStart Pro" },
         });
         var sync = new SyncPaymentStatusCommandHandler(
-            _db, _provider, clock, plans, NullLogger<SyncPaymentStatusCommandHandler>.Instance);
+            _db, _provider, clock, plans, new RecordingCacheService(), new StubServiceEntitlementChecker(),
+            NullLogger<SyncPaymentStatusCommandHandler>.Instance);
         var options = Options.Create(new BillingMaintenanceOptions());
         _job = new PaymentReconciliationJob(
             _db, sync, clock, options, NullLogger<PaymentReconciliationJob>.Instance);
@@ -79,6 +81,32 @@ public sealed class PaymentReconciliationJobTests
 
         _db.Payments.Single().Status.ShouldBe(PaymentStatus.Cancelled);
         _db.Subscriptions.Single().Status.ShouldBe(SubscriptionStatus.Cancelled);
+    }
+
+    [Fact]
+    public async Task AbandonedSweep_PendingServiceOrder_IsCancelledAlongsideItsPayment()
+    {
+        // An abandoned one-time service order used to sit Pending forever: the sweep cancelled the
+        // payment and the subscription but never looked at the order.
+        DateTime createdAt = Now.AddHours(-100);
+        Guid userId = Guid.NewGuid();
+        ServiceOrder order = ServiceOrder.CreatePending(
+            userId, ServiceType.ScoringReport, Guid.NewGuid(), 490m, "RUB", createdAt);
+        Payment payment = Payment.CreatePendingForServiceOrder(
+            userId, order.Id, PaymentProvider.YooKassa, 490m, "RUB", createdAt);
+        payment.AssignProviderPayment("pay-svc", "https://pay/redirect");
+        _db.ServiceOrders.Add(order);
+        _db.Payments.Add(payment);
+        await _db.SaveChangesAsync();
+
+        _provider.SnapshotToReturn = new ProviderPaymentSnapshot(
+            "pay-svc", PaymentStatus.Pending, Paid: false, null, RefundedAmount: 0m, null);
+
+        await _job.ReconcilePendingAsync(CancellationToken.None);
+
+        _db.Payments.Single().Status.ShouldBe(PaymentStatus.Cancelled);
+        _db.ServiceOrders.Single().Status.ShouldBe(ServiceOrderStatus.Cancelled);
+        _db.ServiceOrders.Single().CancelledAt.ShouldBe(Now);
     }
 
     [Fact]

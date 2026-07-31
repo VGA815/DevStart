@@ -57,8 +57,13 @@ namespace DevStart.Application.Startups.GetAll
 
             // Projected to scalars rather than entities: nothing is materialized into the change tracker,
             // and only the columns the response needs cross the wire.
+            // A paid featured placement (the Promotion one-time service, SC-49) buys the front of the
+            // list, not the whole ordering: within featured and within the rest, followers still decide.
+            // Ordered before paging so the promotion is visible on page 1 rather than wherever the
+            // startup happened to fall.
             var rows = await joined
-                .OrderByDescending(x => context.StartupFollowers.Count(f => f.StartupId == x.Startup.Id))
+                .OrderByDescending(x => x.Startup.FeaturedUntil != null && x.Startup.FeaturedUntil > now)
+                .ThenByDescending(x => context.StartupFollowers.Count(f => f.StartupId == x.Startup.Id))
                 .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .Select(x => new
@@ -80,6 +85,7 @@ namespace DevStart.Application.Startups.GetAll
                     x.Startup.Som,
                     x.Startup.MarketGrowthRate,
                     x.Startup.HasPatents,
+                    IsFeatured = x.Startup.FeaturedUntil != null && x.Startup.FeaturedUntil > now,
                     x.Startup.CreatedAt,
                     x.Startup.UpdatedAt,
                     CompletedCount = (int?)x.Standards.CompletedCount,
@@ -115,6 +121,7 @@ namespace DevStart.Application.Startups.GetAll
                     Som = row.Som,
                     MarketGrowthRate = row.MarketGrowthRate,
                     HasPatents = row.HasPatents,
+                    IsFeatured = row.IsFeatured,
                     CommunityStandardsPercent = total > 0
                         ? Math.Round(completed * 100m / total, 0, MidpointRounding.AwayFromZero)
                         : 0m,

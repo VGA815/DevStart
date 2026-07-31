@@ -30,6 +30,7 @@ public sealed class SyncPaymentStatusCommandHandlerTests
         });
         _sut = new SyncPaymentStatusCommandHandler(
             _db, _provider, new FixedDateTimeProvider { UtcNow = Now }, plans,
+            new RecordingCacheService(), new StubServiceEntitlementChecker(),
             NullLogger<SyncPaymentStatusCommandHandler>.Instance);
     }
 

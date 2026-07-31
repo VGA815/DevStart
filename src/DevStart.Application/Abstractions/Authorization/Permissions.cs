@@ -90,6 +90,7 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string SubscriptionsRead                = "subscriptions::read";
 
         public const string ServiceOrdersCheckout            = "service_orders::checkout";
+        public const string ServiceOrdersRead                = "service_orders::read";
 
         public const string PaymentsRefund                   = "payments::refund";
 
@@ -120,5 +121,8 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string AdminObservabilityRead           = "admin_observability::read";
 
         public const string AdminNpdRead                     = "admin_npd::read";
+
+        public const string AdminServiceOrdersRead           = "admin_service_orders::read";
+        public const string AdminServiceOrdersManage         = "admin_service_orders::manage";
     }
 }

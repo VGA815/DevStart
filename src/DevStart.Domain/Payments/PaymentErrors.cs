@@ -49,6 +49,13 @@ namespace DevStart.Domain.Payments
             "Payments.RefundAmountInvalid",
             $"Refund amount must be greater than zero and not exceed the refundable balance ({max}).");
 
+        // A proportional refund prorates the unused part of a subscription period. A one-time service
+        // has no period to prorate, so the caller has to name an amount (or refund in full).
+        public static readonly Error ProportionalNotApplicable = Error.Problem(
+            "Payments.ProportionalNotApplicable",
+            "A proportional refund only applies to a subscription payment. " +
+            "Refund a one-time service order in full or specify an amount.");
+
         // Hard stop for the self-employed (НПД, ФЗ-422) annual income cap: once the calendar-year net
         // income reaches the limit, no new paid operation may be created until the next year.
         public static readonly Error IncomeLimitReached = Error.Conflict(

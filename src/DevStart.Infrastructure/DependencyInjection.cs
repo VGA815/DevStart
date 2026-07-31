@@ -347,6 +347,11 @@ namespace DevStart.Infrastructure
             // SC-42: self-employed (НПД) annual income-limit tracking + hard stop.
             services.AddScoped<Application.Abstractions.Payments.INpdIncomeService, Payments.NpdIncomeService>();
 
+            // SC-49: paid one-time service entitlements, read by the Pro gates.
+            services.AddScoped<
+                Application.Abstractions.ServiceOrders.IServiceEntitlementChecker,
+                ServiceOrders.ServiceEntitlementChecker>();
+
             services.AddTransient<YooKassaResilienceHandler>();
             services.AddHttpClient<IPaymentProvider, YooKassaPaymentProvider>(client =>
                     client.Timeout = TimeSpan.FromSeconds(60))

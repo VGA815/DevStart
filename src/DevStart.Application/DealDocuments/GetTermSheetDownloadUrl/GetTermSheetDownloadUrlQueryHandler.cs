@@ -1,10 +1,12 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.ServiceOrders;
 using DevStart.Application.Abstractions.Subscriptions;
 using DevStart.Application.DealDocuments.Generation;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.InvestmentDeals;
+using DevStart.Domain.ServiceOrders;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Subscriptions;
 using DevStart.SharedKernel;
@@ -17,7 +19,8 @@ namespace DevStart.Application.DealDocuments.GetTermSheetDownloadUrl
         IUserContext userContext,
         IFileStorage fileStorage,
         IDateTimeProvider dateTimeProvider,
-        ISubscriptionChecker subscriptionChecker)
+        ISubscriptionChecker subscriptionChecker,
+        IServiceEntitlementChecker entitlementChecker)
         : IQueryHandler<GetTermSheetDownloadUrlQuery, TermSheetDownloadUrlResponse>
     {
         private const int ExpirySeconds = 600; // 10 min
@@ -47,7 +50,11 @@ namespace DevStart.Application.DealDocuments.GetTermSheetDownloadUrl
                 return Result.Failure<TermSheetDownloadUrlResponse>(DealDocumentErrors.Unauthorized);
             }
 
-            if (isInvestor && !await subscriptionChecker.HasActiveProAsync(userId, cancellationToken))
+            // Investor side requires Pro, or a paid one-time term-sheet order for this deal (SC-49).
+            if (isInvestor
+                && !await subscriptionChecker.HasActiveProAsync(userId, cancellationToken)
+                && !await entitlementChecker.HasAsync(
+                        userId, ServiceType.TermSheet, query.DealId, cancellationToken))
             {
                 return Result.Failure<TermSheetDownloadUrlResponse>(SubscriptionErrors.ProRequired);
             }

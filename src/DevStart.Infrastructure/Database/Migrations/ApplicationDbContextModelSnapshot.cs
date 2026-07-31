@@ -1200,6 +1200,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("numeric(10,2)")
                         .HasColumnName("amount");
 
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -1210,6 +1214,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("currency");
 
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
                     b.Property<DateTime?>("FulfilledAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("fulfilled_at");
@@ -1218,6 +1226,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("paid_at");
 
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("refunded_at");
+
                     b.Property<int>("ServiceType")
                         .HasColumnType("integer")
                         .HasColumnName("service_type");
@@ -1225,6 +1237,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer")
                         .HasColumnName("status");
+
+                    b.Property<Guid?>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -1235,6 +1251,10 @@ namespace DevStart.Infrastructure.Database.Migrations
 
                     b.HasIndex("UserId", "Status")
                         .HasDatabaseName("ix_service_orders_user_status");
+
+                    b.HasIndex("UserId", "ServiceType", "TargetId")
+                        .HasDatabaseName("ix_service_orders_entitlement")
+                        .HasFilter("status = 2");
 
                     b.ToTable("service_orders", "public");
                 });
@@ -1736,6 +1756,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<DateTime?>("FeaturedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("featured_until");
+
                     b.Property<bool>("HasPatents")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1820,6 +1844,10 @@ namespace DevStart.Infrastructure.Database.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_startups");
+
+                    b.HasIndex("FeaturedUntil")
+                        .HasDatabaseName("ix_startups_featured_until")
+                        .HasFilter("featured_until IS NOT NULL");
 
                     b.HasIndex("IsBanned", "BanExpiresAt")
                         .HasDatabaseName("ix_startups_banned");

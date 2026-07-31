@@ -5,6 +5,7 @@ using DevStart.Application.Abstractions.Payments;
 using DevStart.Application.Subscriptions;
 using DevStart.Domain.Payments;
 using DevStart.Domain.ServiceOrders;
+using DevStart.Domain.StartupMembers;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,14 @@ namespace DevStart.Application.ServiceOrders.Checkout
                     ServiceOrderErrors.UnknownServiceType(command.ServiceType.ToString()));
             }
 
+            // The target is settled before anything is persisted and before the НПД counter is touched,
+            // so a purchase that could never be delivered never reaches the payment provider.
+            Result target = await ValidateTargetAsync(command, userId, utcNow, cancellationToken);
+            if (target.IsFailure)
+            {
+                return Result.Failure<ServiceOrderCheckoutResponse>(target.Error);
+            }
+
             // The customer email is required to register the 54-FZ/NPD receipt.
             string? customerEmail = await context.Users
                 .Where(u => u.Id == userId)
@@ -55,7 +64,7 @@ namespace DevStart.Application.ServiceOrders.Checkout
             }
 
             ServiceOrder order = ServiceOrder.CreatePending(
-                userId, command.ServiceType, item.Price, item.Currency, utcNow);
+                userId, command.ServiceType, command.TargetId, item.Price, item.Currency, utcNow);
             Payment payment = Payment.CreatePendingForServiceOrder(
                 userId, order.Id, PaymentProvider.YooKassa, item.Price, item.Currency, utcNow);
 
@@ -99,6 +108,112 @@ namespace DevStart.Application.ServiceOrders.Checkout
                 PaymentId = payment.Id,
                 ConfirmationUrl = created.ConfirmationUrl,
             };
+        }
+
+        /// <summary>
+        /// Checks that the requested target exists, that this buyer may buy this service for it, and
+        /// that they are not paying twice for access they already hold.
+        /// </summary>
+        private async Task<Result> ValidateTargetAsync(
+            CreateServiceOrderCheckoutCommand command,
+            Guid userId,
+            DateTime utcNow,
+            CancellationToken cancellationToken)
+        {
+            if (!ServiceTargets.RequiresTarget(command.ServiceType))
+            {
+                return Result.Success();
+            }
+            if (command.TargetId is not Guid targetId || targetId == Guid.Empty)
+            {
+                return Result.Failure(ServiceOrderErrors.TargetRequired);
+            }
+
+            switch (command.ServiceType)
+            {
+                case ServiceType.ScoringReport:
+                {
+                    // Buying insight into someone else's startup is the point, so membership is not
+                    // required — but a banned startup is not on sale.
+                    bool visible = await context.Startups
+                        .AsNoTracking()
+                        .AnyAsync(
+                            s => s.Id == targetId
+                              && !(s.IsBanned && (s.BanExpiresAt == null || s.BanExpiresAt > utcNow)),
+                            cancellationToken);
+                    if (!visible)
+                    {
+                        return Result.Failure(ServiceOrderErrors.TargetNotFound(targetId));
+                    }
+                    break;
+                }
+
+                case ServiceType.TermSheet:
+                {
+                    // Only the investor side of a deal is Pro-gated, so only the investor can buy their
+                    // way past that gate.
+                    Guid? investorProfileId = await context.InvestmentDeals
+                        .AsNoTracking()
+                        .Where(d => d.Id == targetId)
+                        .Select(d => (Guid?)d.InvestorProfileId)
+                        .SingleOrDefaultAsync(cancellationToken);
+                    if (investorProfileId is null)
+                    {
+                        return Result.Failure(ServiceOrderErrors.TargetNotFound(targetId));
+                    }
+                    if (investorProfileId != userId)
+                    {
+                        return Result.Failure(ServiceOrderErrors.TargetNotAllowed);
+                    }
+                    break;
+                }
+
+                case ServiceType.Promotion:
+                {
+                    bool exists = await context.Startups
+                        .AsNoTracking()
+                        .AnyAsync(s => s.Id == targetId, cancellationToken);
+                    if (!exists)
+                    {
+                        return Result.Failure(ServiceOrderErrors.TargetNotFound(targetId));
+                    }
+
+                    // Promotion changes how a startup is shown, so only the people who run it may buy it.
+                    bool canPromote = await context.StartupMembers
+                        .AsNoTracking()
+                        .AnyAsync(
+                            sm => sm.StartupId == targetId
+                               && sm.ProfileId == userId
+                               && (sm.Role == StartupRole.Founder || sm.Role == StartupRole.Administration),
+                            cancellationToken);
+                    if (!canPromote)
+                    {
+                        return Result.Failure(ServiceOrderErrors.TargetNotAllowed);
+                    }
+                    break;
+                }
+            }
+
+            // Re-buying access that is already running would take money for nothing. Promotion is the
+            // exception: another purchase genuinely adds days on top of the remaining ones.
+            if (command.ServiceType != ServiceType.Promotion)
+            {
+                bool alreadyOwned = await context.ServiceOrders
+                    .AsNoTracking()
+                    .AnyAsync(
+                        o => o.UserId == userId
+                          && o.ServiceType == command.ServiceType
+                          && o.TargetId == targetId
+                          && o.Status == ServiceOrderStatus.Fulfilled
+                          && (o.ExpiresAt == null || o.ExpiresAt > utcNow),
+                        cancellationToken);
+                if (alreadyOwned)
+                {
+                    return Result.Failure(ServiceOrderErrors.AlreadyOwned);
+                }
+            }
+
+            return Result.Success();
         }
     }
 }

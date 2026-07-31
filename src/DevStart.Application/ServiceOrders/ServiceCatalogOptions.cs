@@ -20,5 +20,11 @@ namespace DevStart.Application.ServiceOrders
         public decimal Price { get; set; }
         public string Currency { get; set; } = "RUB";
         public string Description { get; set; } = string.Empty;
+
+        /// <summary>
+        /// How long the delivered access lasts, in days. 0 means the delivery is permanent (a generated
+        /// document stays readable forever); a positive value bounds it (report access, featured placement).
+        /// </summary>
+        public int AccessDays { get; set; }
     }
 }

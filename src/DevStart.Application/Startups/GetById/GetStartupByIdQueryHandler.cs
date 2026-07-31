@@ -37,6 +37,7 @@ namespace DevStart.Application.Startups.GetById
                     Som = s.Som,
                     MarketGrowthRate = s.MarketGrowthRate,
                     HasPatents = s.HasPatents,
+                    IsFeatured = s.FeaturedUntil != null && s.FeaturedUntil > now,
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 

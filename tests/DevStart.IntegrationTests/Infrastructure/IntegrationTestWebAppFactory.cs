@@ -120,11 +120,19 @@ namespace DevStart.IntegrationTests.Infrastructure
             ["Billing:ReconcileMaxAgeHours"] = "72",
             ["Billing:ReminderDaysBefore"] = "3",
 
-            // SC-49 one-time service catalog (only ScoringReport priced in tests).
+            // SC-49 one-time service catalog. TermSheet stays unpriced so the "no catalog entry" path
+            // is still reachable from an integration test.
             ["Services:Items:0:ServiceType"] = "ScoringReport",
             ["Services:Items:0:Price"] = "490.00",
             ["Services:Items:0:Currency"] = "RUB",
             ["Services:Items:0:Description"] = "Scoring report (test)",
+            ["Services:Items:0:AccessDays"] = "30",
+
+            ["Services:Items:1:ServiceType"] = "Promotion",
+            ["Services:Items:1:Price"] = "1490.00",
+            ["Services:Items:1:Currency"] = "RUB",
+            ["Services:Items:1:Description"] = "Promotion (test)",
+            ["Services:Items:1:AccessDays"] = "30",
 
             // AddSmtp reads/parses these eagerly at registration time, so they must be present & valid.
             ["Smtp:Host"] = "localhost",
