@@ -42,6 +42,7 @@ server {
     set $upstream_frontend   frontend:80;
     set $upstream_minio      minio:9000;
     set $upstream_centrifugo centrifugo:8000;
+    set $upstream_matomo     matomo:80;
 
     # Hangfire dashboard — admin only. Gated by Basic Auth (+ optional IP allowlist). nginx stamps a
     # secret header the app's dashboard filter trusts; proxy_set_header overrides any client value, so
@@ -65,6 +66,49 @@ server {
     # network; /health/details carries exception text and is admin-gated in the app anyway).
     location = /metrics { return 404; }
     location = /health/details { return 404; }
+
+    # Matomo analytics, mounted at /matomo/ on the main domain (no subdomain, no extra cert).
+    # proxy_pass has a TRAILING SLASH, so nginx strips the /matomo/ prefix and the container sees
+    # the request at its own document root; X-Forwarded-Uri hands the prefix back, and
+    # [General] proxy_uri_header = 1 (config/matomo/common.config.prod.ini.php) makes Matomo
+    # prepend it when building absolute URLs. Drop either half and every login redirect and asset
+    # URL loses the /matomo prefix — the classic failure mode of a path-mounted Matomo.
+    #
+    # Note this route is deliberately NOT IP-restricted: matomo.js and matomo.php must be
+    # reachable by every visitor. To lock the UI down, first carve those two out into
+    # `location = /matomo/matomo.js` and `location = /matomo/matomo.php` (exact match wins over a
+    # prefix), then add allow/deny here.
+    location /matomo/ {
+        proxy_pass http://$upstream_matomo/;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Uri   /matomo;
+
+        # After a Matomo version bump the DB migration runs synchronously in the browser and can
+        # take minutes on a large log_* table; the 60s default would 504 mid-migration.
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        # client_max_body_size is inherited from the server block (50m) — enough for plugin ZIPs.
+    }
+
+    # `location /matomo/` does not match a bare /matomo: without this it falls through to
+    # `location /` and renders the SPA's 404 page. The redirect stays relative (absolute_redirect
+    # off) so it keeps whatever scheme/host/port the client used — nginx would otherwise rebuild
+    # it from $host, which silently drops a non-443 port.
+    location = /matomo { absolute_redirect off; return 301 /matomo/; }
+
+    # Defence in depth for Matomo's private directories. The image does honour .htaccess
+    # (conf-enabled/docker-php.conf sets AllowOverride All on /var/www/), but Matomo only
+    # GENERATES those files during install, so they do not exist on a fresh volume and are not
+    # guaranteed to survive an upgrade. Denying here holds regardless.
+    # Do NOT add plugins/, libs/, misc/ or node_modules/ — the UI serves assets from those.
+    location /matomo/config/ { return 404; }
+    location /matomo/tmp/    { return 404; }
+    location /matomo/core/   { return 404; }
+    location /matomo/lang/   { return 404; }
 
     # Real-time notifications: Centrifugo WebSocket
     location /connection/websocket {

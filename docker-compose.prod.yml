@@ -201,6 +201,116 @@ services:
     networks:
       - devstart-net
 
+  # --- Matomo: self-hosted product analytics, served at https://${DOMAIN}/matomo/ ---
+  matomo-db:
+    # Matomo supports MySQL/MariaDB only — it has NO PostgreSQL driver, so main-db cannot be
+    # reused and this is a second RDBMS on the box. Budget ~300 MB for it (DEPLOYMENT.md §2).
+    image: mariadb:11.4
+    restart: unless-stopped
+    # utf8mb4 end to end: MariaDB 11.4 defaults the collation to utf8mb4_uca1400_ai_ci, which
+    # Matomo's schema does not expect. The buffer pool is capped so it doesn't crowd out Postgres.
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --max-allowed-packet=64M
+      --innodb-buffer-pool-size=192M
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MATOMO_DB_NAME}
+      MARIADB_USER: ${MATOMO_DB_USER}
+      MARIADB_PASSWORD: ${MATOMO_DB_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - matomo-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    networks:
+      - devstart-net
+
+  matomo:
+    image: matomo:5-apache
+    restart: unless-stopped
+    environment:
+      # These only PRE-FILL the database step of the install wizard — they do not skip it.
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD}
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME}
+      PHP_MEMORY_LIMIT: ${MATOMO_PHP_MEMORY_LIMIT}
+    expose:
+      - "80"
+    volumes:
+      - matomo-data:/var/www/html
+      # MUST exist as a FILE and be mounted BEFORE the install wizard is first opened — see the
+      # file's own header. A bind mount to a missing host path makes Docker create a directory.
+      - ./config/matomo/common.config.prod.ini.php:/var/www/html/config/common.config.ini.php:ro
+    depends_on:
+      matomo-db:
+        condition: service_healthy
+    healthcheck:
+      # The image ships no curl/wget (Debian slim); PHP is guaranteed. Liveness only — this must
+      # go green BEFORE the wizard has run, when there is no config.ini.php and every page 500s.
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 768M
+    networks:
+      - devstart-net
+
+  # Report archiving. Browser-triggered archiving is off (common.config.prod.ini.php), so reports
+  # are built here instead — same loop shape as the certbot sidecar.
+  # Same image + same volume as `matomo` so console, plugins and version always match; the image
+  # entrypoint is replaced so its copy/upgrade logic does not run a second time.
+  # user: www-data — core:archive writes into tmp/; running it as root leaves root-owned cache
+  # files the Apache worker can no longer write, and the UI starts erroring days later.
+  matomo-archive:
+    image: matomo:5-apache
+    restart: unless-stopped
+    user: www-data
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD}
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME}
+      PHP_MEMORY_LIMIT: ${MATOMO_PHP_MEMORY_LIMIT}
+    volumes:
+      - matomo-data:/var/www/html
+      - ./config/matomo/common.config.prod.ini.php:/var/www/html/config/common.config.ini.php:ro
+    depends_on:
+      matomo-db:
+        condition: service_healthy
+      matomo:
+        condition: service_started
+    # The config.ini.php guard keeps the loop quiet (and non-failing) until the wizard is done.
+    entrypoint: >-
+      /bin/sh -c 'trap exit TERM; while :; do
+      if [ -f /var/www/html/config/config.ini.php ]; then
+      php /var/www/html/console core:archive --url=https://${DOMAIN}/matomo/ || true;
+      else echo "matomo not installed yet - skipping archive run"; fi;
+      sleep ${MATOMO_ARCHIVE_INTERVAL} & wait $${!};
+      done'
+    networks:
+      - devstart-net
+
   frontend:
     image: devstart-client:latest
     build:
@@ -208,6 +318,14 @@ services:
       args:
         API_URL: /api
         WS_URL: wss://${DOMAIN}/connection/websocket
+        # Absolute public URL baked into robots.txt / sitemap.xml. Without it the image keeps the
+        # Dockerfile default (http://localhost:8080) and prod ships crawler files pointing at it.
+        SITE_URL: https://${DOMAIN}
+        # Matomo is same-origin at /matomo/, so no CORS and no extra CSP host is needed — the
+        # commented-out CSP in devstart-client/nginx.conf stays valid as written.
+        # MATOMO_SITE_ID is baked into the bundle: changing it needs `up -d --build frontend`.
+        MATOMO_URL: /matomo/
+        MATOMO_SITE_ID: "${MATOMO_SITE_ID}"
     restart: unless-stopped
     expose:
       - "80"
@@ -261,6 +379,8 @@ volumes:
   prometheus-data:
   tempo-data:
   grafana-data:
+  matomo-data:
+  matomo-db-data:
   certbot-conf:
   certbot-www:
 

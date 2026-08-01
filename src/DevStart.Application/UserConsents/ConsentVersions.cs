@@ -7,7 +7,11 @@ namespace DevStart.Application.UserConsents
         public const string PersonalDataProcessing = "1.0";
         public const string PrivacyPolicy          = "1.0";
         public const string TermsOfService         = "1.0";
-        public const string Cookies                = "1.0";
+        // 1.1 replaced the never-implemented `_analytics_id` cookie with the real Matomo cookies.
+        // Cookies is deliberately absent from MandatoryTypes below, so bumping it re-prompts
+        // nobody at login; on an existing database the new document seeds INACTIVE and must be
+        // activated via PATCH api/consent-documents/{id}/activate (see DEPLOYMENT.md).
+        public const string Cookies                = "1.1";
         public const string PublicOffer            = "1.0";
 
         public static string GetCurrentVersion(ConsentType type) => type switch

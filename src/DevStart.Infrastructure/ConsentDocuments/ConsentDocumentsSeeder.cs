@@ -42,7 +42,10 @@ namespace DevStart.Infrastructure.ConsentDocuments
                 "Пользовательское соглашение"
             ),
             (
-                "ConsentDocuments.Documents.cookies-v1.0.md",
+                // Replaces, not appends: this array is seeded in order, and a document is only
+                // auto-activated when no active one exists for its type. Keeping the v1.0 entry
+                // here as well would leave a fresh database permanently pinned to v1.0.
+                "ConsentDocuments.Documents.cookies-v1.1.md",
                 ConsentType.Cookies,
                 ConsentVersions.Cookies,
                 "Политика использования Cookie"

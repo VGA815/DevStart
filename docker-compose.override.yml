@@ -5,6 +5,8 @@ volumes:
   prometheus-data:
   tempo-data:
   grafana-data:
+  matomo-data:
+  matomo-db-data:
 
 networks:
   devstart-net:

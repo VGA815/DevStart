@@ -49,6 +49,11 @@ CENTRIFUGO_API_KEY=$(gen 24)
 CENTRIFUGO_TOKEN_HMAC_SECRET=$(gen 32)
 CENTRIFUGO_ADMIN_PASSWORD=$(gen 16)
 CENTRIFUGO_ADMIN_SECRET=$(gen 24)
+
+# Matomo — its own MariaDB (Matomo has no PostgreSQL driver). The Matomo superuser password is
+# NOT generated here: it is set once in the web install wizard and kept in a password manager.
+MATOMO_DB_PASSWORD=$(gen 24)
+MATOMO_DB_ROOT_PASSWORD=$(gen 24)
 EOF
 
 cat >&2 <<'EOF'
@@ -57,6 +62,7 @@ cat >&2 <<'EOF'
 Still fill these NON-secret values in .env by hand:
   DOMAIN, LETSENCRYPT_EMAIL, JWT_ISSUER, JWT_AUDIENCE, JWT_EXPIRATION_MINUTES,
   OAUTH_*, SMTP_*, YOOKASSA_*, MINIO_BUCKET, MINIO_PUB_ENDPOINT, MINIO_PUB_USE_SSL,
-  MINIO_USE_SSL, FORWARDED_KNOWN_NETWORKS.
+  MINIO_USE_SSL, FORWARDED_KNOWN_NETWORKS, MATOMO_DB_NAME, MATOMO_DB_USER, MATOMO_SITE_ID,
+  MATOMO_PHP_MEMORY_LIMIT, MATOMO_ARCHIVE_INTERVAL.
 Never commit .env. Regenerate and rotate if a secret ever leaks.
 EOF

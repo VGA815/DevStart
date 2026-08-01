@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using DevStart.Application.UserConsents;
+using DevStart.Domain.UserConsents;
 using DevStart.Infrastructure.Database;
 using DevStart.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +13,25 @@ namespace DevStart.IntegrationTests.Auth
     public sealed class RegisterTests(IntegrationTestWebAppFactory factory) : IntegrationTestBase(factory)
     {
         // All five consent types at their seeded active version, mandatory ones accepted.
+        // Versions are read from ConsentVersions rather than hardcoded: the seeder activates
+        // exactly those on a fresh database and ConsentService rejects any submitted version that
+        // is not the active one, so a document bump (e.g. Cookies 1.0 -> 1.1) would otherwise
+        // silently turn every registration here into a 400.
         private static object[] AllConsentsAccepted() =>
         [
-            new { type = 0, document_version = "1.0", accepted = true }, // PersonalDataProcessing (mandatory)
-            new { type = 1, document_version = "1.0", accepted = true }, // PrivacyPolicy (mandatory)
-            new { type = 2, document_version = "1.0", accepted = true }, // TermsOfService (mandatory)
-            new { type = 3, document_version = "1.0", accepted = true }, // Cookies
-            new { type = 4, document_version = "1.0", accepted = true }, // PublicOffer (mandatory)
+            Consent(ConsentType.PersonalDataProcessing), // mandatory
+            Consent(ConsentType.PrivacyPolicy),          // mandatory
+            Consent(ConsentType.TermsOfService),         // mandatory
+            Consent(ConsentType.Cookies),
+            Consent(ConsentType.PublicOffer),            // mandatory
         ];
+
+        private static object Consent(ConsentType type, bool accepted = true) => new
+        {
+            type = (int)type,
+            document_version = ConsentVersions.GetCurrentVersion(type),
+            accepted,
+        };
 
         private static object RegisterBody(string email, string username) => new
         {
@@ -91,7 +104,7 @@ namespace DevStart.IntegrationTests.Auth
                 username = "missing_consents",
                 password = "Password123!",
                 is_public = false,
-                consents = new[] { new { type = 0, document_version = "1.0", accepted = true } },
+                consents = new[] { Consent(ConsentType.PersonalDataProcessing) },
             };
 
             HttpResponseMessage response = await client.PostAsJsonAsync("api/users/register", body);

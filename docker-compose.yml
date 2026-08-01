@@ -154,6 +154,77 @@ services:
       - tempo
     networks:
       - devstart-net
+  # --- Matomo: self-hosted product analytics ---
+  # UI is reachable two ways on purpose: http://localhost:8080/matomo/ (through nginx, same shape
+  # as prod) and http://localhost:8084/ (published port, for quick poking). RUN THE INSTALL WIZARD
+  # THROUGH :8080/matomo/ — the prefix-strip + X-Forwarded-Uri pair is the fragile part of this
+  # setup and should be exercised locally, not discovered in prod. See DEPLOYMENT.md.
+  matomo-db:
+    # Matomo supports MySQL/MariaDB only — it has NO PostgreSQL driver, so main-db cannot be
+    # reused and this is a second RDBMS on the box.
+    image: mariadb:11.4
+    container_name: matomo-db
+    restart: unless-stopped
+    # utf8mb4 end to end: MariaDB 11.4 defaults the collation to utf8mb4_uca1400_ai_ci, which
+    # Matomo's schema does not expect. Buffer pool is capped so it doesn't crowd out Postgres.
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --max-allowed-packet=64M
+      --innodb-buffer-pool-size=128M
+    environment:
+      MARIADB_ROOT_PASSWORD: matomo_root
+      MARIADB_DATABASE: matomo
+      MARIADB_USER: matomo
+      MARIADB_PASSWORD: matomo
+      MARIADB_AUTO_UPGRADE: "1"
+    # No published port: 3306 commonly collides with a locally installed MySQL, and nothing on the
+    # host needs it. Use: docker compose exec matomo-db mariadb -umatomo -pmatomo matomo
+    volumes:
+      - matomo-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - devstart-net
+
+  matomo:
+    image: matomo:5-apache
+    container_name: matomo
+    restart: unless-stopped
+    environment:
+      # These only PRE-FILL the database step of the install wizard — they do not skip it.
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: matomo
+      MATOMO_DATABASE_PASSWORD: matomo
+      MATOMO_DATABASE_DBNAME: matomo
+      PHP_MEMORY_LIMIT: 256M
+    ports:
+      - "8084:80"
+    volumes:
+      - matomo-data:/var/www/html
+      # Reverse-proxy + archiving overrides. Must exist as a FILE before the first start — a bind
+      # mount to a missing host path makes Docker create a directory (same trap as
+      # config/nginx/.htpasswd), and the wizard cannot be completed without these settings.
+      - ./config/matomo/common.config.ini.php:/var/www/html/config/common.config.ini.php:ro
+    depends_on:
+      matomo-db:
+        condition: service_healthy
+    healthcheck:
+      # The image ships no curl/wget (Debian slim); PHP is guaranteed. Liveness only — this must
+      # go green BEFORE the wizard has run, when there is no config.ini.php and every page 500s.
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - devstart-net
   nginx:
     image: nginx:1.27-alpine
     container_name: nginx
