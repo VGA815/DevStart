@@ -68,18 +68,28 @@ server {
     location = /health/details { return 404; }
 
     # Matomo analytics, mounted at /matomo/ on the main domain (no subdomain, no extra cert).
-    # proxy_pass has a TRAILING SLASH, so nginx strips the /matomo/ prefix and the container sees
-    # the request at its own document root; X-Forwarded-Uri hands the prefix back, and
-    # [General] proxy_uri_header = 1 (config/matomo/common.config.prod.ini.php) makes Matomo
-    # prepend it when building absolute URLs. Drop either half and every login redirect and asset
-    # URL loses the /matomo prefix — the classic failure mode of a path-mounted Matomo.
+    # `rewrite ... break` strips the /matomo/ prefix so the container sees the request at its own
+    # document root; X-Forwarded-Uri hands the prefix back, and [General] proxy_uri_header = 1
+    # (config/matomo/common.config.prod.ini.php) makes Matomo prepend it when building absolute
+    # URLs. Drop either half and every login redirect and asset URL loses the /matomo prefix — the
+    # classic failure mode of a path-mounted Matomo.
+    #
+    # The prefix strip MUST be a rewrite, not a trailing slash on proxy_pass. The upstream here is
+    # a variable (needed for per-request DNS re-resolution, see above), and per
+    # ngx_http_proxy_module: "when variables are used in proxy_pass, if URI is specified in the
+    # directive, it is passed to the server as is, replacing the original request URI". So
+    # `proxy_pass http://$upstream_matomo/;` sends a literal `GET /` for EVERY request under
+    # /matomo/ — path and query string both discarded — and Matomo answers every asset request
+    # with its own index page (JS/CSS then die on "Unexpected token '<'"). proxy_pass must stay
+    # URI-less here; nginx then forwards the rewritten URI together with the query string.
     #
     # Note this route is deliberately NOT IP-restricted: matomo.js and matomo.php must be
     # reachable by every visitor. To lock the UI down, first carve those two out into
     # `location = /matomo/matomo.js` and `location = /matomo/matomo.php` (exact match wins over a
     # prefix), then add allow/deny here.
     location /matomo/ {
-        proxy_pass http://$upstream_matomo/;
+        rewrite ^/matomo/(.*)$ /$1 break;
+        proxy_pass http://$upstream_matomo;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;

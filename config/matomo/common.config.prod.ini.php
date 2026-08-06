@@ -20,7 +20,8 @@
 
 [General]
 ; nginx serves Matomo at https://<DOMAIN>/matomo/ and STRIPS the prefix
-; (proxy_pass http://$upstream_matomo/; — note the trailing slash), then hands the prefix back
+; (rewrite ^/matomo/(.*)$ /$1 break; — NOT a trailing slash on proxy_pass, which would blank out
+; the request URI because the upstream is a variable), then hands the prefix back
 ; via `proxy_set_header X-Forwarded-Uri /matomo`. proxy_uri_header makes Matomo prepend that
 ; value when it builds its own script name, so logins, redirects and asset URLs keep /matomo.
 ; Remove either half and every absolute URL Matomo emits loses the prefix — the classic failure

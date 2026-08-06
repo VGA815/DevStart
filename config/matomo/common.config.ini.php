@@ -17,8 +17,9 @@
 ; proxy_uri_header only takes effect when the X-Forwarded-Uri header is actually present, so the
 ; direct port keeps working unchanged.
 ;
-; nginx STRIPS the /matomo/ prefix (proxy_pass http://$upstream_matomo/; — note the trailing
-; slash) and hands it back via `proxy_set_header X-Forwarded-Uri /matomo`. proxy_uri_header makes
+; nginx STRIPS the /matomo/ prefix (rewrite ^/matomo/(.*)$ /$1 break; — NOT a trailing slash on
+; proxy_pass, which blanks out the request URI when the upstream is a variable)
+; and hands it back via `proxy_set_header X-Forwarded-Uri /matomo`. proxy_uri_header makes
 ; Matomo prepend that value when it builds its own script name. Drop either half and every
 ; absolute URL and login redirect loses the /matomo prefix.
 proxy_uri_header = 1
