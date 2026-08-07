@@ -301,12 +301,18 @@ services:
       matomo:
         condition: service_started
     # The config.ini.php guard keeps the loop quiet (and non-failing) until the wizard is done.
+    # It retries every 60s while uninstalled instead of sleeping MATOMO_ARCHIVE_INTERVAL: this
+    # container comes up with the rest of the stack (DEPLOYMENT.md §8), which is BEFORE the install
+    # wizard (§8.1), so on a 6h interval it would print "not installed yet" once and then ignore
+    # the finished install for six hours — and `up -d matomo-archive` in §8.1 step 10 does not
+    # recreate an already-running container, so `logs -f` just replays that stale line.
     entrypoint: >-
       /bin/sh -c 'trap exit TERM; while :; do
       if [ -f /var/www/html/config/config.ini.php ]; then
       php /var/www/html/console core:archive --url=https://${DOMAIN}/matomo/ || true;
-      else echo "matomo not installed yet - skipping archive run"; fi;
-      sleep ${MATOMO_ARCHIVE_INTERVAL} & wait $${!};
+      delay=${MATOMO_ARCHIVE_INTERVAL};
+      else echo "matomo not installed yet - retrying in 60s"; delay=60; fi;
+      sleep $$delay & wait $${!};
       done'
     networks:
       - devstart-net
