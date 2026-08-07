@@ -51,9 +51,16 @@ namespace DevStart.Application.Startups.Update
             startup.Som = command.Som;
             startup.MarketGrowthRate = command.MarketGrowthRate;
             startup.HasPatents = command.HasPatents;
-            startup.Industry = command.Industry;
             startup.TargetRoundAmount = command.TargetRoundAmount;
-            startup.HasStrategicPartnerships = command.HasStrategicPartnerships;
+            // Omitted sector / partnerships keep their stored value — see UpdateStartupCommand.
+            if (command.Industry.HasValue)
+            {
+                startup.Industry = command.Industry.Value;
+            }
+            if (command.HasStrategicPartnerships.HasValue)
+            {
+                startup.HasStrategicPartnerships = command.HasStrategicPartnerships.Value;
+            }
             startup.UpdatedAt = dateTimeProvider.UtcNow;
 
             startup.Raise(new StartupUpdatedDomainEvent(startup.Id));

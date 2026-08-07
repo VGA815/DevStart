@@ -24,8 +24,8 @@ namespace DevStart.IntegrationTests.Startups
             location = 0, // Russia
             billing_email = "billing@startup.test",
             avatar_id = (Guid?)null,
-            product_name = "DevWidget",
-            product_problem_solution = "Solves the cold-start testing problem.",
+            product_problem = "Cold-start testing is unreliable.",
+            product_solution = "Solves the cold-start testing problem.",
             stack = new[] { "C#", "PostgreSQL" },
             product_value_proposition = "Ship with confidence.",
             product_differentiators = "Real database, real pipeline.",
@@ -93,6 +93,81 @@ namespace DevStart.IntegrationTests.Startups
             HttpResponseMessage response = await CreateClient().GetAsync($"api/startups/{Guid.NewGuid()}");
 
             response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        }
+
+        [Fact]
+        public async Task CreateStartup_WithoutOptionalProductDetails_Succeeds()
+        {
+            User user = await SeedUserAsync();
+            HttpClient client = CreateAuthenticatedClient(user);
+
+            HttpResponseMessage response = await client.PostAsJsonAsync("api/startups/", new
+            {
+                user_id = user.Id,
+                name = "Minimal Co",
+                public_email = "founders@minimal.test",
+                description = "",
+                url = "",
+                is_stopped = false,
+                stage = 0, // Idea
+                social_media_links = Array.Empty<string>(),
+                location = 0,
+                billing_email = "",
+                avatar_id = (Guid?)null,
+                product_solution = "Does the one thing it says it does.",
+                stack = Array.Empty<string>(),
+                short_description = "",
+            });
+
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        }
+
+        // Sector and partnerships are not on every client's update payload. Omitting them must
+        // leave the stored values alone — resetting them would silently wipe the scoring inputs.
+        [Fact]
+        public async Task UpdateStartup_WithoutSectorFields_KeepsStoredSectorAndPartnerships()
+        {
+            User user = await SeedUserAsync();
+            HttpClient client = CreateAuthenticatedClient(user);
+
+            object body = CreateBody(user.Id, "Sector Co");
+            HttpResponseMessage created = await client.PostAsJsonAsync("api/startups/", body);
+            created.StatusCode.ShouldBe(HttpStatusCode.OK);
+            Guid startupId = await created.Content.ReadFromJsonAsync<Guid>();
+
+            await ExecuteDbAsync(async db =>
+            {
+                Domain.Startups.Startup startup = await db.Startups.SingleAsync(s => s.Id == startupId);
+                startup.Industry = Domain.Startups.Industry.Fintech;
+                startup.HasStrategicPartnerships = true;
+                await db.SaveChangesAsync();
+            });
+
+            HttpResponseMessage updated = await client.PutAsJsonAsync("api/startups", new
+            {
+                startup_id = startupId,
+                name = "Sector Co Renamed",
+                public_email = "founders@startup.test",
+                description = "Updated.",
+                url = "https://startup.test",
+                is_stopped = false,
+                stage = 2,
+                social_media_links = Array.Empty<string>(),
+                location = 0,
+                billing_email = "billing@startup.test",
+                avatar_url = (Guid?)null,
+                short_description = "Updated.",
+            });
+
+            updated.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+            await ExecuteDbAsync(async db =>
+            {
+                Domain.Startups.Startup startup = await db.Startups.SingleAsync(s => s.Id == startupId);
+                startup.Name.ShouldBe("Sector Co Renamed");
+                startup.Industry.ShouldBe(Domain.Startups.Industry.Fintech);
+                startup.HasStrategicPartnerships.ShouldBeTrue();
+            });
         }
     }
 }

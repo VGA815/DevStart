@@ -60,8 +60,8 @@ namespace DevStart.Application.Startups.Create
 
             StartupProduct startupProduct = StartupProduct.Create(
                 startup.Id,
-                command.ProductName,
-                command.ProductProblemSolution,
+                command.ProductProblem,
+                command.ProductSolution,
                 command.Stack,
                 command.ProductValueProposition,
                 command.ProductDifferentiators);

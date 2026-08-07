@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.Startups;
 
 namespace DevStart.Application.Startups.Create
@@ -17,11 +17,11 @@ namespace DevStart.Application.Startups.Create
         public StartupLocation? Location { get; set; }
         public string? BillingEmail { get; set; }
         public Guid? AvatarId { get; set; }
-        public string ProductName { get; set; } = null!;
-        public string ProductProblemSolution { get; set; } = null!;
+        public string? ProductProblem { get; set; }
+        public string ProductSolution { get; set; } = null!;
         public List<string> Stack { get; set; } = [];
-        public string ProductValueProposition { get; set; } = null!;
-        public string ProductDifferentiators { get; set; } = null!;
+        public string? ProductValueProposition { get; set; }
+        public string? ProductDifferentiators { get; set; }
         public decimal? Tam { get; set; }
         public decimal? Sam { get; set; }
         public decimal? Som { get; set; }
@@ -32,7 +32,7 @@ namespace DevStart.Application.Startups.Create
         public bool HasStrategicPartnerships { get; set; }
 
         public CreateStartupCommand(Guid userId, string name, string publicEmail, string? description, string? url, bool isStopped, StartupStage stage, List<string>? socialMediaLinks, StartupLocation? location,
-            string? billingEmail, Guid? avatarId, string? shortDescription, string productName, string productProblemSolution, List<string> stack, string productValueProposition, string productDifferentiators,
+            string? billingEmail, Guid? avatarId, string? shortDescription, string? productProblem, string productSolution, List<string> stack, string? productValueProposition, string? productDifferentiators,
             decimal? tam = null, decimal? sam = null, decimal? som = null,
             decimal? marketGrowthRate = null, bool hasPatents = false,
             Industry industry = Industry.Other, decimal? targetRoundAmount = null, bool hasStrategicPartnerships = false)
@@ -48,9 +48,9 @@ namespace DevStart.Application.Startups.Create
             Location = location;
             BillingEmail = billingEmail;
             AvatarId = avatarId;
-            ProductName = productName;
+            ProductProblem = productProblem;
             SocialMediaLinks = socialMediaLinks;
-            ProductProblemSolution = productProblemSolution;
+            ProductSolution = productSolution;
             Stack = stack;
             ProductValueProposition = productValueProposition;
             ProductDifferentiators = productDifferentiators;

@@ -22,6 +22,14 @@ namespace DevStart.Application.Startups.GetById
         public decimal? MarketGrowthRate { get; init; }
         public bool HasPatents { get; init; }
 
+        /// <summary>Sector — feeds the sector-specific valuation constants. Editable by the owner.</summary>
+        public Industry Industry { get; init; }
+
+        /// <summary>Target raising amount for the current round (RUB).</summary>
+        public decimal? TargetRoundAmount { get; init; }
+
+        public bool HasStrategicPartnerships { get; init; }
+
         /// <summary>
         /// Whether a paid featured placement is currently running. This response is cached for
         /// <see cref="Abstractions.Caching.CacheTtl.Default"/>; the cache is dropped when a promotion is

@@ -31,9 +31,9 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("som")] decimal? Som = null,
             [property: JsonPropertyName("market_growth_rate")] decimal? MarketGrowthRate = null,
             [property: JsonPropertyName("has_patents")] bool HasPatents = false,
-            [property: JsonPropertyName("industry")] Industry Industry = Industry.Other,
+            [property: JsonPropertyName("industry")] Industry? Industry = null,
             [property: JsonPropertyName("target_round_amount")] decimal? TargetRoundAmount = null,
-            [property: JsonPropertyName("has_strategic_partnerships")] bool HasStrategicPartnerships = false);
+            [property: JsonPropertyName("has_strategic_partnerships")] bool? HasStrategicPartnerships = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPut("api/startups", async (

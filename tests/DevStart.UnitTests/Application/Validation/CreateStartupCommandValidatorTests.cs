@@ -28,22 +28,42 @@ public sealed class CreateStartupCommandValidatorTests
         CreateStartupCommand command = CreateValidCommand();
         command.Name = string.Empty;
         command.PublicEmail = string.Empty;
-        command.Stack = [];
-        command.ProductName = string.Empty;
-        command.ProductProblemSolution = string.Empty;
-        command.ProductValueProposition = string.Empty;
-        command.ProductDifferentiators = string.Empty;
+        command.ProductSolution = string.Empty;
 
         var result = _validator.Validate(command);
 
         result.IsValid.ShouldBeFalse();
         result.Errors.Select(error => error.PropertyName).ShouldContain("Name");
         result.Errors.Select(error => error.PropertyName).ShouldContain("PublicEmail");
-        result.Errors.Select(error => error.PropertyName).ShouldContain("Stack");
-        result.Errors.Select(error => error.PropertyName).ShouldContain("ProductName");
-        result.Errors.Select(error => error.PropertyName).ShouldContain("ProductProblemSolution");
-        result.Errors.Select(error => error.PropertyName).ShouldContain("ProductValueProposition");
-        result.Errors.Select(error => error.PropertyName).ShouldContain("ProductDifferentiators");
+        result.Errors.Select(error => error.PropertyName).ShouldContain("ProductSolution");
+    }
+
+    [Fact]
+    public void Validate_ShouldFail_ForMalformedPublicEmail()
+    {
+        CreateStartupCommand command = CreateValidCommand();
+        command.PublicEmail = "not-an-email";
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.Select(error => error.PropertyName).ShouldContain("PublicEmail");
+    }
+
+    // Stack, value proposition, differentiators and the problem statement are scoring inputs, not
+    // gates: a startup must be creatable without them and complete them later in the editor.
+    [Fact]
+    public void Validate_ShouldPass_WithoutOptionalProductDetails()
+    {
+        CreateStartupCommand command = CreateValidCommand();
+        command.Stack = [];
+        command.ProductProblem = null;
+        command.ProductValueProposition = null;
+        command.ProductDifferentiators = null;
+
+        var result = _validator.Validate(command);
+
+        result.IsValid.ShouldBeTrue();
     }
 
     [Fact]
@@ -80,8 +100,8 @@ public sealed class CreateStartupCommandValidatorTests
             "billing@example.com",
             avatarId: null,
             "Short",
-            "Product",
-            "Problem and solution",
+            "Problem",
+            "Solution",
             ["dotnet"],
             "Value",
             "Differentiators",
