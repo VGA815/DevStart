@@ -37,6 +37,16 @@ namespace DevStart.Infrastructure.Messages
                 .HasColumnType("jsonb")
                 .HasConversion(EfJson.GuidListConverter);
 
+            builder.Property(x => x.DocumentIds)
+                .HasColumnName("document_ids")
+                .HasColumnType("jsonb")
+                .HasConversion(EfJson.GuidListConverter);
+
+            builder.Property(x => x.FileIds)
+                .HasColumnName("file_ids")
+                .HasColumnType("jsonb")
+                .HasConversion(EfJson.GuidListConverter);
+
             builder.HasIndex(x => new { x.SenderId, x.ReceiverId }).HasDatabaseName("ix_messages_sender_receiver");
             builder.HasIndex(x => new { x.ReceiverId, x.IsRead }).HasDatabaseName("ix_messages_receiver_is_read");
             builder.HasIndex(x => x.CreatedAt).HasDatabaseName("ix_messages_created_at");

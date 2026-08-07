@@ -67,6 +67,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.MessagesRead,
                 Permissions.MessagesUpdate,
 
+                Permissions.ChatFilesUpload,
+                Permissions.ChatFilesRead,
+
                 Permissions.InvestorProfilesCreate,
                 Permissions.InvestorProfilesUpdate,
                 Permissions.InvestorProfilesRead,
@@ -161,6 +164,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.MessagesSend,
                 Permissions.MessagesRead,
                 Permissions.MessagesUpdate,
+
+                Permissions.ChatFilesUpload,
+                Permissions.ChatFilesRead,
 
                 Permissions.InvestorProfilesCreate,
                 Permissions.InvestorProfilesUpdate,

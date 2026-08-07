@@ -12,6 +12,8 @@ namespace DevStart.Application.Messages.GetById
         public string? TextContent { get; set; }
         public List<Guid> MediaIds { get; set; } = [];
         public List<Guid> MetricIds { get; set; } = [];
+        public List<Guid> DocumentIds { get; set; } = [];
+        public List<Guid> FileIds { get; set; } = [];
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

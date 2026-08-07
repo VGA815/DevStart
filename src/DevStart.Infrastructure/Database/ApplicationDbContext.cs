@@ -16,6 +16,7 @@ using DevStart.Domain.InvestmentApplications;
 using DevStart.Domain.InvestmentDeals;
 using DevStart.Domain.Investors;
 using DevStart.Domain.InviteTokens;
+using DevStart.Domain.ChatFiles;
 using DevStart.Domain.MediaFiles;
 using DevStart.Domain.Messages;
 using DevStart.Domain.Notifications;
@@ -88,6 +89,8 @@ namespace DevStart.Infrastructure.Database
         public DbSet<InviteToken> InviteTokens { get; set; }
 
         public DbSet<Message> Messages { get; set; }
+
+        public DbSet<ChatFile> ChatFiles { get; set; }
 
         public DbSet<StartupDocumentFile> StartupDocumentFiles { get; set; }
 

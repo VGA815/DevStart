@@ -58,6 +58,9 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string MessagesRead                     = "messages::read";
         public const string MessagesUpdate                   = "messages::update";
 
+        public const string ChatFilesUpload                  = "chat_files::upload";
+        public const string ChatFilesRead                    = "chat_files::read";
+
         public const string InvestorProfilesCreate           = "investor_profiles::create";
         public const string InvestorProfilesUpdate           = "investor_profiles::update";
         public const string InvestorProfilesRead             = "investor_profiles::read";

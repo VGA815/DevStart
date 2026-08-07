@@ -1,4 +1,5 @@
 ﻿using DevStart.Domain.Admin;
+using DevStart.Domain.ChatFiles;
 using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.DealDocuments;
 using DevStart.Domain.ExternalLogins;
@@ -62,6 +63,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<Notification> Notifications { get; }
         DbSet<InviteToken> InviteTokens { get; }
         DbSet<Message> Messages { get; }
+        DbSet<ChatFile> ChatFiles { get; }
         DbSet<StartupDocumentFile> StartupDocumentFiles { get; }
         DbSet<InvestorProfile> InvestorProfiles { get; }
         DbSet<ExpertProfile> ExpertProfiles { get; }

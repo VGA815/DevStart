@@ -18,14 +18,26 @@ namespace DevStart.Application.MediaFiles.Upload
                 return Result.Failure<Guid>(UserErrors.NotFound(command.OwnerId));
             }
 
-            if (command.Size > int.MaxValue)
+            if (command.Size <= 0)
             {
-                return Result.Failure<Guid>(Error.Failure("MediaFiles.FileTooLarge", "File size exceeds the maximum allowed size."));
+                return Result.Failure<Guid>(MediaFileErrors.Empty);
+            }
+
+            if (command.Size > MediaFileRules.MaxFileSizeBytes)
+            {
+                return Result.Failure<Guid>(MediaFileErrors.TooLarge);
+            }
+
+            // The stored object used to be named ".webp" regardless of what was actually uploaded, and
+            // anything at all was accepted here — including non-images.
+            if (!MediaFileRules.IsAllowedContentType(command.ContentType))
+            {
+                return Result.Failure<Guid>(MediaFileErrors.ContentTypeNotAllowed);
             }
 
             Guid fileId = Guid.NewGuid();
 
-            var objectKey = $"users/{userContext.UserId}/{fileId}.webp";
+            var objectKey = $"users/{userContext.UserId}/{fileId}{MediaFileRules.ExtensionFor(command.ContentType)}";
 
             try
             {
@@ -44,7 +56,7 @@ namespace DevStart.Application.MediaFiles.Upload
             MediaFile mediaFile = new MediaFile()
             {
                 FileSize = (int)command.Size,
-                FileType = MediaFileType.Img,
+                FileType = MediaFileRules.TypeFor(command.ContentType),
                 ObjectName = objectKey,
                 Id = fileId,
                 Bucket = command.Bucket,

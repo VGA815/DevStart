@@ -13,6 +13,9 @@ namespace DevStart.Domain.Messages
         public static readonly Error Unauthorized = Error.Problem(
             "Messages.Unauthorized",
             "You are not allowed to perform this action on this message.");
+        public static Error AttachmentNotAllowed(string attachmentKind) => Error.Problem(
+            "Messages.AttachmentNotAllowed",
+            $"One or more attached {attachmentKind} do not exist or are not available to you.");
         public static Error ReceiverNotFound(Guid receiverId, ChatParticipantType receiverType) => Error.NotFound(
             "Messages.ReceiverNotFound",
             $"Receiver of type '{receiverType}' with id = '{receiverId}' was not found.");

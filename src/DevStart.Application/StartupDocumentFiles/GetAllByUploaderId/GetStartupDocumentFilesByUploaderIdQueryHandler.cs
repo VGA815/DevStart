@@ -1,4 +1,5 @@
-﻿using DevStart.Application.Abstractions.Data;
+﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.Users;
@@ -7,12 +8,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.StartupDocumentFiles.GetAllByUploaderId
 {
-    internal sealed class GetStartupDocumentFilesByUploaderIdQueryHandler(IApplicationDbContext context, IFileStorage fileStorage)
+    internal sealed class GetStartupDocumentFilesByUploaderIdQueryHandler(IApplicationDbContext context, IUserContext userContext, IFileStorage fileStorage)
         : IQueryHandler<GetStartupDocumentFilesByUploaderIdQuery, List<StartupDocumentFileResponse>>
     {
         private const int PresignedUrlExpirySeconds = 3600;
         public async Task<Result<List<StartupDocumentFileResponse>>> Handle(GetStartupDocumentFilesByUploaderIdQuery query, CancellationToken cancellationToken)
         {
+            // This lists one person's uploads across every startup they belong to, so it stays private to them.
+            if (query.UploaderId != userContext.UserId)
+            {
+                return Result.Failure<List<StartupDocumentFileResponse>>(StartupDocumentFileErrors.Forbidden);
+            }
+
             if (!await context.Users.AnyAsync(u => u.Id == query.UploaderId, cancellationToken))
             {
                 return Result.Failure<List<StartupDocumentFileResponse>>(UserErrors.NotFound(query.UploaderId));

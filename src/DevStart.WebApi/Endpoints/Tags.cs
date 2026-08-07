@@ -21,6 +21,7 @@
         public const string Notifications = "Notifications";
         public const string InviteTokens = "InviteTokens";
         public const string Messages = "Messages";
+        public const string ChatFiles = "ChatFiles";
         public const string InvestorProfiles = "InvestorProfiles";
         public const string ExpertProfiles = "ExpertProfiles";
         public const string ExpertExperiences = "ExpertExperiences";

@@ -23,26 +23,7 @@ namespace DevStart.Application.Messages.GetById
                 return Result.Failure<MessageResponse>(MessageErrors.NotFound(query.MessageId));
             }
 
-            bool isDirectUser =
-                (message.SenderType == ChatParticipantType.User && message.SenderId == userId) ||
-                (message.ReceiverType == ChatParticipantType.User && message.ReceiverId == userId);
-
-            bool isStartupMember = false;
-            if (!isDirectUser)
-            {
-                var startupIds = new List<Guid>(2);
-                if (message.SenderType == ChatParticipantType.Startup) startupIds.Add(message.SenderId);
-                if (message.ReceiverType == ChatParticipantType.Startup) startupIds.Add(message.ReceiverId);
-
-                if (startupIds.Count > 0)
-                {
-                    isStartupMember = await context.StartupMembers.AnyAsync(
-                        sm => sm.ProfileId == userId && startupIds.Contains(sm.StartupId),
-                        cancellationToken);
-                }
-            }
-
-            if (!isDirectUser && !isStartupMember)
+            if (!await MessageAccess.CanReadAsync(context, message, userId, cancellationToken))
             {
                 return Result.Failure<MessageResponse>(MessageErrors.Unauthorized);
             }
@@ -57,6 +38,8 @@ namespace DevStart.Application.Messages.GetById
                 TextContent = message.TextContent,
                 MediaIds = message.MediaIds,
                 MetricIds = message.MetricIds,
+                DocumentIds = message.DocumentIds,
+                FileIds = message.FileIds,
                 IsRead = message.IsRead,
                 CreatedAt = message.CreatedAt,
                 UpdatedAt = message.UpdatedAt

@@ -11,6 +11,8 @@ namespace DevStart.Application.Messages.GetConversation
     internal sealed class GetConversationQueryHandler(IApplicationDbContext context, IUserContext userContext)
         : IQueryHandler<GetConversationQuery, List<MessageResponse>>
     {
+        private const int MaxPageSize = 100;
+
         public async Task<Result<List<MessageResponse>>> Handle(GetConversationQuery query, CancellationToken cancellationToken)
         {
             Guid myId;
@@ -39,14 +41,18 @@ namespace DevStart.Application.Messages.GetConversation
             ChatParticipantType otherType = query.OtherType;
             Guid otherId = query.OtherId;
 
+            // A page below 1 would produce a negative OFFSET, which the database rejects outright.
+            int page = query.Page < 1 ? 1 : query.Page;
+            int pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
             List<MessageResponse> messages = await context.Messages
                 .AsNoTracking()
                 .Where(m =>
                     (m.SenderType == mySide && m.SenderId == myId && m.ReceiverType == otherType && m.ReceiverId == otherId) ||
                     (m.SenderType == otherType && m.SenderId == otherId && m.ReceiverType == mySide && m.ReceiverId == myId))
                 .OrderByDescending(m => m.CreatedAt)
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(m => new MessageResponse
                 {
                     Id = m.Id,
@@ -57,6 +63,8 @@ namespace DevStart.Application.Messages.GetConversation
                     TextContent = m.TextContent,
                     MediaIds = m.MediaIds,
                     MetricIds = m.MetricIds,
+                    DocumentIds = m.DocumentIds,
+                    FileIds = m.FileIds,
                     IsRead = m.IsRead,
                     CreatedAt = m.CreatedAt,
                     UpdatedAt = m.UpdatedAt

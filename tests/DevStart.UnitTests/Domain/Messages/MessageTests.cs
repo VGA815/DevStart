@@ -12,6 +12,8 @@ public sealed class MessageTests
         Guid receiverId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         Guid mediaId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
         Guid metricId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        Guid documentId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        Guid fileId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
         DateTime createdAt = new(2026, 5, 16, 10, 0, 0, DateTimeKind.Utc);
 
         Message message = Message.Create(
@@ -22,6 +24,8 @@ public sealed class MessageTests
             "Hello",
             [mediaId],
             [metricId],
+            [documentId],
+            [fileId],
             createdAt);
 
         message.Id.ShouldNotBe(Guid.Empty);
@@ -32,6 +36,8 @@ public sealed class MessageTests
         message.TextContent.ShouldBe("Hello");
         message.MediaIds.ShouldBe([mediaId]);
         message.MetricIds.ShouldBe([metricId]);
+        message.DocumentIds.ShouldBe([documentId]);
+        message.FileIds.ShouldBe([fileId]);
         message.IsRead.ShouldBeFalse();
         message.CreatedAt.ShouldBe(createdAt);
         message.UpdatedAt.ShouldBe(createdAt);
@@ -48,10 +54,14 @@ public sealed class MessageTests
             textContent: null,
             mediaIds: null,
             metricIds: null,
+            documentIds: null,
+            fileIds: null,
             new DateTime(2026, 5, 16, 10, 0, 0, DateTimeKind.Utc));
 
         message.MediaIds.ShouldBeEmpty();
         message.MetricIds.ShouldBeEmpty();
+        message.DocumentIds.ShouldBeEmpty();
+        message.FileIds.ShouldBeEmpty();
     }
 
     [Fact]
@@ -65,6 +75,8 @@ public sealed class MessageTests
             "Hello",
             mediaIds: null,
             metricIds: null,
+            documentIds: null,
+            fileIds: null,
             new DateTime(2026, 5, 16, 10, 0, 0, DateTimeKind.Utc));
 
         message.MarkAsRead();

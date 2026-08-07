@@ -15,7 +15,9 @@ namespace DevStart.WebApi.Endpoints.StartupDocumentFiles
                 IQueryHandler<GetStartupDocumentFileByIdQuery, StartupDocumentFileResponse> handler,
                 CancellationToken cancellationToken) =>
             {
-                var query = new GetStartupDocumentFileByIdQuery(id, 300);
+                // Matches the list endpoints' TTL: chat attachments keep a document reference for a while
+                // after it is rendered, and a 5-minute link expired before it could be opened.
+                var query = new GetStartupDocumentFileByIdQuery(id, 3600);
 
                 Result<StartupDocumentFileResponse> result = await handler.Handle(query, cancellationToken);
 

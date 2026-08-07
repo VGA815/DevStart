@@ -10,8 +10,14 @@ namespace DevStart.Application.Messages.GetConversations
     internal sealed class GetConversationsQueryHandler(IApplicationDbContext context, IUserContext userContext)
         : IQueryHandler<GetConversationsQuery, List<ConversationSummaryResponse>>
     {
+        private const int MaxPageSize = 100;
+
         public async Task<Result<List<ConversationSummaryResponse>>> Handle(GetConversationsQuery query, CancellationToken cancellationToken)
         {
+            // A page below 1 would produce a negative OFFSET, which the database rejects outright.
+            int page = query.Page < 1 ? 1 : query.Page;
+            int pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+
             Guid myId;
             ChatParticipantType mySide;
 
@@ -53,8 +59,8 @@ namespace DevStart.Application.Messages.GetConversations
                     LastMessageAt = g.Max(m => m.CreatedAt)
                 })
                 .OrderByDescending(c => c.LastMessageAt)
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
             return conversations;

@@ -11,5 +11,7 @@ namespace DevStart.Application.Messages.Create
         public string? TextContent { get; set; }
         public List<Guid>? MediaIds { get; set; }
         public List<Guid>? MetricIds { get; set; }
+        public List<Guid>? DocumentIds { get; set; }
+        public List<Guid>? FileIds { get; set; }
     }
 }

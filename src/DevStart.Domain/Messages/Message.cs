@@ -12,6 +12,10 @@ namespace DevStart.Domain.Messages
         public string? TextContent { get; set; }
         public List<Guid> MediaIds { get; set; } = [];
         public List<Guid> MetricIds { get; set; } = [];
+        /// <summary>Attached startup documents (<c>StartupDocumentFile</c> ids).</summary>
+        public List<Guid> DocumentIds { get; set; } = [];
+        /// <summary>Attached files uploaded from the sender's machine (<c>ChatFile</c> ids).</summary>
+        public List<Guid> FileIds { get; set; } = [];
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -28,6 +32,8 @@ namespace DevStart.Domain.Messages
             string? textContent,
             List<Guid>? mediaIds,
             List<Guid>? metricIds,
+            List<Guid>? documentIds,
+            List<Guid>? fileIds,
             DateTime createdAt)
             => new()
             {
@@ -37,6 +43,8 @@ namespace DevStart.Domain.Messages
                 IsRead = false,
                 MediaIds = mediaIds ?? [],
                 MetricIds = metricIds ?? [],
+                DocumentIds = documentIds ?? [],
+                FileIds = fileIds ?? [],
                 ReceiverId = receiverId,
                 ReceiverType = receiverType,
                 SenderId = senderId,
