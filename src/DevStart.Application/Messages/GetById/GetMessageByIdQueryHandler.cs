@@ -28,11 +28,18 @@ namespace DevStart.Application.Messages.GetById
                 return Result.Failure<MessageResponse>(MessageErrors.Unauthorized);
             }
 
+            // The author behind a startup message is disclosed to that startup's own side only.
+            bool isOwnStartupMessage =
+                message.SenderType == ChatParticipantType.Startup &&
+                message.SentByProfileId is not null &&
+                await StartupIdentity.CanActAsAsync(context, message.SenderId, userId, cancellationToken);
+
             return new MessageResponse
             {
                 Id = message.Id,
                 SenderId = message.SenderId,
                 SenderType = message.SenderType,
+                SentByProfileId = isOwnStartupMessage ? message.SentByProfileId : null,
                 ReceiverId = message.ReceiverId,
                 ReceiverType = message.ReceiverType,
                 TextContent = message.TextContent,

@@ -134,6 +134,100 @@ public sealed class CreateMessageCommandHandlerTests
         result.Error.ShouldBe(MessageErrors.IsEmpty);
     }
 
+    [Fact]
+    public async Task Handle_SendingAsStartup_RecordsTheStartupAsSenderAndTheAuthorBehindIt()
+    {
+        await using ApplicationDbContext context = InMemoryDbContextFactory.Create();
+        (User founder, User receiver, Startup startup) = await SeedAsync(context);
+
+        Result<Guid> result = await CreateHandler(context, founder.Id).Handle(
+            new CreateMessageCommand
+            {
+                ReceiverId = receiver.Id,
+                ReceiverType = ChatParticipantType.User,
+                SenderStartupId = startup.Id,
+                TextContent = "Пишем от лица компании",
+            },
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+
+        Message message = context.Messages.Single();
+        message.SenderType.ShouldBe(ChatParticipantType.Startup);
+        message.SenderId.ShouldBe(startup.Id);
+        message.SentByProfileId.ShouldBe(founder.Id);
+    }
+
+    [Fact]
+    public async Task Handle_SendingAsStartup_IsForbiddenForAPlainMember()
+    {
+        await using ApplicationDbContext context = InMemoryDbContextFactory.Create();
+        (_, User receiver, Startup startup) = await SeedAsync(context);
+
+        User plainMember = CreateUser("member");
+        context.Users.Add(plainMember);
+        context.Profiles.Add(Profile.Create(plainMember.Id, "Member", null, null, false, true, null));
+        context.StartupMembers.Add(StartupMember.Create(plainMember.Id, startup.Id, StartupRole.Member, true, UtcNow));
+        await context.SaveChangesAsync();
+
+        Result<Guid> result = await CreateHandler(context, plainMember.Id).Handle(
+            new CreateMessageCommand
+            {
+                ReceiverId = receiver.Id,
+                ReceiverType = ChatParticipantType.User,
+                SenderStartupId = startup.Id,
+                TextContent = "Пишем от лица компании",
+            },
+            CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe(MessageErrors.StartupIdentityForbidden);
+        context.Messages.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Handle_SendingAsAStartupTheUserDoesNotBelongTo_IsForbidden()
+    {
+        await using ApplicationDbContext context = InMemoryDbContextFactory.Create();
+        (User sender, User receiver, _) = await SeedAsync(context);
+
+        Startup foreignStartup = CreateStartup("Foreign");
+        context.Startups.Add(foreignStartup);
+        await context.SaveChangesAsync();
+
+        Result<Guid> result = await CreateHandler(context, sender.Id).Handle(
+            new CreateMessageCommand
+            {
+                ReceiverId = receiver.Id,
+                ReceiverType = ChatParticipantType.User,
+                SenderStartupId = foreignStartup.Id,
+                TextContent = "Не моя компания",
+            },
+            CancellationToken.None);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe(MessageErrors.StartupIdentityForbidden);
+    }
+
+    [Fact]
+    public async Task Handle_SendingAsUser_LeavesTheAuthorFieldEmpty()
+    {
+        await using ApplicationDbContext context = InMemoryDbContextFactory.Create();
+        (User sender, User receiver, _) = await SeedAsync(context);
+
+        Result<Guid> result = await CreateHandler(context, sender.Id).Handle(
+            new CreateMessageCommand
+            {
+                ReceiverId = receiver.Id,
+                ReceiverType = ChatParticipantType.User,
+                TextContent = "От себя",
+            },
+            CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+        context.Messages.Single().SentByProfileId.ShouldBeNull();
+    }
+
     private static CreateMessageCommandHandler CreateHandler(ApplicationDbContext context, Guid userId) =>
         new(context, new TestUserContext(userId), new FixedDateTimeProvider { UtcNow = UtcNow });
 

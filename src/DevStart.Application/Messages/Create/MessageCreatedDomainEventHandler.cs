@@ -21,15 +21,23 @@ namespace DevStart.Application.Messages.Create
                 return;
             }
 
+            // Only the people who may open the startup's chat are told about it.
             List<Guid> memberProfileIds = await context.StartupMembers
                 .AsNoTracking()
-                .Where(sm => sm.StartupId == domainEvent.ReceiverId)
+                .Where(sm => sm.StartupId == domainEvent.ReceiverId
+                          && MessagingRoles.CanActAsStartup.Contains(sm.Role))
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
             foreach (Guid profileId in memberProfileIds)
             {
                 if (domainEvent.SenderType == ChatParticipantType.User && profileId == domainEvent.SenderId)
+                {
+                    continue;
+                }
+
+                // Someone who leads both sides must not be pinged about their own message.
+                if (profileId == domainEvent.SentByProfileId)
                 {
                     continue;
                 }

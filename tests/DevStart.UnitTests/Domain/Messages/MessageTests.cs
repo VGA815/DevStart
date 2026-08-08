@@ -19,6 +19,7 @@ public sealed class MessageTests
         Message message = Message.Create(
             senderId,
             ChatParticipantType.User,
+            sentByProfileId: null,
             receiverId,
             ChatParticipantType.Startup,
             "Hello",
@@ -49,6 +50,7 @@ public sealed class MessageTests
         Message message = Message.Create(
             Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
             ChatParticipantType.User,
+            sentByProfileId: null,
             Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
             ChatParticipantType.Startup,
             textContent: null,
@@ -70,6 +72,7 @@ public sealed class MessageTests
         Message message = Message.Create(
             Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
             ChatParticipantType.User,
+            sentByProfileId: null,
             Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
             ChatParticipantType.Startup,
             "Hello",

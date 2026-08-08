@@ -23,13 +23,9 @@ namespace DevStart.Application.Messages.GetConversations
 
             if (query.AsStartupId.HasValue)
             {
-                bool isMember = await context.StartupMembers.AnyAsync(
-                    sm => sm.StartupId == query.AsStartupId.Value && sm.ProfileId == userContext.UserId,
-                    cancellationToken);
-
-                if (!isMember)
+                if (!await StartupIdentity.CanActAsAsync(context, query.AsStartupId.Value, userContext.UserId, cancellationToken))
                 {
-                    return Result.Failure<List<ConversationSummaryResponse>>(MessageErrors.Unauthorized);
+                    return Result.Failure<List<ConversationSummaryResponse>>(MessageErrors.StartupIdentityForbidden);
                 }
 
                 myId = query.AsStartupId.Value;

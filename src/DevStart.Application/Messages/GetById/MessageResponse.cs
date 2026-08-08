@@ -7,6 +7,11 @@ namespace DevStart.Application.Messages.GetById
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }
         public ChatParticipantType SenderType { get; set; }
+        /// <summary>
+        /// Which team member sent this as the startup. Populated only for that startup's own side of
+        /// the conversation — the counterpart always sees <c>null</c>.
+        /// </summary>
+        public Guid? SentByProfileId { get; set; }
         public Guid ReceiverId { get; set; }
         public ChatParticipantType ReceiverType { get; set; }
         public string? TextContent { get; set; }

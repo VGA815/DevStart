@@ -6,6 +6,7 @@ namespace DevStart.Domain.Messages
         Guid MessageId,
         Guid SenderId,
         ChatParticipantType SenderType,
+        Guid? SentByProfileId,
         Guid ReceiverId,
         ChatParticipantType ReceiverType) : IDomainEvent;
 }

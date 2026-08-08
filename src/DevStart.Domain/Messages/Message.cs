@@ -7,6 +7,11 @@ namespace DevStart.Domain.Messages
         public Guid Id { get; set; }
         public Guid SenderId { get; set; }
         public ChatParticipantType SenderType { get; set; }
+        /// <summary>
+        /// The team member behind a message sent as a startup; <c>null</c> for messages sent by a user
+        /// under their own name. Only ever disclosed to that startup's own side of the conversation.
+        /// </summary>
+        public Guid? SentByProfileId { get; set; }
         public Guid ReceiverId { get; set; }
         public ChatParticipantType ReceiverType { get; set; }
         public string? TextContent { get; set; }
@@ -27,6 +32,7 @@ namespace DevStart.Domain.Messages
         public static Message Create(
             Guid senderId,
             ChatParticipantType senderType,
+            Guid? sentByProfileId,
             Guid receiverId,
             ChatParticipantType receiverType,
             string? textContent,
@@ -49,6 +55,7 @@ namespace DevStart.Domain.Messages
                 ReceiverType = receiverType,
                 SenderId = senderId,
                 SenderType = senderType,
+                SentByProfileId = sentByProfileId,
                 TextContent = textContent,
             };
     }

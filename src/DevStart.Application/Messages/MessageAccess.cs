@@ -34,8 +34,11 @@ namespace DevStart.Application.Messages
                 return false;
             }
 
+            // A startup's correspondence is visible to whoever may speak for it, not to every member.
             return await context.StartupMembers.AnyAsync(
-                sm => sm.ProfileId == userId && startupIds.Contains(sm.StartupId),
+                sm => sm.ProfileId == userId
+                   && startupIds.Contains(sm.StartupId)
+                   && MessagingRoles.CanActAsStartup.Contains(sm.Role),
                 cancellationToken);
         }
     }

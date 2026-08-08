@@ -32,20 +32,19 @@ namespace DevStart.Application.Messages.Create
             Guid userId = userContext.UserId;
             Guid senderId;
             ChatParticipantType senderType;
+            Guid? sentByProfileId = null;
 
             if (command.SenderStartupId.HasValue)
             {
-                bool isMember = await context.StartupMembers.AnyAsync(
-                    sm => sm.StartupId == command.SenderStartupId.Value && sm.ProfileId == userId,
-                    cancellationToken);
-
-                if (!isMember)
+                if (!await StartupIdentity.CanActAsAsync(context, command.SenderStartupId.Value, userId, cancellationToken))
                 {
-                    return Result.Failure<Guid>(MessageErrors.Unauthorized);
+                    return Result.Failure<Guid>(MessageErrors.StartupIdentityForbidden);
                 }
 
                 senderId = command.SenderStartupId.Value;
                 senderType = ChatParticipantType.Startup;
+                // Kept for the startup's own side of the thread, so the team can tell who replied.
+                sentByProfileId = userId;
             }
             else
             {
@@ -129,6 +128,7 @@ namespace DevStart.Application.Messages.Create
             Message message = Message.Create(
                 senderId,
                 senderType,
+                sentByProfileId,
                 command.ReceiverId,
                 command.ReceiverType,
                 textContent,
@@ -148,6 +148,7 @@ namespace DevStart.Application.Messages.Create
                 message.Id,
                 message.SenderId,
                 message.SenderType,
+                message.SentByProfileId,
                 message.ReceiverId,
                 message.ReceiverType));
 

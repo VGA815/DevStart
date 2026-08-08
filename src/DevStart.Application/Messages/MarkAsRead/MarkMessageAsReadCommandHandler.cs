@@ -29,9 +29,8 @@ namespace DevStart.Application.Messages.MarkAsRead
             }
             else
             {
-                canMark = await context.StartupMembers.AnyAsync(
-                    sm => sm.StartupId == message.ReceiverId && sm.ProfileId == userId,
-                    cancellationToken);
+                // Read state is shared across the startup, so only those who may read it may clear it.
+                canMark = await StartupIdentity.CanActAsAsync(context, message.ReceiverId, userId, cancellationToken);
             }
 
             if (!canMark)

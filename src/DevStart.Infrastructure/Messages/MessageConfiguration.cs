@@ -17,6 +17,7 @@ namespace DevStart.Infrastructure.Messages
                 .HasConversion<int>()
                 .IsRequired()
                 .HasColumnName("sender_type");
+            builder.Property(x => x.SentByProfileId).HasColumnName("sent_by_profile_id");
             builder.Property(x => x.ReceiverId).HasColumnName("receiver_id");
             builder.Property(x => x.ReceiverType)
                 .HasConversion<int>()

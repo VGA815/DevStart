@@ -20,13 +20,9 @@ namespace DevStart.Application.Messages.GetConversation
 
             if (query.AsStartupId.HasValue)
             {
-                bool isMember = await context.StartupMembers.AnyAsync(
-                    sm => sm.StartupId == query.AsStartupId.Value && sm.ProfileId == userContext.UserId,
-                    cancellationToken);
-
-                if (!isMember)
+                if (!await StartupIdentity.CanActAsAsync(context, query.AsStartupId.Value, userContext.UserId, cancellationToken))
                 {
-                    return Result.Failure<List<MessageResponse>>(MessageErrors.Unauthorized);
+                    return Result.Failure<List<MessageResponse>>(MessageErrors.StartupIdentityForbidden);
                 }
 
                 myId = query.AsStartupId.Value;
@@ -58,6 +54,10 @@ namespace DevStart.Application.Messages.GetConversation
                     Id = m.Id,
                     SenderId = m.SenderId,
                     SenderType = m.SenderType,
+                    // Only the startup's own side learns who behind the company wrote the message.
+                    SentByProfileId = mySide == ChatParticipantType.Startup && m.SenderId == myId
+                        ? m.SentByProfileId
+                        : null,
                     ReceiverId = m.ReceiverId,
                     ReceiverType = m.ReceiverType,
                     TextContent = m.TextContent,
