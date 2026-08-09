@@ -4,17 +4,18 @@ using DevStart.Domain.ExpertCollaborationRequests;
 using DevStart.Domain.Notifications;
 using DevStart.SharedKernel;
 
-namespace DevStart.Application.ExpertCollaborationRequests.Create
+namespace DevStart.Application.ExpertCollaborationRequests.Expire
 {
-    internal sealed class ExpertCollaborationRequestCreatedDomainEventHandler(
+    internal sealed class ExpertCollaborationRequestExpiredDomainEventHandler(
         IApplicationDbContext context,
         INotificationService notificationService,
-        IDateTimeProvider dateTimeProvider) : IDomainEventHandler<ExpertCollaborationRequestCreatedDomainEvent>
+        IDateTimeProvider dateTimeProvider) : IDomainEventHandler<ExpertCollaborationRequestExpiredDomainEvent>
     {
-        public async Task Handle(ExpertCollaborationRequestCreatedDomainEvent domainEvent, CancellationToken cancellationToken)
+        public async Task Handle(ExpertCollaborationRequestExpiredDomainEvent domainEvent, CancellationToken cancellationToken)
         {
-            // The new request lands in the inbox of whoever has to answer it.
-            List<Guid> recipientIds = await ExpertCollaborationRequestParticipants.GetResponderRecipientsAsync(
+            // Only the side that was waiting for an answer is told. The side that never responded does
+            // not need a notification about the thing it ignored.
+            List<Guid> recipientIds = await ExpertCollaborationRequestParticipants.GetInitiatorRecipientsAsync(
                 context,
                 domainEvent.StartupId,
                 domainEvent.ExpertProfileId,
@@ -22,7 +23,7 @@ namespace DevStart.Application.ExpertCollaborationRequests.Create
                 cancellationToken);
 
             (NotificationType type, string title, string body) = ExpertCollaborationNotifications
-                .Received(domainEvent.Initiator);
+                .Expired(domainEvent.Initiator);
 
             DateTime utcNow = dateTimeProvider.UtcNow;
 

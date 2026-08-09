@@ -6,5 +6,6 @@ namespace DevStart.Domain.ExpertCollaborationRequests
         Guid RequestId,
         Guid ExpertProfileId,
         Guid StartupId,
+        CollaborationRequestInitiator Initiator,
         CollaborationType CollaborationType) : IDomainEvent;
 }

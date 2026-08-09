@@ -7,6 +7,7 @@ namespace DevStart.Domain.ExpertCollaborationRequests
         public Guid Id { get; set; }
         public Guid ExpertProfileId { get; set; }
         public Guid StartupId { get; set; }
+        public CollaborationRequestInitiator Initiator { get; set; }
         public CollaborationType CollaborationType { get; set; }
         public string? Message { get; set; }
         public int? ProposedHoursPerWeek { get; set; }
@@ -15,6 +16,12 @@ namespace DevStart.Domain.ExpertCollaborationRequests
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
+        /// <summary>
+        /// True when the expert side must respond — that is, when the startup opened the request.
+        /// The mirror of this drives who may accept/reject, and its inverse who may withdraw.
+        /// </summary>
+        public bool AwaitsExpertResponse => Initiator == CollaborationRequestInitiator.Startup;
+
         public ExpertCollaborationRequest()
         {
         }
@@ -22,6 +29,7 @@ namespace DevStart.Domain.ExpertCollaborationRequests
         public static ExpertCollaborationRequest Create(
             Guid expertProfileId,
             Guid startupId,
+            CollaborationRequestInitiator initiator,
             CollaborationType collaborationType,
             string? message,
             int? proposedHoursPerWeek,
@@ -32,6 +40,7 @@ namespace DevStart.Domain.ExpertCollaborationRequests
                 Id = Guid.NewGuid(),
                 ExpertProfileId = expertProfileId,
                 StartupId = startupId,
+                Initiator = initiator,
                 CollaborationType = collaborationType,
                 Message = message,
                 ProposedHoursPerWeek = proposedHoursPerWeek,
@@ -73,6 +82,22 @@ namespace DevStart.Domain.ExpertCollaborationRequests
             }
 
             Status = ExpertCollaborationRequestStatus.Withdrawn;
+            UpdatedAt = utcNow;
+            return Result.Success();
+        }
+
+        /// <summary>
+        /// Times out a request nobody answered. Only the expiry job calls this; it is deliberately
+        /// distinct from <see cref="Withdraw"/> so the history shows why the request ended.
+        /// </summary>
+        public Result Expire(DateTime utcNow)
+        {
+            if (Status != ExpertCollaborationRequestStatus.Pending)
+            {
+                return Result.Failure(ExpertCollaborationRequestErrors.MustBePending);
+            }
+
+            Status = ExpertCollaborationRequestStatus.Expired;
             UpdatedAt = utcNow;
             return Result.Success();
         }

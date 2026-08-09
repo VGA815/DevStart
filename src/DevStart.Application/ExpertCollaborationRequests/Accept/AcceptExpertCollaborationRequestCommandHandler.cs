@@ -25,7 +25,10 @@ namespace DevStart.Application.ExpertCollaborationRequests.Accept
                 return Result.Failure(ExpertCollaborationRequestErrors.NotFound(command.RequestId));
             }
 
-            if (!await authorization.IsFounderOrAdminAsync(userContext.UserId, request.StartupId, cancellationToken))
+            // Only the side that owes an answer may accept: the startup for an expert's application,
+            // the expert for a startup's invitation.
+            if (!await ExpertCollaborationRequestParticipants.CanRespondAsync(
+                    request, userContext.UserId, authorization, cancellationToken))
             {
                 return Result.Failure(ExpertCollaborationRequestErrors.Unauthorized);
             }
@@ -40,7 +43,8 @@ namespace DevStart.Application.ExpertCollaborationRequests.Accept
             request.Raise(new ExpertCollaborationRequestAcceptedDomainEvent(
                 request.Id,
                 request.ExpertProfileId,
-                request.StartupId));
+                request.StartupId,
+                request.Initiator));
 
             await context.SaveChangesAsync(cancellationToken);
 

@@ -5,5 +5,6 @@ namespace DevStart.Domain.ExpertCollaborationRequests
     public sealed record ExpertCollaborationRequestAcceptedDomainEvent(
         Guid RequestId,
         Guid ExpertProfileId,
-        Guid StartupId) : IDomainEvent;
+        Guid StartupId,
+        CollaborationRequestInitiator Initiator) : IDomainEvent;
 }

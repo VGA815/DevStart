@@ -23,5 +23,16 @@ namespace DevStart.Domain.Notifications
         CommunityStandardsIncomplete = 18,
         IncomeLimitWarning = 19,
         ServiceOrderFulfilled = 20,
+
+        // 11–14 and 21 cover requests an expert opened, so they always land on the startup side for
+        // "received/withdrawn" and on the expert side for the answers. 22–26 are their mirror for
+        // invitations a startup opened. Splitting them keeps the recipient's side derivable from the
+        // type alone, which is what the client routes on.
+        ExpertCollaborationRequestExpired = 21,
+        ExpertCollaborationInvitationReceived = 22,
+        ExpertCollaborationInvitationWithdrawn = 23,
+        ExpertCollaborationInvitationAccepted = 24,
+        ExpertCollaborationInvitationRejected = 25,
+        ExpertCollaborationInvitationExpired = 26,
     }
 }

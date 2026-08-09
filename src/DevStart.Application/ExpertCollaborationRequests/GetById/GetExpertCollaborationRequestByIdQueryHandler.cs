@@ -54,6 +54,7 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetById
                 ExpertDisplayName = expertDisplayName,
                 StartupId = request.StartupId,
                 StartupName = startupName,
+                Initiator = request.Initiator,
                 CollaborationType = request.CollaborationType,
                 Message = request.Message,
                 ProposedHoursPerWeek = request.ProposedHoursPerWeek,

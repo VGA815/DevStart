@@ -16,6 +16,7 @@ public sealed class ExpertCollaborationRequestTests
         ExpertCollaborationRequest request = ExpertCollaborationRequest.Create(
             ExpertId,
             StartupId,
+            CollaborationRequestInitiator.Expert,
             CollaborationType.Advisor,
             "I'd like to help.",
             proposedHoursPerWeek: 5,
@@ -25,6 +26,8 @@ public sealed class ExpertCollaborationRequestTests
         request.Id.ShouldNotBe(Guid.Empty);
         request.ExpertProfileId.ShouldBe(ExpertId);
         request.StartupId.ShouldBe(StartupId);
+        request.Initiator.ShouldBe(CollaborationRequestInitiator.Expert);
+        request.AwaitsExpertResponse.ShouldBeFalse();
         request.CollaborationType.ShouldBe(CollaborationType.Advisor);
         request.Message.ShouldBe("I'd like to help.");
         request.ProposedHoursPerWeek.ShouldBe(5);
@@ -106,10 +109,57 @@ public sealed class ExpertCollaborationRequestTests
         result.Error.ShouldBe(ExpertCollaborationRequestErrors.MustBePending);
     }
 
-    private static ExpertCollaborationRequest CreatePending() =>
+    [Fact]
+    public void Create_ByStartup_ShouldAwaitExpertResponse()
+    {
+        ExpertCollaborationRequest request = CreatePending(CollaborationRequestInitiator.Startup);
+
+        request.Initiator.ShouldBe(CollaborationRequestInitiator.Startup);
+        request.AwaitsExpertResponse.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Expire_FromPending_ShouldTransitionToExpired()
+    {
+        ExpertCollaborationRequest request = CreatePending();
+
+        var result = request.Expire(UpdatedAt);
+
+        result.IsSuccess.ShouldBeTrue();
+        request.Status.ShouldBe(ExpertCollaborationRequestStatus.Expired);
+        request.UpdatedAt.ShouldBe(UpdatedAt);
+    }
+
+    [Fact]
+    public void Expire_FromNonPending_ShouldFail()
+    {
+        ExpertCollaborationRequest request = CreatePending();
+        request.Accept(UpdatedAt);
+
+        var result = request.Expire(UpdatedAt);
+
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe(ExpertCollaborationRequestErrors.MustBePending);
+        request.Status.ShouldBe(ExpertCollaborationRequestStatus.Accepted);
+    }
+
+    [Fact]
+    public void Respond_FromExpired_ShouldFail()
+    {
+        ExpertCollaborationRequest request = CreatePending();
+        request.Expire(UpdatedAt);
+
+        request.Accept(UpdatedAt).Error.ShouldBe(ExpertCollaborationRequestErrors.MustBePending);
+        request.Reject(UpdatedAt).Error.ShouldBe(ExpertCollaborationRequestErrors.MustBePending);
+        request.Withdraw(UpdatedAt).Error.ShouldBe(ExpertCollaborationRequestErrors.MustBePending);
+    }
+
+    private static ExpertCollaborationRequest CreatePending(
+        CollaborationRequestInitiator initiator = CollaborationRequestInitiator.Expert) =>
         ExpertCollaborationRequest.Create(
             ExpertId,
             StartupId,
+            initiator,
             CollaborationType.Consultant,
             message: null,
             proposedHoursPerWeek: null,

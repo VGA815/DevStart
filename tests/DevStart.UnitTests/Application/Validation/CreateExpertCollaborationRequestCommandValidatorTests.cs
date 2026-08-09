@@ -19,6 +19,7 @@ public sealed class CreateExpertCollaborationRequestCommandValidatorTests
     {
         var result = _validator.Validate(new CreateExpertCollaborationRequestCommand(
             startupId: Guid.NewGuid(),
+            expertProfileId: null,
             collaborationType: CollaborationType.Advisor,
             message: "Hello",
             proposedHoursPerWeek: 10,
@@ -32,6 +33,7 @@ public sealed class CreateExpertCollaborationRequestCommandValidatorTests
     {
         var result = _validator.Validate(new CreateExpertCollaborationRequestCommand(
             startupId: Guid.Empty,
+            expertProfileId: null,
             collaborationType: (CollaborationType)999,
             message: null,
             proposedHoursPerWeek: null,
@@ -48,6 +50,7 @@ public sealed class CreateExpertCollaborationRequestCommandValidatorTests
     {
         var result = _validator.Validate(new CreateExpertCollaborationRequestCommand(
             startupId: Guid.NewGuid(),
+            expertProfileId: null,
             collaborationType: CollaborationType.Mentor,
             message: new string('x', 2001),
             proposedHoursPerWeek: null,
@@ -65,6 +68,7 @@ public sealed class CreateExpertCollaborationRequestCommandValidatorTests
     {
         var result = _validator.Validate(new CreateExpertCollaborationRequestCommand(
             startupId: Guid.NewGuid(),
+            expertProfileId: null,
             collaborationType: CollaborationType.Consultant,
             message: null,
             proposedHoursPerWeek: hours,
@@ -81,6 +85,7 @@ public sealed class CreateExpertCollaborationRequestCommandValidatorTests
     {
         var result = _validator.Validate(new CreateExpertCollaborationRequestCommand(
             startupId: Guid.NewGuid(),
+            expertProfileId: null,
             collaborationType: CollaborationType.ProjectBased,
             message: null,
             proposedHoursPerWeek: null,

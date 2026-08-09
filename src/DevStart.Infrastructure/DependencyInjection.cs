@@ -325,6 +325,7 @@ namespace DevStart.Infrastructure
             services.AddScoped<TermSheetGenerationJob>();
             services.AddScoped<BanExpiryJob>();
             services.AddScoped<CommunityStandardsRefreshJob>();
+            services.AddScoped<ExpertCollaborationRequests.ExpertCollaborationRequestExpiryJob>();
 
             return services;
         }
@@ -353,6 +354,8 @@ namespace DevStart.Infrastructure
             services.Configure<BillingMaintenanceOptions>(configuration.GetSection("Billing"));
             services.Configure<Application.Payments.Npd.NpdOptions>(configuration.GetSection("Npd"));
             services.Configure<Application.ServiceOrders.ServiceCatalogOptions>(configuration.GetSection("Services"));
+            services.Configure<Application.ExpertCollaborationRequests.ExpertCollaborationOptions>(
+                configuration.GetSection("ExpertCollaboration"));
 
             // SC-42: self-employed (НПД) annual income-limit tracking + hard stop.
             services.AddScoped<Application.Abstractions.Payments.INpdIncomeService, Payments.NpdIncomeService>();

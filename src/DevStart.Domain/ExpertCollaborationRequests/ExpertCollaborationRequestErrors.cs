@@ -24,16 +24,31 @@ namespace DevStart.Domain.ExpertCollaborationRequests
             "ExpertCollaborationRequests.ExpertProfileRequired",
             "You must have an expert profile to create a collaboration request.");
 
-        public static readonly Error InvalidProposedHours = Error.Problem(
-            "ExpertCollaborationRequests.InvalidProposedHours",
-            "ProposedHoursPerWeek must be between 1 and 168 when specified.");
+        public static readonly Error ExpertProfileIdRequired = Error.Problem(
+            "ExpertCollaborationRequests.ExpertProfileIdRequired",
+            "ExpertProfileId is required when a startup invites an expert.");
 
-        public static readonly Error InvalidProposedRate = Error.Problem(
-            "ExpertCollaborationRequests.InvalidProposedRate",
-            "ProposedRate must be greater than zero when specified.");
+        public static readonly Error ExpertProfileNotFound = Error.Problem(
+            "ExpertCollaborationRequests.ExpertProfileNotFound",
+            "The invited expert does not have an expert profile.");
+
+        public static readonly Error ExpertAlreadyMember = Error.Problem(
+            "ExpertCollaborationRequests.ExpertAlreadyMember",
+            "This expert is already a member of the startup.");
+
+        public static readonly Error StartupUnavailable = Error.Problem(
+            "ExpertCollaborationRequests.StartupUnavailable",
+            "This startup is not available for collaboration requests.");
+
+        // ProposedHoursPerWeek / ProposedRate ranges are enforced by
+        // CreateExpertCollaborationRequestCommandValidator, which short-circuits ahead of the handler.
 
         public static readonly Error AlreadyExistsForStartup = Error.Conflict(
             "ExpertCollaborationRequests.AlreadyExistsForStartup",
-            "A pending collaboration request from you to this startup already exists.");
+            "A pending collaboration request between you and this startup already exists.");
+
+        public static Error RejectionCooldownActive(DateTime retryAfterUtc) => Error.Conflict(
+            "ExpertCollaborationRequests.RejectionCooldownActive",
+            $"Your previous request was rejected. You can send a new one after {retryAfterUtc:yyyy-MM-dd}.");
     }
 }

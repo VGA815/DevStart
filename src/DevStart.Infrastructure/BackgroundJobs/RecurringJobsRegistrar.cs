@@ -1,5 +1,6 @@
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.CommunityStandards;
+using DevStart.Infrastructure.ExpertCollaborationRequests;
 using DevStart.Infrastructure.Moderation;
 using DevStart.Infrastructure.Payments;
 using DevStart.Infrastructure.Subscriptions;
@@ -33,6 +34,11 @@ namespace DevStart.Infrastructure.BackgroundJobs
 
             recurringJobManager.AddOrUpdate<CommunityStandardsRefreshJob>(
                 "community-standards-refresh",
+                job => job.RunAsync(CancellationToken.None),
+                Cron.Daily());
+
+            recurringJobManager.AddOrUpdate<ExpertCollaborationRequestExpiryJob>(
+                "expert-collaboration-request-expiry",
                 job => job.RunAsync(CancellationToken.None),
                 Cron.Daily());
 

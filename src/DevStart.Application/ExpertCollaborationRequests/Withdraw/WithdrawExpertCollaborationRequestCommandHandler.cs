@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Startups;
 using DevStart.Domain.ExpertCollaborationRequests;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ namespace DevStart.Application.ExpertCollaborationRequests.Withdraw
     internal sealed class WithdrawExpertCollaborationRequestCommandHandler(
         IApplicationDbContext context,
         IUserContext userContext,
+        IStartupAuthorizationService authorization,
         IDateTimeProvider dateTimeProvider)
         : ICommandHandler<WithdrawExpertCollaborationRequestCommand>
     {
@@ -23,7 +25,9 @@ namespace DevStart.Application.ExpertCollaborationRequests.Withdraw
                 return Result.Failure(ExpertCollaborationRequestErrors.NotFound(command.RequestId));
             }
 
-            if (request.ExpertProfileId != userContext.UserId)
+            // Only the side that opened the request may take it back.
+            if (!await ExpertCollaborationRequestParticipants.CanWithdrawAsync(
+                    request, userContext.UserId, authorization, cancellationToken))
             {
                 return Result.Failure(ExpertCollaborationRequestErrors.Unauthorized);
             }
@@ -38,7 +42,8 @@ namespace DevStart.Application.ExpertCollaborationRequests.Withdraw
             request.Raise(new ExpertCollaborationRequestWithdrawnDomainEvent(
                 request.Id,
                 request.ExpertProfileId,
-                request.StartupId));
+                request.StartupId,
+                request.Initiator));
 
             await context.SaveChangesAsync(cancellationToken);
 

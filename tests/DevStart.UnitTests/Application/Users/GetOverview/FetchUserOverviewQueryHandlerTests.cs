@@ -141,6 +141,7 @@ public sealed class FetchUserOverviewQueryHandlerTests
         ExpertCollaborationRequest request = ExpertCollaborationRequest.Create(
             expertProfileId,
             startupId,
+            CollaborationRequestInitiator.Expert,
             CollaborationType.Advisor,
             message: null,
             proposedHoursPerWeek: null,

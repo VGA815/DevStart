@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Notifications;
 using DevStart.Domain.ExpertCollaborationRequests;
 using DevStart.Domain.Notifications;
@@ -6,20 +7,34 @@ using DevStart.SharedKernel;
 namespace DevStart.Application.ExpertCollaborationRequests.Reject
 {
     internal sealed class ExpertCollaborationRequestRejectedDomainEventHandler(
+        IApplicationDbContext context,
         INotificationService notificationService,
         IDateTimeProvider dateTimeProvider) : IDomainEventHandler<ExpertCollaborationRequestRejectedDomainEvent>
     {
         public async Task Handle(ExpertCollaborationRequestRejectedDomainEvent domainEvent, CancellationToken cancellationToken)
         {
-            Notification notification = Notification.Create(
-                userId: domainEvent.ExpertProfileId,
-                type: NotificationType.ExpertCollaborationRequestRejected,
-                title: "Collaboration request rejected",
-                body: "Your collaboration request has been rejected.",
-                createdAt: dateTimeProvider.UtcNow,
-                referenceId: domainEvent.RequestId);
+            // The answer goes back to whoever opened the request.
+            List<Guid> recipientIds = await ExpertCollaborationRequestParticipants.GetInitiatorRecipientsAsync(
+                context,
+                domainEvent.StartupId,
+                domainEvent.ExpertProfileId,
+                domainEvent.Initiator,
+                cancellationToken);
 
-            await notificationService.PublishAsync(notification, cancellationToken);
+            (NotificationType type, string title, string body) = ExpertCollaborationNotifications
+                .Rejected(domainEvent.Initiator);
+
+            DateTime utcNow = dateTimeProvider.UtcNow;
+
+            List<Notification> notifications = [.. recipientIds.Select(recipientId => Notification.Create(
+                userId: recipientId,
+                type: type,
+                title: title,
+                body: body,
+                createdAt: utcNow,
+                referenceId: domainEvent.RequestId))];
+
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
         }
     }
 }

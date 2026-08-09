@@ -23,23 +23,40 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetAllByStartupId
                     ExpertCollaborationRequestErrors.Unauthorized);
             }
 
-            List<ExpertCollaborationRequestResponse> requests = await context.ExpertCollaborationRequests
+            // Every row in this list belongs to the same startup, so its name is one lookup rather than
+            // a correlated subquery per row.
+            string startupName = await context.Startups
                 .AsNoTracking()
-                .Where(r => r.StartupId == query.StartupId)
-                .OrderByDescending(r => r.CreatedAt)
-                .Select(r => new ExpertCollaborationRequestResponse
+                .Where(s => s.Id == query.StartupId)
+                .Select(s => s.Name)
+                .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
+
+            IQueryable<ExpertCollaborationRequest> requests = context.ExpertCollaborationRequests
+                .AsNoTracking()
+                .Where(r => r.StartupId == query.StartupId);
+
+            if (query.Status is { } status)
+            {
+                requests = requests.Where(r => r.Status == status);
+            }
+
+            int pageSize = CollaborationRequestPaging.Size(query.PageSize);
+            int skip = CollaborationRequestPaging.Skip(query.PageNumber, pageSize);
+
+            // Pending first so the inbox stays actionable across pages, newest first within each group.
+            List<ExpertCollaborationRequestResponse> items = await (
+                from r in requests
+                join p in context.Profiles.AsNoTracking() on r.ExpertProfileId equals p.UserId into profileMatches
+                from p in profileMatches.DefaultIfEmpty()
+                orderby r.Status == ExpertCollaborationRequestStatus.Pending ? 0 : 1, r.CreatedAt descending
+                select new ExpertCollaborationRequestResponse
                 {
                     Id = r.Id,
                     ExpertProfileId = r.ExpertProfileId,
-                    ExpertDisplayName = context.Profiles
-                        .Where(p => p.UserId == r.ExpertProfileId)
-                        .Select(p => p.Name)
-                        .FirstOrDefault() ?? string.Empty,
+                    ExpertDisplayName = p != null ? p.Name : string.Empty,
                     StartupId = r.StartupId,
-                    StartupName = context.Startups
-                        .Where(s => s.Id == r.StartupId)
-                        .Select(s => s.Name)
-                        .FirstOrDefault() ?? string.Empty,
+                    StartupName = startupName,
+                    Initiator = r.Initiator,
                     CollaborationType = r.CollaborationType,
                     Message = r.Message,
                     ProposedHoursPerWeek = r.ProposedHoursPerWeek,
@@ -48,9 +65,11 @@ namespace DevStart.Application.ExpertCollaborationRequests.GetAllByStartupId
                     CreatedAt = r.CreatedAt,
                     UpdatedAt = r.UpdatedAt
                 })
+                .Skip(skip)
+                .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
-            return requests;
+            return items;
         }
     }
 }
