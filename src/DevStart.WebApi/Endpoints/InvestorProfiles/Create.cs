@@ -12,8 +12,17 @@ namespace DevStart.WebApi.Endpoints.InvestorProfiles
 {
     internal sealed class Create : IEndpoint
     {
+        /// <summary>
+        /// Everything except <c>type</c> is stored on the shared Profile — the same fields
+        /// <c>GET api/investor-profiles/{userId}</c> returns. They must stay on this contract: unknown
+        /// JSON members are dropped silently, so omitting one loses the user's input without an error.
+        /// </summary>
         public sealed record Request(
-            [property: JsonPropertyName("type")] InvestorProfileType Type);
+            [property: JsonPropertyName("type")] InvestorProfileType Type,
+            [property: JsonPropertyName("display_name")] string DisplayName,
+            [property: JsonPropertyName("bio")] string? Bio,
+            [property: JsonPropertyName("website")] string? Website,
+            [property: JsonPropertyName("is_public")] bool IsPublic);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -22,7 +31,12 @@ namespace DevStart.WebApi.Endpoints.InvestorProfiles
                 ICommandHandler<CreateInvestorProfileCommand, Guid> handler,
                 CancellationToken cancellationToken) =>
             {
-                var command = new CreateInvestorProfileCommand(request.Type);
+                var command = new CreateInvestorProfileCommand(
+                    request.Type,
+                    request.DisplayName ?? string.Empty,
+                    request.Bio,
+                    request.Website,
+                    request.IsPublic);
 
                 Result<Guid> result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.Ok, CustomResults.Problem);

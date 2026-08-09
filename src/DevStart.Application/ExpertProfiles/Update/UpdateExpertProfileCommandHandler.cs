@@ -1,7 +1,9 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Profiles;
 using DevStart.Domain.Experts;
+using DevStart.Domain.Profiles;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +26,25 @@ namespace DevStart.Application.ExpertProfiles.Update
             {
                 return Result.Failure(ExpertProfileErrors.NotFound(userId));
             }
+
+            // The personal fields of the expert form are stored on the shared Profile.
+            Profile? profile = await context.Profiles
+                .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken);
+
+            if (profile is null)
+            {
+                return Result.Failure(ProfileErrors.NotFound(userId));
+            }
+
+            if (string.IsNullOrWhiteSpace(command.DisplayName))
+            {
+                return Result.Failure(ExpertProfileErrors.ProfileNameRequired);
+            }
+
+            ProfilePersonalDetails.ApplyCore(
+                profile, command.DisplayName, command.Bio, command.Website, command.IsPublic);
+            ProfilePersonalDetails.ApplySocialLinks(
+                profile, command.LinkedInUrl, command.TwitterUrl, command.GitHubUrl, command.TelegramUrl);
 
             expertProfile.Touch(dateTimeProvider.UtcNow);
 

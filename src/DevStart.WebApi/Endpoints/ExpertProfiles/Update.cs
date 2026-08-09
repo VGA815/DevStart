@@ -12,8 +12,21 @@ namespace DevStart.WebApi.Endpoints.ExpertProfiles
 {
     internal sealed class Update : IEndpoint
     {
+        /// <summary>
+        /// Everything except <c>specializations</c> is stored on the shared Profile — the same fields
+        /// <c>GET api/expert-profiles/{userId}</c> returns. They must stay on this contract: unknown
+        /// JSON members are dropped silently, so omitting one loses the user's input without an error.
+        /// </summary>
         public sealed record Request(
-            [property: JsonPropertyName("specializations")] List<ExpertSpecialization> Specializations);
+            [property: JsonPropertyName("specializations")] List<ExpertSpecialization> Specializations,
+            [property: JsonPropertyName("display_name")] string DisplayName,
+            [property: JsonPropertyName("bio")] string? Bio,
+            [property: JsonPropertyName("website")] string? Website,
+            [property: JsonPropertyName("is_public")] bool IsPublic,
+            [property: JsonPropertyName("linkedin_url")] string? LinkedInUrl,
+            [property: JsonPropertyName("twitter_url")] string? TwitterUrl,
+            [property: JsonPropertyName("github_url")] string? GitHubUrl,
+            [property: JsonPropertyName("telegram_url")] string? TelegramUrl);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -23,7 +36,15 @@ namespace DevStart.WebApi.Endpoints.ExpertProfiles
                 CancellationToken cancellationToken) =>
             {
                 var command = new UpdateExpertProfileCommand(
-                    request.Specializations ?? new List<ExpertSpecialization>());
+                    request.Specializations ?? new List<ExpertSpecialization>(),
+                    request.DisplayName ?? string.Empty,
+                    request.Bio,
+                    request.Website,
+                    request.IsPublic,
+                    request.LinkedInUrl,
+                    request.TwitterUrl,
+                    request.GitHubUrl,
+                    request.TelegramUrl);
 
                 Result result = await handler.Handle(command, cancellationToken);
                 return result.Match(Results.NoContent, CustomResults.Problem);

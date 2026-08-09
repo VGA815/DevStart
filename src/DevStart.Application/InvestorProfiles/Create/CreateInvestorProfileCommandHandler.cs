@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Profiles;
 using DevStart.Domain.Investors;
 using DevStart.Domain.Profiles;
 using DevStart.SharedKernel;
@@ -26,15 +27,24 @@ namespace DevStart.Application.InvestorProfiles.Create
                 return Result.Failure<Guid>(InvestorProfileErrors.AlreadyExists(userId));
             }
 
-            // Personal data (name, bio, website) lives on the shared Profile; require it before becoming an investor.
+            // Tracked: the personal fields of the investor form are stored here, not on InvestorProfile.
             Profile? profile = await context.Profiles
-                .AsNoTracking()
                 .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken);
 
-            if (profile is null || string.IsNullOrWhiteSpace(profile.Name))
+            if (profile is null)
+            {
+                return Result.Failure<Guid>(ProfileErrors.NotFound(userId));
+            }
+
+            if (string.IsNullOrWhiteSpace(command.DisplayName))
             {
                 return Result.Failure<Guid>(InvestorProfileErrors.ProfileNameRequired);
             }
+
+            // Core fields only: the investor form has no social-link inputs, and this user may also
+            // hold an expert profile whose links must survive.
+            ProfilePersonalDetails.ApplyCore(
+                profile, command.DisplayName, command.Bio, command.Website, command.IsPublic);
 
             InvestorProfile investorProfile = InvestorProfile.Create(
                 userId,
