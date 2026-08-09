@@ -1,5 +1,6 @@
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Pagination;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,9 +26,11 @@ internal sealed class GetInvestorProfilesQueryHandler(IApplicationDbContext cont
             _                        => q.OrderBy(ip => ip.Profile.Name)
         };
 
+        (int pageNumber, int pageSize) = Paging.Normalize(query.PageNumber, query.PageSize);
+
         List<InvestorCatalogResponse> result = await q
-            .Skip((query.PageNumber - 1) * query.PageSize)
-            .Take(query.PageSize)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(ip => new InvestorCatalogResponse
             {
                 Id          = ip.Id,

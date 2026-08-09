@@ -60,15 +60,39 @@ namespace DevStart.Infrastructure.Caching
             cancellationToken.ThrowIfCancellationRequested();
 
             string pattern = $"{BuildKey(prefix)}*";
+            const int BatchSize = 500;
 
             foreach (System.Net.EndPoint endpoint in _multiplexer.GetEndPoints())
             {
                 IServer server = _multiplexer.GetServer(endpoint);
 
-
-                await foreach (RedisKey key in server.KeysAsync(pattern: pattern, pageSize: 250).WithCancellation(cancellationToken))
+                // A replica reports the same keys as its master but cannot be written to, so
+                // scanning it only duplicates work.
+                if (!server.IsConnected || server.IsReplica)
                 {
-                    await _db.KeyDeleteAsync(key);
+                    continue;
+                }
+
+                // Deleted in batches rather than one round trip per key: the SCAN itself is
+                // unavoidable here, but the deletes need not be serialized behind each other.
+                var batch = new List<RedisKey>(BatchSize);
+
+                await foreach (RedisKey key in server
+                    .KeysAsync(pattern: pattern, pageSize: BatchSize)
+                    .WithCancellation(cancellationToken))
+                {
+                    batch.Add(key);
+
+                    if (batch.Count == BatchSize)
+                    {
+                        await _db.KeyDeleteAsync([.. batch]);
+                        batch.Clear();
+                    }
+                }
+
+                if (batch.Count > 0)
+                {
+                    await _db.KeyDeleteAsync([.. batch]);
                 }
             }
         }

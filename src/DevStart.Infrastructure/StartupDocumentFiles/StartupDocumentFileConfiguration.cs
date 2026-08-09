@@ -12,6 +12,14 @@ namespace DevStart.Infrastructure.StartupDocumentFiles
 
             builder.HasKey(x => x.Id);
 
+            // The table had no index beyond the primary key, yet is only ever read by owner:
+            // per-startup (document listings, the pitch-deck check in the community-standards
+            // sweep) and per-uploader.
+            builder.HasIndex(x => x.StartupId)
+                .HasDatabaseName("ix_startup_document_files_startup");
+            builder.HasIndex(x => x.UploaderId)
+                .HasDatabaseName("ix_startup_document_files_uploader");
+
             builder.Property(x => x.Id).HasColumnName("id");
             builder.Property(x => x.StartupId).HasColumnName("startup_id");
             builder.Property(x => x.ObjectName).HasColumnName("object_name");

@@ -34,6 +34,15 @@ server {
 
     client_max_body_size 50m;
 
+    # API responses are JSON and compress by roughly 70-85%; the app itself adds no compression.
+    # min_length keeps tiny bodies (and their CPU cost) out of it.
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_vary on;
+    gzip_types application/json application/javascript text/css text/plain image/svg+xml;
+
     # Docker DNS with a short TTL + variable upstreams make nginx re-resolve container names at
     # request time. With hostnames inlined in proxy_pass, nginx caches IPs once at config load, so
     # recreating a backend container (new IP) 502s every proxied route until nginx restarts.

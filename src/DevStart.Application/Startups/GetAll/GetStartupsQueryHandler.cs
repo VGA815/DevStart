@@ -1,6 +1,7 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Pagination;
 using DevStart.Domain.StartupCommunityStandards;
 using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
@@ -36,6 +37,13 @@ namespace DevStart.Application.Startups.GetAll
                 startupQuery = startupQuery.Where(s => s.IsStopped == query.IsStopped);
             }
 
+            // Follower counts are aggregated once and joined, not counted per row. As an ORDER BY term
+            // the count has to be known for every startup matching the filters — before paging — so a
+            // correlated subquery here would scan startup_followers once per candidate.
+            var followerCounts = context.StartupFollowers
+                .GroupBy(f => f.StartupId)
+                .Select(g => new { StartupId = g.Key, Count = g.Count() });
+
             // Single left join to the checklist projection: it both feeds the badge and backs the level
             // filter, so the database sees one join against a primary key instead of a correlated
             // subquery per row. Joined before paging because the filter has to narrow the set the page
@@ -44,7 +52,10 @@ namespace DevStart.Application.Startups.GetAll
                          join standards in context.StartupCommunityStandards
                              on s.Id equals standards.StartupId into standardsGroup
                          from cs in standardsGroup.DefaultIfEmpty()
-                         select new { Startup = s, Standards = cs };
+                         join followers in followerCounts
+                             on s.Id equals followers.StartupId into followerGroup
+                         from fc in followerGroup.DefaultIfEmpty()
+                         select new { Startup = s, Standards = cs, FollowerCount = (int?)fc.Count };
 
             if (query.MinCommunityStandardsLevel is { } minLevel && minLevel > CommunityStandardsLevel.Incomplete)
             {
@@ -61,11 +72,13 @@ namespace DevStart.Application.Startups.GetAll
             // list, not the whole ordering: within featured and within the rest, followers still decide.
             // Ordered before paging so the promotion is visible on page 1 rather than wherever the
             // startup happened to fall.
+            (int pageNumber, int pageSize) = Paging.Normalize(query.PageNumber, query.PageSize);
+
             var rows = await joined
                 .OrderByDescending(x => x.Startup.FeaturedUntil != null && x.Startup.FeaturedUntil > now)
-                .ThenByDescending(x => context.StartupFollowers.Count(f => f.StartupId == x.Startup.Id))
-                .Skip((query.PageNumber - 1) * query.PageSize)
-                .Take(query.PageSize)
+                .ThenByDescending(x => x.FollowerCount ?? 0)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(x => new
                 {
                     x.Startup.Id,
@@ -78,7 +91,6 @@ namespace DevStart.Application.Startups.GetAll
                     x.Startup.Stage,
                     x.Startup.SocialMediaLinks,
                     x.Startup.Location,
-                    x.Startup.BillingEmail,
                     x.Startup.AvatarId,
                     x.Startup.Tam,
                     x.Startup.Sam,
@@ -114,7 +126,6 @@ namespace DevStart.Application.Startups.GetAll
                     Stage = row.Stage,
                     SocialMediaLinks = row.SocialMediaLinks,
                     Location = row.Location,
-                    BillingEmail = row.BillingEmail,
                     AvatarId = row.AvatarId,
                     Tam = row.Tam,
                     Sam = row.Sam,

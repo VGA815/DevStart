@@ -1,5 +1,6 @@
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Pagination;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,9 +30,11 @@ internal sealed class GetExpertProfilesQueryHandler(IApplicationDbContext contex
             _                      => q.OrderBy(ep => ep.Profile.Name)
         };
 
+        (int pageNumber, int pageSize) = Paging.Normalize(query.PageNumber, query.PageSize);
+
         List<ExpertCatalogResponse> result = await q
-            .Skip((query.PageNumber - 1) * query.PageSize)
-            .Take(query.PageSize)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(ep => new ExpertCatalogResponse
             {
                 Id              = ep.Id,

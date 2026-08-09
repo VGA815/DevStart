@@ -22,18 +22,17 @@ namespace DevStart.Application.InvestmentApplications.Withdraw
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
-            foreach (Guid recipientId in recipientIds)
-            {
-                Notification notification = Notification.Create(
-                    userId: recipientId,
-                    type: NotificationType.InvestmentApplicationWithdrawn,
-                    title: "Investment application withdrawn",
-                    body: "An investor has withdrawn their investment application.",
-                    createdAt: dateTimeProvider.UtcNow,
-                    referenceId: domainEvent.ApplicationId);
+            DateTime utcNow = dateTimeProvider.UtcNow;
 
-                await notificationService.PublishAsync(notification, cancellationToken);
-            }
+            List<Notification> notifications = [.. recipientIds.Select(recipientId => Notification.Create(
+                userId: recipientId,
+                type: NotificationType.InvestmentApplicationWithdrawn,
+                title: "Investment application withdrawn",
+                body: "An investor has withdrawn their investment application.",
+                createdAt: utcNow,
+                referenceId: domainEvent.ApplicationId))];
+
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
         }
     }
 }

@@ -27,7 +27,6 @@ namespace DevStart.Application.Startups.GetAllByProfileId
                 {
                     Id = s.Id,
                     AvatarId = s.AvatarId,
-                    BillingEmail = s.BillingEmail,
                     ShortDescription = s.ShortDescription,
                     CreatedAt = DateTime.UtcNow,
                     Description = s.Description,

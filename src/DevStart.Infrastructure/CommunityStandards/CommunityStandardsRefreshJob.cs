@@ -129,7 +129,8 @@ namespace DevStart.Infrastructure.CommunityStandards
             Dictionary<Guid, (string Name, int Completed, int Total)> byStartup = candidates
                 .ToDictionary(c => c.Id, c => (c.Name, c.CompletedCount, c.TotalCount));
 
-            int sent = 0;
+            var notifications = new List<Notification>(founders.Count);
+
             foreach (StartupFounder founder in founders)
             {
                 if (!byStartup.TryGetValue(founder.StartupId, out (string Name, int Completed, int Total) info))
@@ -137,7 +138,7 @@ namespace DevStart.Infrastructure.CommunityStandards
                     continue;
                 }
 
-                Notification notification = Notification.Create(
+                notifications.Add(Notification.Create(
                     userId: founder.ProfileId,
                     type: NotificationType.CommunityStandardsIncomplete,
                     title: "Стандарты сообщества не заполнены",
@@ -145,13 +146,12 @@ namespace DevStart.Infrastructure.CommunityStandards
                         + "чек-листа стандартов сообщества. Заполните недостающие, чтобы инвесторам и "
                         + "экспертам было проще вам довериться.",
                     createdAt: now,
-                    referenceId: founder.StartupId);
-
-                await notificationService.PublishAsync(notification, cancellationToken);
-                sent++;
+                    referenceId: founder.StartupId));
             }
 
-            return sent;
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
+
+            return notifications.Count;
         }
 
         private readonly record struct StartupFounder(Guid StartupId, Guid ProfileId);

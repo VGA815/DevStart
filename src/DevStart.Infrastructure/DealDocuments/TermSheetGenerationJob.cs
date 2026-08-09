@@ -166,16 +166,15 @@ namespace DevStart.Infrastructure.DealDocuments
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
-            foreach (Guid recipientId in recipients)
-            {
-                await notificationService.PublishAsync(Notification.Create(
+            await notificationService.PublishManyAsync(
+                [.. recipients.Select(recipientId => Notification.Create(
                     userId: recipientId,
                     type: NotificationType.DealDocumentsReady,
                     title: "Deal documents are ready",
                     body: "Term sheet and cap table for the accepted deal are now available.",
                     createdAt: utcNow,
-                    referenceId: dealId), cancellationToken);
-            }
+                    referenceId: dealId))],
+                cancellationToken);
 
             logger.LogInformation("Generated deal documents for {DealId}", dealId);
         }

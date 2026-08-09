@@ -13,6 +13,13 @@ namespace DevStart.Infrastructure.StartupMembers
 
             builder.HasKey(x => new { x.ProfileId, x.StartupId });
 
+            // The primary key leads with profile_id, so it cannot serve the "members of this startup"
+            // direction — which is how almost every read here filters (scoring, community standards,
+            // authorization, messaging fan-out). Role trails because the permission checks and
+            // MessagingRoles.CanActAsStartup filter on the pair.
+            builder.HasIndex(x => new { x.StartupId, x.Role })
+                .HasDatabaseName("ix_startup_members_startup_role");
+
             builder.Property(x => x.ProfileId).HasColumnName("profile_id");
             builder.Property(x => x.StartupId).HasColumnName("startup_id");
             builder.Property(x => x.Role).HasColumnName("role");

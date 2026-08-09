@@ -29,6 +29,11 @@ namespace DevStart.Application.Messages.Create
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
+            // Collected and published in one batch: this runs on the synchronous path of sending a
+            // message, so a per-recipient commit would put N transactions between the sender and
+            // their response.
+            var notifications = new List<Notification>(memberProfileIds.Count);
+
             foreach (Guid profileId in memberProfileIds)
             {
                 if (domainEvent.SenderType == ChatParticipantType.User && profileId == domainEvent.SenderId)
@@ -42,21 +47,22 @@ namespace DevStart.Application.Messages.Create
                     continue;
                 }
 
-                await PublishOneAsync(profileId, domainEvent.MessageId, cancellationToken);
+                notifications.Add(Build(profileId, domainEvent.MessageId));
             }
+
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
         }
 
-        private Task PublishOneAsync(Guid userId, Guid messageId, CancellationToken cancellationToken)
-        {
-            Notification notification = Notification.Create(
+        private Task PublishOneAsync(Guid userId, Guid messageId, CancellationToken cancellationToken) =>
+            notificationService.PublishAsync(Build(userId, messageId), cancellationToken);
+
+        private Notification Build(Guid userId, Guid messageId) =>
+            Notification.Create(
                 userId: userId,
                 type: NotificationType.MessageReceived,
                 title: "New message",
                 body: "You have received a new message.",
                 createdAt: dateTimeProvider.UtcNow,
                 referenceId: messageId);
-
-            return notificationService.PublishAsync(notification, cancellationToken);
-        }
     }
 }

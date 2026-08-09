@@ -23,7 +23,9 @@ namespace DevStart.Infrastructure.StartupCompetitors
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
-            builder.HasIndex(x => x.StartupId);
+            // No standalone startup_id index: it would be a strict left prefix of the composite
+            // unique index below, which already serves those lookups, at the cost of extra work on
+            // every write.
 
             // One card per domain within a startup. Nulls stay distinct on purpose: rows created
             // before the website became mandatory have no domain and must not collide with each other.

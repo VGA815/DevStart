@@ -316,7 +316,10 @@ namespace DevStart.Infrastructure
                 .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString!))
                 .UseFilter(provider.GetRequiredService<JobFailureAlertFilter>()));
 
-            services.AddHangfireServer();
+            // Worker count is capped rather than left at the default (ProcessorCount * 5): each worker
+            // can hold a connection, and Hangfire's pool is a third one opened against the same
+            // Postgres alongside EF and the health check.
+            services.AddHangfireServer(options => options.WorkerCount = 5);
 
             services.AddScoped<IBackgroundJobScheduler, HangfireBackgroundJobScheduler>();
             services.AddScoped<TermSheetGenerationJob>();

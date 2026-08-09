@@ -30,7 +30,6 @@ namespace DevStart.Application.StartupFollowers.GetAllByProfileId
                 {
                     Id = s.Id,
                     AvatarId = s.AvatarId,
-                    BillingEmail = s.BillingEmail,
                     ShortDescription = s.ShortDescription,
                     CreatedAt = s.CreatedAt,
                     Description = s.Description,

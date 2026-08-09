@@ -64,6 +64,28 @@ namespace DevStart.WebApi.Extensions
                     }
                 };
 
+                // A backstop for every endpoint, including the ~160 that opt into no named policy.
+                // The named policies below are far stricter and stack on top of this: a request has
+                // to satisfy both the global limiter and its endpoint's policy. The ceiling is set
+                // well above what a normal SPA session produces (a dashboard load is tens of
+                // requests) so it only ever catches genuinely abusive traffic.
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+                {
+                    string partitionKey = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                        ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                        ?? "unknown";
+
+                    return RateLimitPartition.GetTokenBucketLimiter(
+                        partitionKey,
+                        _ => new TokenBucketRateLimiterOptions
+                        {
+                            TokenLimit = 300,
+                            TokensPerPeriod = 300,
+                            ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0
+                        });
+                });
+
                 options.AddFixedWindowLimiter("fixed", cfg =>
                 {
                     cfg.PermitLimit = 10;

@@ -1,5 +1,6 @@
 ﻿using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Pagination;
 using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,8 @@ namespace DevStart.Application.StartupFollowers.GetAllByStartupId
                 return Result.Failure<List<StartupFollowerResponse>>(StartupErrors.NotFound(query.StartupId));
             }
 
+            (int page, int pageSize) = Paging.Normalize(query.Page, query.PageSize);
+
             List<StartupFollowerResponse> startupFollowerResponses = await context.StartupFollowers
                 .Where(sf => sf.StartupId == query.StartupId)
                 .Select(sf => new StartupFollowerResponse
@@ -24,8 +27,8 @@ namespace DevStart.Application.StartupFollowers.GetAllByStartupId
                     CreatedAt = sf.CreatedAt,
                     ProfileId = sf.ProfileId,
                 })
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
             return startupFollowerResponses;

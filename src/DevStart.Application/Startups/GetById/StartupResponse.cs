@@ -14,7 +14,6 @@ namespace DevStart.Application.Startups.GetById
         public StartupStage Stage { get; init; }
         public List<string>? SocialMediaLinks { get; init; } = [];
         public StartupLocation? Location { get; init; }
-        public string? BillingEmail { get; init; }
         public Guid? AvatarId { get; init; }
         public decimal? Tam { get; init; }
         public decimal? Sam { get; init; }

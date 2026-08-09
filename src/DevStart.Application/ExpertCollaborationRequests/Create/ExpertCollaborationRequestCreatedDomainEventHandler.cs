@@ -22,18 +22,17 @@ namespace DevStart.Application.ExpertCollaborationRequests.Create
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
-            foreach (Guid recipientId in recipientIds)
-            {
-                Notification notification = Notification.Create(
-                    userId: recipientId,
-                    type: NotificationType.ExpertCollaborationRequestReceived,
-                    title: "New expert collaboration request",
-                    body: "You have received a new collaboration request from an expert.",
-                    createdAt: dateTimeProvider.UtcNow,
-                    referenceId: domainEvent.RequestId);
+            DateTime utcNow = dateTimeProvider.UtcNow;
 
-                await notificationService.PublishAsync(notification, cancellationToken);
-            }
+            List<Notification> notifications = [.. recipientIds.Select(recipientId => Notification.Create(
+                userId: recipientId,
+                type: NotificationType.ExpertCollaborationRequestReceived,
+                title: "New expert collaboration request",
+                body: "You have received a new collaboration request from an expert.",
+                createdAt: utcNow,
+                referenceId: domainEvent.RequestId))];
+
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
         }
     }
 }

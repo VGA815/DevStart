@@ -20,7 +20,6 @@ namespace DevStart.Application.Startups.GetById
                 {
                     Id = s.Id,
                     AvatarId = s.AvatarId,
-                    BillingEmail = s.BillingEmail,
                     CreatedAt = s.CreatedAt,
                     Description = s.Description,
                     IsStopped = s.IsStopped,

@@ -22,18 +22,17 @@ namespace DevStart.Application.ExpertCollaborationRequests.Withdraw
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
-            foreach (Guid recipientId in recipientIds)
-            {
-                Notification notification = Notification.Create(
-                    userId: recipientId,
-                    type: NotificationType.ExpertCollaborationRequestWithdrawn,
-                    title: "Collaboration request withdrawn",
-                    body: "An expert has withdrawn their collaboration request.",
-                    createdAt: dateTimeProvider.UtcNow,
-                    referenceId: domainEvent.RequestId);
+            DateTime utcNow = dateTimeProvider.UtcNow;
 
-                await notificationService.PublishAsync(notification, cancellationToken);
-            }
+            List<Notification> notifications = [.. recipientIds.Select(recipientId => Notification.Create(
+                userId: recipientId,
+                type: NotificationType.ExpertCollaborationRequestWithdrawn,
+                title: "Collaboration request withdrawn",
+                body: "An expert has withdrawn their collaboration request.",
+                createdAt: utcNow,
+                referenceId: domainEvent.RequestId))];
+
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
         }
     }
 }

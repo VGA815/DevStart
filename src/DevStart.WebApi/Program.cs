@@ -50,6 +50,14 @@ app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 
 app.UseAuthentication();
+
+// Between authentication and authorization on purpose. After authentication, so the principal is
+// populated and the limiter can partition by user rather than lumping everyone behind a NAT into
+// one IP bucket. Before authorization, because the permission check hits the database — a request
+// that is going to be rejected should not pay for that. Also before the Hangfire dashboard below,
+// which is terminal middleware and would otherwise bypass the limiter entirely.
+app.UseRateLimiter();
+
 app.UseAuthorization();
 
 // Exposed in all environments but gated: dev-open, else trusted-proxy header or authenticated admin.
@@ -67,8 +75,6 @@ app.MapHealthCheckEndpoints();
 
 // Prometheus scrape endpoint (/metrics) — kept internal to the network via nginx in prod.
 app.MapPrometheusScrapingEndpoint();
-
-app.UseRateLimiter();
 
 app.MapControllers();
 

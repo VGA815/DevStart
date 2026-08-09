@@ -5,9 +5,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 # Npgsql probes for GSSAPI/Kerberos (libgssapi_krb5.so.2) while negotiating auth; the slim
 # runtime image doesn't ship it, which logs "Cannot load library libgssapi_krb5.so.2".
 # We use username/password auth (so it's harmless), but install the lib to silence it.
+# curl backs the container health check in docker-compose.prod.yml.
 # Installed as root, before dropping to the non-root app user.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 curl \
     && rm -rf /var/lib/apt/lists/*
 USER $APP_UID
 WORKDIR /app
@@ -31,15 +32,12 @@ COPY ["src/DevStart.SharedKernel/DevStart.SharedKernel.csproj", "src/DevStart.Sh
 RUN dotnet restore "./src/DevStart.WebApi/DevStart.WebApi.csproj"
 COPY . .
 WORKDIR "/src/src/DevStart.WebApi"
-RUN dotnet build "./DevStart.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
-
-# This stage is used to publish the service project to be copied to the final stage
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
+# Publish directly. A separate `dotnet build` step writing to a different output directory would
+# only be recompiled from scratch by publish, doubling image build time — and nothing consumed it.
 RUN dotnet publish "./DevStart.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "DevStart.WebApi.dll"]

@@ -13,5 +13,13 @@ namespace DevStart.UnitTests.TestSupport
             Published.Add(notification);
             return Task.CompletedTask;
         }
+
+        // Recorded into the same list, so a fan-out batch reads identically to the same
+        // notifications published one by one and existing assertions keep working.
+        public Task PublishManyAsync(IReadOnlyCollection<Notification> notifications, CancellationToken cancellationToken)
+        {
+            Published.AddRange(notifications);
+            return Task.CompletedTask;
+        }
     }
 }

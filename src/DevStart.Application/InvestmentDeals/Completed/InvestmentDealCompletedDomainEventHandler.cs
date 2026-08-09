@@ -17,16 +17,6 @@ namespace DevStart.Application.InvestmentDeals.Completed
         {
             DateTime utcNow = dateTimeProvider.UtcNow;
 
-            Notification investorNotification = Notification.Create(
-                userId: domainEvent.InvestorProfileId,
-                type: NotificationType.InvestmentDealCompleted,
-                title: "Investment deal completed",
-                body: "Your investment deal has been completed.",
-                createdAt: utcNow,
-                referenceId: domainEvent.DealId);
-
-            await notificationService.PublishAsync(investorNotification, cancellationToken);
-
             List<Guid> recipientIds = await context.StartupMembers
                 .AsNoTracking()
                 .Where(sm => sm.StartupId == domainEvent.StartupId
@@ -34,18 +24,28 @@ namespace DevStart.Application.InvestmentDeals.Completed
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
-            foreach (Guid recipientId in recipientIds)
-            {
-                Notification startupNotification = Notification.Create(
+            // The investor and the startup side are told in one transaction — both sides of a
+            // completed deal should become visible together.
+            List<Notification> notifications =
+            [
+                Notification.Create(
+                    userId: domainEvent.InvestorProfileId,
+                    type: NotificationType.InvestmentDealCompleted,
+                    title: "Investment deal completed",
+                    body: "Your investment deal has been completed.",
+                    createdAt: utcNow,
+                    referenceId: domainEvent.DealId),
+
+                .. recipientIds.Select(recipientId => Notification.Create(
                     userId: recipientId,
                     type: NotificationType.InvestmentDealCompleted,
                     title: "Investment deal completed",
                     body: "An investment deal has been completed.",
                     createdAt: utcNow,
-                    referenceId: domainEvent.DealId);
+                    referenceId: domainEvent.DealId))
+            ];
 
-                await notificationService.PublishAsync(startupNotification, cancellationToken);
-            }
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
         }
     }
 }

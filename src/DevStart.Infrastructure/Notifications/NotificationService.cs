@@ -15,6 +15,31 @@ namespace DevStart.Infrastructure.Notifications
             context.Notifications.Add(notification);
             await context.SaveChangesAsync(cancellationToken);
 
+            await SendAsync(notification, cancellationToken);
+        }
+
+        public async Task PublishManyAsync(
+            IReadOnlyCollection<Notification> notifications,
+            CancellationToken cancellationToken)
+        {
+            if (notifications.Count == 0)
+            {
+                return;
+            }
+
+            context.Notifications.AddRange(notifications);
+            await context.SaveChangesAsync(cancellationToken);
+
+            foreach (Notification notification in notifications)
+            {
+                await SendAsync(notification, cancellationToken);
+            }
+        }
+
+        // A push failure must not roll back a notification that is already persisted — the recipient
+        // still sees it on their next read, they just miss the live nudge.
+        private async Task SendAsync(Notification notification, CancellationToken cancellationToken)
+        {
             try
             {
                 await sender.SendAsync(notification, cancellationToken);

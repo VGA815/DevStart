@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Abstractions.Pagination;
 using DevStart.Domain.Notifications;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -21,10 +22,12 @@ namespace DevStart.Application.Notifications.GetByUserId
                 notifications = notifications.Where(n => n.IsRead == query.IsRead.Value);
             }
 
+            (int page, int pageSize) = Paging.Normalize(query.Page, query.PageSize);
+
             List<NotificationResponse> items = await notifications
                 .OrderByDescending(n => n.CreatedAt)
-                .Skip((query.Page - 1) * query.PageSize)
-                .Take(query.PageSize)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(n => new NotificationResponse
                 {
                     Id = n.Id,

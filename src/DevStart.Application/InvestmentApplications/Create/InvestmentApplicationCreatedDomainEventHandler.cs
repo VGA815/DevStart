@@ -22,18 +22,17 @@ namespace DevStart.Application.InvestmentApplications.Create
                 .Select(sm => sm.ProfileId)
                 .ToListAsync(cancellationToken);
 
-            foreach (Guid recipientId in recipientIds)
-            {
-                Notification notification = Notification.Create(
-                    userId: recipientId,
-                    type: NotificationType.InvestmentApplicationReceived,
-                    title: "New investment application",
-                    body: "You have received a new investment application.",
-                    createdAt: dateTimeProvider.UtcNow,
-                    referenceId: domainEvent.ApplicationId);
+            DateTime utcNow = dateTimeProvider.UtcNow;
 
-                await notificationService.PublishAsync(notification, cancellationToken);
-            }
+            List<Notification> notifications = [.. recipientIds.Select(recipientId => Notification.Create(
+                userId: recipientId,
+                type: NotificationType.InvestmentApplicationReceived,
+                title: "New investment application",
+                body: "You have received a new investment application.",
+                createdAt: utcNow,
+                referenceId: domainEvent.ApplicationId))];
+
+            await notificationService.PublishManyAsync(notifications, cancellationToken);
         }
     }
 }
