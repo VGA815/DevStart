@@ -21,12 +21,16 @@ namespace DevStart.Infrastructure.RefreshTokens
             builder.Property(x => x.ReplacedByTokenId).HasColumnName("replaced_by_token_id");
             builder.Property(x => x.CreatedByIp).HasColumnName("created_by_ip").HasMaxLength(64);
             builder.Property(x => x.UserAgent).HasColumnName("user_agent").HasMaxLength(512);
+            builder.Property(x => x.SessionId).HasColumnName("session_id");
+            builder.Property(x => x.SessionStartedAt).HasColumnName("session_started_at");
+            builder.Property(x => x.LastUsedAt).HasColumnName("last_used_at");
 
             builder.Ignore(x => x.IsRevoked);
 
             builder.HasIndex(x => x.TokenHash).IsUnique();
             builder.HasIndex(x => x.UserId);
             builder.HasIndex(x => x.ExpiresAt);
+            builder.HasIndex(x => x.SessionId);
         }
     }
 }

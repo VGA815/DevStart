@@ -31,8 +31,7 @@ namespace DevStart.UnitTests.Auth.OAuth
 
         public HandleOAuthCallbackCommandHandlerTests()
         {
-            var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
-            var refreshSvc = new RefreshTokenService(_db, _clock, refreshOptions);
+            var refreshSvc = AuthTestKit.RefreshTokens(_db, _clock);
 
             _sut = new HandleOAuthCallbackCommandHandler(
                 _db,
@@ -42,7 +41,7 @@ namespace DevStart.UnitTests.Auth.OAuth
                 new StubTokenProvider(),
                 refreshSvc,
                 _consentService,
-                new TwoFactorLoginGate(_db, _twoFactorStore),
+                AuthTestKit.Gate(_db, _twoFactorStore, _clock),
                 _clock,
                 NullLogger<HandleOAuthCallbackCommandHandler>.Instance);
         }

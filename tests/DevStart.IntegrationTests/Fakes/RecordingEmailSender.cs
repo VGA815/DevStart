@@ -10,6 +10,7 @@ namespace DevStart.IntegrationTests.Fakes
         public ConcurrentQueue<(string Email, string Token)> Verifications { get; } = new();
         public ConcurrentQueue<(string Email, string Token)> PasswordResets { get; } = new();
         public ConcurrentQueue<(string Email, DateTime ExpiresAt)> ExpiringReminders { get; } = new();
+        public ConcurrentQueue<(string Email, NewDeviceLoginInfo Info)> NewDeviceLogins { get; } = new();
 
         public Task SendVerification(string email, string token)
         {
@@ -26,6 +27,12 @@ namespace DevStart.IntegrationTests.Fakes
         public Task SendSubscriptionExpiring(string email, DateTime expiresAt)
         {
             ExpiringReminders.Enqueue((email, expiresAt));
+            return Task.CompletedTask;
+        }
+
+        public Task SendNewDeviceLogin(string email, NewDeviceLoginInfo info)
+        {
+            NewDeviceLogins.Enqueue((email, info));
             return Task.CompletedTask;
         }
     }

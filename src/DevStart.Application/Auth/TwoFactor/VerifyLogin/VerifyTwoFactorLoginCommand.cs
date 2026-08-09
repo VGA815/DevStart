@@ -7,5 +7,6 @@ namespace DevStart.Application.Auth.TwoFactor.VerifyLogin
         string PendingToken,
         string Code,
         string? IpAddress,
-        string? UserAgent) : ICommand<OAuthAuthResult>;
+        string? UserAgent,
+        bool RememberDevice = false) : ICommand<OAuthAuthResult>;
 }

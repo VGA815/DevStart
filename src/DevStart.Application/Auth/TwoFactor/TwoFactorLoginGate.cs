@@ -1,6 +1,8 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Auth.OAuth;
+using DevStart.Application.Users.Security;
+using DevStart.Domain.Security;
 using DevStart.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
@@ -9,7 +11,9 @@ namespace DevStart.Application.Auth.TwoFactor
 {
     internal sealed class TwoFactorLoginGate(
         IApplicationDbContext context,
-        IPendingTwoFactorStore pendingStore) : ITwoFactorLoginGate
+        IPendingTwoFactorStore pendingStore,
+        ITrustedDeviceService trustedDevices,
+        IUserSecuritySettingsProvider securitySettings) : ITwoFactorLoginGate
     {
         /// <summary>
         /// Short on purpose: the challenge only bridges the seconds between entering the password
@@ -21,24 +25,40 @@ namespace DevStart.Application.Auth.TwoFactor
             User user,
             string? ipAddress,
             string? userAgent,
+            string? deviceToken,
             CancellationToken cancellationToken)
         {
             bool enabled = await context.UserTwoFactors
                 .AnyAsync(t => t.UserId == user.Id && t.IsEnabled, cancellationToken);
 
-            if (enabled)
+            if (!enabled)
             {
-                string token = await SavePendingAsync(user.Id, ipAddress, userAgent, setupRequired: false, cancellationToken);
-                return OAuthAuthResult.TwoFactorRequired(new TwoFactorChallenge(token));
+                // Deliberately before any device lookup: a trusted device attests that this browser
+                // once completed a second factor for this account. An admin who has never enrolled
+                // has completed none, so there is nothing for a device to vouch for.
+                if (user.Role == UserSystemRole.Admin)
+                {
+                    string setupToken = await SavePendingAsync(user.Id, ipAddress, userAgent, setupRequired: true, cancellationToken);
+                    return OAuthAuthResult.TwoFactorSetupRequired(new TwoFactorSetupChallenge(setupToken));
+                }
+
+                return null;
             }
 
-            if (user.Role == UserSystemRole.Admin)
+            if (deviceToken is not null)
             {
-                string token = await SavePendingAsync(user.Id, ipAddress, userAgent, setupRequired: true, cancellationToken);
-                return OAuthAuthResult.TwoFactorSetupRequired(new TwoFactorSetupChallenge(token));
+                UserSecuritySettings settings = await securitySettings.GetOrDefaultAsync(user.Id, cancellationToken);
+
+                // A rejected device token falls through to the ordinary challenge, exactly like a
+                // missing one — never a distinct error, which would tell an attacker what they hold.
+                if (await trustedDevices.TryConsumeAsync(user, deviceToken, ipAddress, settings.Strictness, cancellationToken))
+                {
+                    return null;
+                }
             }
 
-            return null;
+            string token = await SavePendingAsync(user.Id, ipAddress, userAgent, setupRequired: false, cancellationToken);
+            return OAuthAuthResult.TwoFactorRequired(new TwoFactorChallenge(token));
         }
 
         private async Task<string> SavePendingAsync(

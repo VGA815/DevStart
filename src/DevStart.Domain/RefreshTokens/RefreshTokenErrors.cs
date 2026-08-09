@@ -15,5 +15,13 @@ namespace DevStart.Domain.RefreshTokens
         public static readonly Error ReuseDetected = Error.Failure(
             "RefreshTokens.ReuseDetected",
             "Refresh token reuse detected; all sessions for this user have been revoked");
+
+        /// <summary>
+        /// Also returned when the session belongs to somebody else: a distinct "forbidden" would let a
+        /// caller probe which session ids exist.
+        /// </summary>
+        public static readonly Error SessionNotFound = Error.NotFound(
+            "Sessions.NotFound",
+            "The session was not found");
     }
 }

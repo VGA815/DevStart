@@ -32,7 +32,9 @@ using DevStart.Domain.StartupMembers;
 using DevStart.Domain.StartupMetrics;
 using DevStart.Domain.StartupProducts;
 using DevStart.Domain.StartupRoadmapItems;
+using DevStart.Domain.Security;
 using DevStart.Domain.Startups;
+using DevStart.Domain.TrustedDevices;
 using DevStart.Domain.TwoFactor;
 using DevStart.Domain.UserPreferences;
 using DevStart.Domain.Users;
@@ -129,6 +131,10 @@ namespace DevStart.Infrastructure.Database
         public DbSet<UserTwoFactor> UserTwoFactors { get; set; }
 
         public DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes { get; set; }
+
+        public DbSet<TrustedDevice> TrustedDevices { get; set; }
+
+        public DbSet<UserSecuritySettings> UserSecuritySettings { get; set; }
 
         public DbSet<AdminActionLog> AdminActionLogs { get; set; }
 

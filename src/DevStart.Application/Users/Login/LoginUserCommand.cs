@@ -7,5 +7,6 @@ namespace DevStart.Application.Users.Login
         string Email,
         string Password,
         string? IpAddress,
-        string? UserAgent) : ICommand<OAuthAuthResult>;
+        string? UserAgent,
+        string? DeviceToken = null) : ICommand<OAuthAuthResult>;
 }

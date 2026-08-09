@@ -7,7 +7,8 @@ namespace DevStart.Application.Auth.TwoFactor.ConfirmSetupLogin
         string PendingToken,
         string Code,
         string? IpAddress,
-        string? UserAgent) : ICommand<TwoFactorSetupCompleteResponse>;
+        string? UserAgent,
+        bool RememberDevice = false) : ICommand<TwoFactorSetupCompleteResponse>;
 
     /// <summary>
     /// Recovery codes are returned exactly once, alongside the auth outcome (tokens, or a consent

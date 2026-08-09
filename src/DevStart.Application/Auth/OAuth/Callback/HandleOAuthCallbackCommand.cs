@@ -8,5 +8,6 @@ namespace DevStart.Application.Auth.OAuth.Callback
         string Code,
         string State,
         string? IpAddress,
-        string? UserAgent) : ICommand<OAuthAuthResult>;
+        string? UserAgent,
+        string? DeviceToken = null) : ICommand<OAuthAuthResult>;
 }

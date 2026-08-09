@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Admin.Users.BanUser;
 using DevStart.Domain.Admin;
 using DevStart.Domain.Users;
@@ -17,13 +18,13 @@ public sealed class BanUserCommandHandlerTests
 
     private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
     private readonly FixedDateTimeProvider _clock = new() { UtcNow = Now };
-    private readonly RefreshTokenService _refresh;
+    private readonly IRefreshTokenService _refresh;
     private readonly Guid _adminId = Guid.NewGuid();
     private readonly BanUserCommandHandler _sut;
 
     public BanUserCommandHandlerTests()
     {
-        _refresh = new RefreshTokenService(_db, _clock, Options.Create(new RefreshTokenOptions { LifetimeDays = 30 }));
+        _refresh = AuthTestKit.RefreshTokens(_db, _clock);
         _sut = new BanUserCommandHandler(_db, new TestUserContext(_adminId), _refresh, _clock);
     }
 

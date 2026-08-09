@@ -62,7 +62,7 @@ namespace DevStart.Application.Users.Login
             // Second factor comes before the consent gate: identity must be fully proven first.
             // The verify/confirm handlers re-run the consent check after the code is accepted.
             OAuthAuthResult? twoFactorChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
-                user, command.IpAddress, command.UserAgent, cancellationToken);
+                user, command.IpAddress, command.UserAgent, command.DeviceToken, cancellationToken);
             if (twoFactorChallenge is not null)
             {
                 return twoFactorChallenge;
@@ -84,12 +84,13 @@ namespace DevStart.Application.Users.Login
                 return OAuthAuthResult.ConsentRequired(new ConsentChallenge(pendingToken, required));
             }
 
-            string accessToken = tokenProvider.CreateAccessToken(user);
+            // Refresh token first: its session id becomes the access token's sid claim.
             IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
                 user,
                 command.IpAddress,
                 command.UserAgent,
                 cancellationToken);
+            string accessToken = tokenProvider.CreateAccessToken(user, refresh.SessionId);
 
             return OAuthAuthResult.Authenticated(
                 new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds));

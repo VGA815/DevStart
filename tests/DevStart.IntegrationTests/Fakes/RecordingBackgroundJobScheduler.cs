@@ -9,6 +9,13 @@ namespace DevStart.IntegrationTests.Fakes
     {
         public ConcurrentQueue<Guid> TermSheetGenerations { get; } = new();
 
+        public ConcurrentQueue<(string Email, string? Browser, string? Os, string? IpAddress, DateTime OccurredAtUtc)>
+            NewDeviceLoginEmails { get; } = new();
+
         public void EnqueueTermSheetGeneration(Guid dealId) => TermSheetGenerations.Enqueue(dealId);
+
+        public void EnqueueNewDeviceLoginEmail(
+            string email, string? browser, string? os, string? ipAddress, DateTime occurredAtUtc)
+            => NewDeviceLoginEmails.Enqueue((email, browser, os, ipAddress, occurredAtUtc));
     }
 }

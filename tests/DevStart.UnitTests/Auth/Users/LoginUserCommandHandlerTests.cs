@@ -27,11 +27,10 @@ namespace DevStart.UnitTests.Auth.Users
 
         public LoginUserCommandHandlerTests()
         {
-            var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
-            var refreshSvc = new RefreshTokenService(_db, _clock, refreshOptions);
             _sut = new LoginUserCommandHandler(
-                _db, _hasher, new StubTokenProvider(), refreshSvc, _consentService, _pendingStore,
-                new TwoFactorLoginGate(_db, _twoFactorStore), _clock);
+                _db, _hasher, new StubTokenProvider(), AuthTestKit.RefreshTokens(_db, _clock),
+                _consentService, _pendingStore,
+                AuthTestKit.Gate(_db, _twoFactorStore, _clock), _clock);
         }
 
         [Fact]
@@ -167,10 +166,9 @@ namespace DevStart.UnitTests.Auth.Users
             // No user is seeded. The verifier must still run (against a dummy hash) so the response time
             // doesn't reveal whether the email is registered — and the result mirrors a wrong password.
             var recordingHasher = new RecordingPasswordHasher();
-            var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
             var sut = new LoginUserCommandHandler(
-                _db, recordingHasher, new StubTokenProvider(), new RefreshTokenService(_db, _clock, refreshOptions),
-                _consentService, _pendingStore, new TwoFactorLoginGate(_db, _twoFactorStore), _clock);
+                _db, recordingHasher, new StubTokenProvider(), AuthTestKit.RefreshTokens(_db, _clock),
+                _consentService, _pendingStore, AuthTestKit.Gate(_db, _twoFactorStore, _clock), _clock);
 
             var cmd = new LoginUserCommand("nobody@example.com", "whatever", null, null);
             Result<OAuthAuthResult> result = await sut.Handle(cmd, default);

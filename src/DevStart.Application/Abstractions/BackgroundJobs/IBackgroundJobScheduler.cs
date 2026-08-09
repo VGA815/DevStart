@@ -8,5 +8,12 @@ namespace DevStart.Application.Abstractions.BackgroundJobs
     public interface IBackgroundJobScheduler
     {
         void EnqueueTermSheetGeneration(Guid dealId);
+
+        /// <summary>
+        /// Queued rather than sent inline because domain events are dispatched inside SaveChangesAsync
+        /// — an inline SMTP call would put mail-server latency on the login request itself.
+        /// </summary>
+        void EnqueueNewDeviceLoginEmail(
+            string email, string? browser, string? os, string? ipAddress, DateTime occurredAtUtc);
     }
 }

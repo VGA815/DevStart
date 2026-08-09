@@ -23,6 +23,10 @@ services:
       TwoFactor__EncryptionKey: "${TWO_FACTOR_ENCRYPTION_KEY}"
       TwoFactor__Issuer: "DevStart"
 
+      TrustedDevices__Enabled: "${TRUSTED_DEVICES_ENABLED:-true}"
+      TrustedDevices__MaxTrustDays: "${TRUSTED_DEVICE_MAX_DAYS:-30}"
+      TrustedDevices__AdminMaxTrustDays: "${TRUSTED_DEVICE_ADMIN_MAX_DAYS:-7}"
+
       OAuth__Google__ClientId: "${OAUTH_GOOGLE_CLIENT_ID}"
       OAuth__Google__ClientSecret: "${OAUTH_GOOGLE_CLIENT_SECRET}"
       OAuth__Google__RedirectUri: "${OAUTH_GOOGLE_REDIRECT_URI}"

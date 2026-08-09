@@ -15,7 +15,7 @@ namespace DevStart.UnitTests.Auth.RefreshToken
     {
         private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
         private readonly FixedDateTimeProvider _clock = new();
-        private readonly RefreshTokenService _sut;
+        private readonly IRefreshTokenService _sut;
         private readonly User _user;
 
         public RefreshTokenServiceTests()
@@ -24,8 +24,7 @@ namespace DevStart.UnitTests.Auth.RefreshToken
             _db.Users.Add(_user);
             _db.SaveChanges();
 
-            var options = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
-            _sut = new RefreshTokenService(_db, _clock, options);
+            _sut = AuthTestKit.RefreshTokens(_db, _clock);
         }
 
         [Fact]
@@ -57,6 +56,66 @@ namespace DevStart.UnitTests.Auth.RefreshToken
             Assert.NotNull(all[0].RevokedAt);
             Assert.Equal(all[1].Id, all[0].ReplacedByTokenId);
             Assert.Null(all[1].RevokedAt);
+        }
+
+        [Fact]
+        public async Task SessionIdentity_SurvivesRotation()
+        {
+            IssuedRefreshToken first = await _sut.IssueAsync(_user, null, "ua", default);
+            DateTime startedAt = _clock.UtcNow;
+
+            _clock.UtcNow = _clock.UtcNow.AddMinutes(5);
+            Result<RotatedTokens> rotated = await _sut.RotateAsync(first.RawToken, null, "ua", default);
+
+            // The session id is what the sessions list and the sid claim expose — a new one on every
+            // refresh would make both useless.
+            Assert.Equal(first.SessionId, rotated.Value.SessionId);
+
+            RefreshTokenEntity replacement = await _db.RefreshTokens.SingleAsync(t => t.RevokedAt == null);
+            Assert.Equal(first.SessionId, replacement.SessionId);
+            Assert.Equal(startedAt, replacement.SessionStartedAt);
+            Assert.Equal(_clock.UtcNow, replacement.LastUsedAt);
+        }
+
+        [Fact]
+        public async Task IssueAsync_StartsANewSessionChain()
+        {
+            IssuedRefreshToken first = await _sut.IssueAsync(_user, null, "ua", default);
+            IssuedRefreshToken second = await _sut.IssueAsync(_user, null, "ua", default);
+
+            Assert.NotEqual(first.SessionId, second.SessionId);
+            Assert.Equal(first.SessionId, (await _db.RefreshTokens.SingleAsync(t => t.SessionId == first.SessionId)).Id);
+        }
+
+        [Fact]
+        public async Task DeliberatelyRevokedToken_IsInvalid_NotTreatedAsReuse()
+        {
+            IssuedRefreshToken keep = await _sut.IssueAsync(_user, null, "ua", default);
+            IssuedRefreshToken ended = await _sut.IssueAsync(_user, null, "ua", default);
+
+            await _sut.RevokeAsync(ended.RawToken, default);
+
+            Result<RotatedTokens> result = await _sut.RotateAsync(ended.RawToken, null, "ua", default);
+
+            // Ending one session from the settings screen must not cascade into every other session.
+            Assert.Equal(RefreshTokenErrors.Invalid, result.Error);
+            Assert.True((await _sut.RotateAsync(keep.RawToken, null, "ua", default)).IsSuccess);
+        }
+
+        [Fact]
+        public async Task RevokeAllForUserAsync_AlsoRevokesTrustedDevices()
+        {
+            var trustedDevices = AuthTestKit.TrustedDevices(_db, _clock);
+            IRefreshTokenService sut = AuthTestKit.RefreshTokens(_db, _clock, trustedDevices: trustedDevices);
+            await sut.IssueAsync(_user, null, "ua", default);
+            await trustedDevices.IssueAsync(_user, null, "ua", default);
+
+            await sut.RevokeAllForUserAsync(_user.Id, default);
+
+            // Every caller of this method is invalidating credentials; a still-trusted device would
+            // quietly undo that.
+            Assert.All(await _db.RefreshTokens.ToListAsync(), t => Assert.NotNull(t.RevokedAt));
+            Assert.All(await _db.TrustedDevices.ToListAsync(), d => Assert.NotNull(d.RevokedAt));
         }
 
         [Fact]

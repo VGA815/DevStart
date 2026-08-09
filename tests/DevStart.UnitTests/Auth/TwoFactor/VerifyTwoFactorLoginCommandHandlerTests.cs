@@ -23,11 +23,12 @@ namespace DevStart.UnitTests.Auth.TwoFactor
         private readonly InMemoryPendingTwoFactorStore _twoFactorStore = new();
         private readonly InMemoryPendingRegistrationStore _pendingRegistrationStore = new();
         private readonly FakeConsentService _consentService = new();
+        private readonly ITrustedDeviceService _trustedDevices;
         private readonly VerifyTwoFactorLoginCommandHandler _sut;
 
         public VerifyTwoFactorLoginCommandHandlerTests()
         {
-            var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
+            _trustedDevices = AuthTestKit.TrustedDevices(_db, _clock);
             _sut = new VerifyTwoFactorLoginCommandHandler(
                 _db,
                 _twoFactorStore,
@@ -39,7 +40,8 @@ namespace DevStart.UnitTests.Auth.TwoFactor
                     TwoFactorTestKit.CreateRecoveryCodeGenerator(),
                     _clock),
                 new StubTokenProvider(),
-                new RefreshTokenService(_db, _clock, refreshOptions),
+                AuthTestKit.RefreshTokens(_db, _clock, trustedDevices: _trustedDevices),
+                _trustedDevices,
                 _consentService,
                 _clock);
         }
@@ -201,6 +203,57 @@ namespace DevStart.UnitTests.Auth.TwoFactor
             Assert.NotNull(result.Value.Consent);
             PendingExternalRegistration pending = _pendingRegistrationStore.Items.Values.Single();
             Assert.True(pending.TwoFactorSatisfied);
+        }
+
+        [Fact]
+        public async Task RememberDevice_MintsAGrant_AndStoresTheDevice()
+        {
+            (User user, string secret, string token) = await SeedChallengedUserAsync();
+
+            Result<OAuthAuthResult> result = await _sut.Handle(
+                new VerifyTwoFactorLoginCommand(
+                    token, TwoFactorTestKit.CurrentCodeFor(secret), "1.1.1.1", "ua", RememberDevice: true),
+                default);
+
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Value.TrustedDevice);
+            Assert.NotNull(result.Value.Tokens);
+
+            DevStart.Domain.TrustedDevices.TrustedDevice stored = await _db.TrustedDevices.SingleAsync();
+            Assert.Equal(user.Id, stored.UserId);
+            Assert.Equal(result.Value.TrustedDevice!.DeviceId, stored.Id);
+            // The raw token is handed out once and never persisted.
+            Assert.NotEqual(result.Value.TrustedDevice.DeviceToken, stored.TokenHash);
+        }
+
+        [Fact]
+        public async Task WithoutRememberDevice_NoDeviceIsTrusted()
+        {
+            (_, string secret, string token) = await SeedChallengedUserAsync();
+
+            Result<OAuthAuthResult> result = await _sut.Handle(
+                new VerifyTwoFactorLoginCommand(token, TwoFactorTestKit.CurrentCodeFor(secret), null, "ua"), default);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.TrustedDevice);
+            Assert.Empty(await _db.TrustedDevices.ToListAsync());
+        }
+
+        [Fact]
+        public async Task RememberDevice_AlsoAppliesOnTheConsentBranch()
+        {
+            // The second factor is proven either way; an outstanding consent is an orthogonal concern.
+            (_, string secret, string token) = await SeedChallengedUserAsync();
+            _consentService.MandatoryCurrent = false;
+
+            Result<OAuthAuthResult> result = await _sut.Handle(
+                new VerifyTwoFactorLoginCommand(
+                    token, TwoFactorTestKit.CurrentCodeFor(secret), null, "ua", RememberDevice: true),
+                default);
+
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Value.Consent);
+            Assert.NotNull(result.Value.TrustedDevice);
         }
 
         internal sealed class InMemoryPendingRegistrationStore : IPendingRegistrationStore

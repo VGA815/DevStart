@@ -14,7 +14,8 @@ namespace DevStart.WebApi.Endpoints.Auth
     {
         public sealed record Request(
             [property: JsonPropertyName("pending_token")] string PendingToken,
-            [property: JsonPropertyName("code")] string Code);
+            [property: JsonPropertyName("code")] string Code,
+            [property: JsonPropertyName("remember_device")] bool RememberDevice = false);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -27,7 +28,8 @@ namespace DevStart.WebApi.Endpoints.Auth
                 string? ip = httpContext.Connection.RemoteIpAddress?.ToString();
                 string? ua = httpContext.Request.Headers.UserAgent.ToString();
 
-                var command = new VerifyTwoFactorLoginCommand(request.PendingToken, request.Code, ip, ua);
+                var command = new VerifyTwoFactorLoginCommand(
+                    request.PendingToken, request.Code, ip, ua, request.RememberDevice);
 
                 Result<OAuthAuthResult> result = await handler.Handle(command, cancellationToken);
 

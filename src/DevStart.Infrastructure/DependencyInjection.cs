@@ -10,6 +10,7 @@ using DevStart.Application.Subscriptions;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.Authentication.OAuth;
 using DevStart.Infrastructure.Authentication.RefreshTokens;
+using DevStart.Infrastructure.Authentication.TrustedDevices;
 using DevStart.Infrastructure.Authentication.TwoFactor;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
@@ -186,6 +187,7 @@ namespace DevStart.Infrastructure
 
             services.Configure<RefreshTokenOptions>(configuration.GetSection("Jwt:RefreshToken"));
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<ITrustedDeviceService, TrustedDeviceService>();
 
             services.AddSingleton<IPkceGenerator, PkceGenerator>();
             services.AddSingleton<IOAuthStateStore, RedisOAuthStateStore>();
@@ -202,6 +204,11 @@ namespace DevStart.Infrastructure
             services.AddSingleton<ITwoFactorSecretProtector, AesGcmTwoFactorSecretProtector>();
             services.AddSingleton<IRecoveryCodeGenerator, RecoveryCodeGenerator>();
             services.AddSingleton<IPendingTwoFactorStore, RedisPendingTwoFactorStore>();
+
+            // Application-layer options (the login gate reads them), bound here the same way
+            // ValuationOptions is. Deliberately no ValidateOnStart: every value has a sane default.
+            services.Configure<Application.Configuration.TrustedDeviceOptions>(
+                configuration.GetSection(Application.Configuration.TrustedDeviceOptions.SectionName));
 
             services.AddOptions<GoogleOAuthOptions>()
                 .Bind(configuration.GetSection("OAuth:Google"))

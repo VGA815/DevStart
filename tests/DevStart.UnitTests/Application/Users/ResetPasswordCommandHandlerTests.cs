@@ -18,13 +18,13 @@ namespace DevStart.UnitTests.Application.Users
         private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
         private readonly FixedDateTimeProvider _clock = new();
         private readonly IPasswordHasher _hasher = new PasswordHasher();
-        private readonly RefreshTokenService _refresh;
+        private readonly IRefreshTokenService _refresh;
         private readonly ResetPasswordCommandHandler _sut;
 
         public ResetPasswordCommandHandlerTests()
         {
             var options = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
-            _refresh = new RefreshTokenService(_db, _clock, options);
+            _refresh = AuthTestKit.RefreshTokens(_db, _clock);
             _sut = new ResetPasswordCommandHandler(_db, _hasher, _clock, _refresh);
         }
 

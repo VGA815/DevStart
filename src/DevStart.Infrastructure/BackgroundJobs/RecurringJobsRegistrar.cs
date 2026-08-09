@@ -1,3 +1,4 @@
+using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.CommunityStandards;
 using DevStart.Infrastructure.Moderation;
 using DevStart.Infrastructure.Payments;
@@ -32,6 +33,11 @@ namespace DevStart.Infrastructure.BackgroundJobs
 
             recurringJobManager.AddOrUpdate<CommunityStandardsRefreshJob>(
                 "community-standards-refresh",
+                job => job.RunAsync(CancellationToken.None),
+                Cron.Daily());
+
+            recurringJobManager.AddOrUpdate<SessionCleanupJob>(
+                "session-cleanup",
                 job => job.RunAsync(CancellationToken.None),
                 Cron.Daily());
 

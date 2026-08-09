@@ -1221,6 +1221,10 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
+                    b.Property<DateTime>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
                     b.Property<Guid?>("ReplacedByTokenId")
                         .HasColumnType("uuid")
                         .HasColumnName("replaced_by_token_id");
@@ -1228,6 +1232,14 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("revoked_at");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
+                    b.Property<DateTime>("SessionStartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("session_started_at");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
@@ -1250,6 +1262,9 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.HasIndex("ExpiresAt")
                         .HasDatabaseName("ix_refresh_tokens_expires_at");
 
+                    b.HasIndex("SessionId")
+                        .HasDatabaseName("ix_refresh_tokens_session_id");
+
                     b.HasIndex("TokenHash")
                         .IsUnique()
                         .HasDatabaseName("ix_refresh_tokens_token_hash");
@@ -1258,6 +1273,47 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasDatabaseName("ix_refresh_tokens_user_id");
 
                     b.ToTable("refresh_tokens", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.Security.UserSecuritySettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("NotifyOnNewDeviceLogin")
+                        .HasColumnType("boolean")
+                        .HasColumnName("notify_on_new_device_login");
+
+                    b.Property<int>("Strictness")
+                        .HasColumnType("integer")
+                        .HasColumnName("strictness");
+
+                    b.Property<int>("TrustDurationDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("trust_duration_days");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_security_settings");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_security_settings_user_id");
+
+                    b.ToTable("user_security_settings", "public");
                 });
 
             modelBuilder.Entity("DevStart.Domain.ServiceOrders.ServiceOrder", b =>
@@ -2058,6 +2114,75 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasDatabaseName("ix_subscriptions_user_status");
 
                     b.ToTable("subscriptions", "public");
+                });
+
+            modelBuilder.Entity("DevStart.Domain.TrustedDevices.TrustedDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_by_ip");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("label");
+
+                    b.Property<string>("LastSeenIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("last_seen_ip");
+
+                    b.Property<DateTime>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("user_agent");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_trusted_devices");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_trusted_devices_expires_at");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_trusted_devices_token_hash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_trusted_devices_user_id");
+
+                    b.ToTable("trusted_devices", "public");
                 });
 
             modelBuilder.Entity("DevStart.Domain.TwoFactor.TwoFactorRecoveryCode", b =>

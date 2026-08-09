@@ -82,8 +82,10 @@ namespace DevStart.Application.Auth.OAuth.Callback
                 await context.SaveChangesAsync(cancellationToken);
 
                 // Linking issues a fresh token pair — a full login — so the 2FA gate applies here too.
+                // No device token: linking is an explicit, already-authenticated security action, and
+                // remembering a browser is not something the user asked for in that flow.
                 OAuthAuthResult? linkChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
-                    linkResult.Value, command.IpAddress, command.UserAgent, cancellationToken);
+                    linkResult.Value, command.IpAddress, command.UserAgent, deviceToken: null, cancellationToken);
                 if (linkChallenge is not null)
                 {
                     return linkChallenge;
@@ -157,7 +159,7 @@ namespace DevStart.Application.Auth.OAuth.Callback
 
             // Second factor before the consent gate; the verify handler re-checks consent afterwards.
             OAuthAuthResult? twoFactorChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
-                user, command.IpAddress, command.UserAgent, cancellationToken);
+                user, command.IpAddress, command.UserAgent, command.DeviceToken, cancellationToken);
             if (twoFactorChallenge is not null)
             {
                 return twoFactorChallenge;
@@ -183,9 +185,10 @@ namespace DevStart.Application.Auth.OAuth.Callback
         private async Task<TokenPair> IssueTokensAsync(
             User user, HandleOAuthCallbackCommand command, CancellationToken cancellationToken)
         {
-            string accessToken = tokenProvider.CreateAccessToken(user);
+            // Refresh token first: its session id becomes the access token's sid claim.
             IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
                 user, command.IpAddress, command.UserAgent, cancellationToken);
+            string accessToken = tokenProvider.CreateAccessToken(user, refresh.SessionId);
 
             return new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds);
         }

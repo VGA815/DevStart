@@ -43,7 +43,7 @@ namespace DevStart.Application.Auth.RefreshToken
                 return Result.Failure<TokenPair>(UserErrors.Banned);
             }
 
-            string accessToken = tokenProvider.CreateAccessToken(user);
+            string accessToken = tokenProvider.CreateAccessToken(user, rotated.Value.SessionId);
             return new TokenPair(accessToken, rotated.Value.RawRefreshToken, tokenProvider.AccessTokenLifetimeSeconds);
         }
     }

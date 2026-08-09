@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Admin.Users.ResetTwoFactor;
 using DevStart.Domain.Admin;
 using DevStart.Domain.TwoFactor;
@@ -15,13 +16,12 @@ namespace DevStart.UnitTests.Application.Admin
     {
         private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
         private readonly FixedDateTimeProvider _clock = new();
-        private readonly RefreshTokenService _refreshService;
+        private readonly IRefreshTokenService _refreshService;
         private readonly User _admin;
 
         public ResetUserTwoFactorCommandHandlerTests()
         {
-            _refreshService = new RefreshTokenService(
-                _db, _clock, Options.Create(new RefreshTokenOptions { LifetimeDays = 30 }));
+            _refreshService = AuthTestKit.RefreshTokens(_db, _clock);
 
             _admin = User.Create("admin", "admin@example.com", "hash", _clock.UtcNow);
             _admin.Role = UserSystemRole.Admin;

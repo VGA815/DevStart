@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.Users.TwoFactor.Enable;
 using DevStart.Application.Users.TwoFactor.Setup;
@@ -18,7 +19,7 @@ namespace DevStart.UnitTests.Application.Users.TwoFactor
         private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
         private readonly FixedDateTimeProvider _clock = new();
         private readonly TwoFactorEnrollmentService _enrollment;
-        private readonly RefreshTokenService _refreshService;
+        private readonly IRefreshTokenService _refreshService;
         private readonly User _user;
 
         public EnableTwoFactorCommandHandlerTests()
@@ -29,8 +30,7 @@ namespace DevStart.UnitTests.Application.Users.TwoFactor
                 TwoFactorTestKit.CreateProtector(),
                 TwoFactorTestKit.CreateRecoveryCodeGenerator(),
                 _clock);
-            _refreshService = new RefreshTokenService(
-                _db, _clock, Options.Create(new RefreshTokenOptions { LifetimeDays = 30 }));
+            _refreshService = AuthTestKit.RefreshTokens(_db, _clock);
 
             _user = User.Create("nina", "nina@example.com", "hash", _clock.UtcNow);
             _user.IsVerified = true;

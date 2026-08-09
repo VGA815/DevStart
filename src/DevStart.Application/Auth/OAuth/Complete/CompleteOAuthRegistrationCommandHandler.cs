@@ -107,8 +107,10 @@ namespace DevStart.Application.Auth.OAuth.Complete
             // cannot have 2FA yet.
             if (pending.ExistingUserId is not null && !pending.TwoFactorSatisfied)
             {
+                // No device token here: reaching this branch means 2FA was turned on mid-flow, so
+                // whatever this browser was trusted for predates it.
                 OAuthAuthResult? twoFactorChallenge = await twoFactorGate.ChallengeIfRequiredAsync(
-                    user, command.IpAddress, command.UserAgent, cancellationToken);
+                    user, command.IpAddress, command.UserAgent, deviceToken: null, cancellationToken);
                 if (twoFactorChallenge is not null)
                 {
                     return twoFactorChallenge;

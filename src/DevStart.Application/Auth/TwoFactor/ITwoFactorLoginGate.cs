@@ -14,11 +14,17 @@ namespace DevStart.Application.Auth.TwoFactor
         /// enabled, a <see cref="OAuthAuthResult.TwoFactorSetupRequired"/> challenge when the user is
         /// an admin without 2FA (enrollment is mandatory for admins), or null when no challenge is
         /// needed and the caller may proceed to issue tokens.
+        ///
+        /// <paramref name="deviceToken"/> is the opaque "remember this device" token the client kept
+        /// from a previous successful second factor; a valid one skips the challenge. It is never
+        /// consulted on the mandatory-admin-enrollment path — a device can only vouch for a second
+        /// factor the account has actually completed.
         /// </summary>
         Task<OAuthAuthResult?> ChallengeIfRequiredAsync(
             User user,
             string? ipAddress,
             string? userAgent,
+            string? deviceToken,
             CancellationToken cancellationToken);
     }
 }

@@ -61,6 +61,11 @@ namespace DevStart.Application
             services.AddScoped<Auth.TwoFactor.ITwoFactorLoginGate, Auth.TwoFactor.TwoFactorLoginGate>();
             services.AddScoped<Auth.TwoFactor.ITwoFactorEnrollmentService, Auth.TwoFactor.TwoFactorEnrollmentService>();
             services.AddScoped<Auth.TwoFactor.ITwoFactorCodeVerifier, Auth.TwoFactor.TwoFactorCodeVerifier>();
+            services.AddScoped<Users.Security.IUserSecuritySettingsProvider, Users.Security.UserSecuritySettingsProvider>();
+
+            // Default trusted-device tunables; Infrastructure binds the "TrustedDevices" section on top
+            // so IOptions<TrustedDeviceOptions> resolves even when the section is absent.
+            services.AddOptions<Configuration.TrustedDeviceOptions>();
 
             return services;
         }

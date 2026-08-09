@@ -1,3 +1,4 @@
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.Users.TwoFactor.Disable;
 using DevStart.Domain.TwoFactor;
@@ -19,12 +20,11 @@ namespace DevStart.UnitTests.Application.Users.TwoFactor
         private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
         private readonly FixedDateTimeProvider _clock = new();
         private readonly PasswordHasher _hasher = new();
-        private readonly RefreshTokenService _refreshService;
+        private readonly IRefreshTokenService _refreshService;
 
         public DisableTwoFactorCommandHandlerTests()
         {
-            _refreshService = new RefreshTokenService(
-                _db, _clock, Options.Create(new RefreshTokenOptions { LifetimeDays = 30 }));
+            _refreshService = AuthTestKit.RefreshTokens(_db, _clock);
         }
 
         private DisableTwoFactorCommandHandler CreateSut(Guid userId) =>

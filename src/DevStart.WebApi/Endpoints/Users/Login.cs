@@ -13,7 +13,8 @@ namespace DevStart.WebApi.Endpoints.Users
     {
         public sealed record Request(
             [property: JsonPropertyName("email")] string Email,
-            [property: JsonPropertyName("password")] string Password);
+            [property: JsonPropertyName("password")] string Password,
+            [property: JsonPropertyName("device_token")] string? DeviceToken = null);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -26,7 +27,7 @@ namespace DevStart.WebApi.Endpoints.Users
                 string? ip = httpContext.Connection.RemoteIpAddress?.ToString();
                 string? ua = httpContext.Request.Headers.UserAgent.ToString();
 
-                var command = new LoginUserCommand(request.Email, request.Password, ip, ua);
+                var command = new LoginUserCommand(request.Email, request.Password, ip, ua, request.DeviceToken);
 
                 Result<OAuthAuthResult> result = await handler.Handle(command, cancellationToken);
 

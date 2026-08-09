@@ -22,6 +22,7 @@ namespace DevStart.Application.Auth.TwoFactor.ConfirmSetupLogin
         ITwoFactorEnrollmentService enrollment,
         ITokenProvider tokenProvider,
         IRefreshTokenService refreshTokenService,
+        ITrustedDeviceService trustedDeviceService,
         IConsentService consentService,
         IDateTimeProvider dateTimeProvider) : ICommandHandler<ConfirmTwoFactorSetupLoginCommand, TwoFactorSetupCompleteResponse>
     {
@@ -70,6 +71,18 @@ namespace DevStart.Application.Auth.TwoFactor.ConfirmSetupLogin
 
             await pendingStore.RemoveAsync(command.PendingToken, cancellationToken);
 
+            // Enrollment just proved the second factor, so the browser can be trusted on either branch
+            // below. Admins get the shorter cap, applied inside the service.
+            TrustedDeviceGrant? deviceGrant = null;
+            if (command.RememberDevice)
+            {
+                IssuedTrustedDevice? issued = await trustedDeviceService.IssueAsync(
+                    user, command.IpAddress, command.UserAgent, cancellationToken);
+                deviceGrant = issued is null
+                    ? null
+                    : new TrustedDeviceGrant(issued.RawToken, issued.DeviceId, issued.ExpiresAt);
+            }
+
             if (!await consentService.AreMandatoryConsentsCurrentAsync(user.Id, cancellationToken))
             {
                 string consentToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
@@ -83,17 +96,21 @@ namespace DevStart.Application.Auth.TwoFactor.ConfirmSetupLogin
                 IReadOnlyList<RequiredConsent> required = await consentService.GetRequiredConsentsAsync(cancellationToken);
                 return new TwoFactorSetupCompleteResponse(
                     confirmed.Value,
-                    OAuthAuthResult.ConsentRequired(new ConsentChallenge(consentToken, required)));
+                    OAuthAuthResult
+                        .ConsentRequired(new ConsentChallenge(consentToken, required))
+                        .WithTrustedDevice(deviceGrant));
             }
 
-            string accessToken = tokenProvider.CreateAccessToken(user);
+            // Refresh token first: its session id becomes the access token's sid claim.
             IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
                 user, command.IpAddress, command.UserAgent, cancellationToken);
+            string accessToken = tokenProvider.CreateAccessToken(user, refresh.SessionId);
 
             return new TwoFactorSetupCompleteResponse(
                 confirmed.Value,
-                OAuthAuthResult.Authenticated(
-                    new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds)));
+                OAuthAuthResult
+                    .Authenticated(new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds))
+                    .WithTrustedDevice(deviceGrant));
         }
     }
 }

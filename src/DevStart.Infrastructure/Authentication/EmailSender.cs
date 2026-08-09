@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.Encodings.Web;
 
 namespace DevStart.Infrastructure.Authentication
 {
@@ -79,6 +80,36 @@ namespace DevStart.Infrastructure.Authentication
 
             await TrySendAsync(message, "subscription-expiring", email);
         }
+
+        // Every interpolated value is HTML-encoded. Today none of them can carry markup — browser/OS
+        // come from a closed set of parser literals and the IP is a formatted IPAddress — but this is
+        // the one email built from request-derived data, and putting the raw User-Agent in here later
+        // would otherwise turn it into an injection point silently.
+        public async Task SendNewDeviceLogin(string email, NewDeviceLoginInfo info)
+        {
+            string settingsUrl = Encode($"{_frontendOptions.BaseUrl.TrimEnd('/')}/dashboard/settings");
+            string browser = Encode(info.Browser ?? "неизвестный браузер");
+            string os = Encode(info.Os ?? "неизвестная система");
+            string where = Encode(string.IsNullOrWhiteSpace(info.IpAddress) ? "неизвестен" : info.IpAddress);
+            string occurredAt = Encode(info.OccurredAtUtc.ToString("yyyy-MM-dd HH:mm"));
+
+            IFluentEmail message = _fluentEmail
+                .To(email)
+                .Subject("Новый вход в аккаунт DevStart")
+                .Body(
+                    $"В ваш аккаунт DevStart вошли с устройства, которым вы давно не пользовались.<br><br>" +
+                    $"Браузер: {browser}<br>" +
+                    $"Система: {os}<br>" +
+                    $"IP-адрес: {where}<br>" +
+                    $"Время (UTC): {occurredAt}<br><br>" +
+                    "Если это были вы — ничего делать не нужно. Если нет — смените пароль и завершите " +
+                    $"чужие сессии в <a href='{settingsUrl}'>настройках безопасности</a>.",
+                    isHtml: true);
+
+            await TrySendAsync(message, "new-device-login", email);
+        }
+
+        private static string Encode(string value) => HtmlEncoder.Default.Encode(value);
 
         // Email delivery is best-effort: both the verification and password-reset flows expose a resend
         // path, so a transient SMTP failure must never bubble out as a 500 (which would also break the

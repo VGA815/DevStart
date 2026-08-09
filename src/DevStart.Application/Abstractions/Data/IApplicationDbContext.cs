@@ -31,7 +31,9 @@ using DevStart.Domain.StartupMembers;
 using DevStart.Domain.StartupMetrics;
 using DevStart.Domain.StartupProducts;
 using DevStart.Domain.StartupRoadmapItems;
+using DevStart.Domain.Security;
 using DevStart.Domain.Startups;
+using DevStart.Domain.TrustedDevices;
 using DevStart.Domain.TwoFactor;
 using DevStart.Domain.UserPreferences;
 using DevStart.Domain.Users;
@@ -83,6 +85,8 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<RefreshToken> RefreshTokens { get; }
         DbSet<UserTwoFactor> UserTwoFactors { get; }
         DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes { get; }
+        DbSet<TrustedDevice> TrustedDevices { get; }
+        DbSet<UserSecuritySettings> UserSecuritySettings { get; }
         DbSet<AdminActionLog> AdminActionLogs { get; }
         DbSet<PromoCode> PromoCodes { get; }
         DbSet<PromoCodeRedemption> PromoCodeRedemptions { get; }

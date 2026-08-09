@@ -1,4 +1,5 @@
 using DevStart.Application.Abstractions.BackgroundJobs;
+using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.DealDocuments;
 using Hangfire;
 
@@ -9,6 +10,13 @@ namespace DevStart.Infrastructure.BackgroundJobs
         public void EnqueueTermSheetGeneration(Guid dealId)
         {
             client.Enqueue<TermSheetGenerationJob>(j => j.GenerateAsync(dealId, CancellationToken.None));
+        }
+
+        public void EnqueueNewDeviceLoginEmail(
+            string email, string? browser, string? os, string? ipAddress, DateTime occurredAtUtc)
+        {
+            client.Enqueue<NewDeviceLoginEmailJob>(
+                j => j.SendAsync(email, browser, os, ipAddress, occurredAtUtc));
         }
     }
 }

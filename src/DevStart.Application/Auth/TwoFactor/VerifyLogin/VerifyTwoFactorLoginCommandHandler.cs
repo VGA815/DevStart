@@ -18,6 +18,7 @@ namespace DevStart.Application.Auth.TwoFactor.VerifyLogin
         ITwoFactorCodeVerifier codeVerifier,
         ITokenProvider tokenProvider,
         IRefreshTokenService refreshTokenService,
+        ITrustedDeviceService trustedDeviceService,
         IConsentService consentService,
         IDateTimeProvider dateTimeProvider) : ICommandHandler<VerifyTwoFactorLoginCommand, OAuthAuthResult>
     {
@@ -81,6 +82,12 @@ namespace DevStart.Application.Auth.TwoFactor.VerifyLogin
             }
             await pendingStore.RemoveAsync(command.PendingToken, cancellationToken);
 
+            // The second factor is proven at this point, so the browser can be trusted regardless of
+            // whether consents still stand — the grant rides along on either branch below.
+            TrustedDeviceGrant? deviceGrant = command.RememberDevice
+                ? await IssueTrustedDeviceAsync(user, command, cancellationToken)
+                : null;
+
             // Same re-consent gate as password login; the pending record marks 2FA as already
             // satisfied so the completion handler does not challenge a second time.
             if (!await consentService.AreMandatoryConsentsCurrentAsync(user.Id, cancellationToken))
@@ -94,15 +101,27 @@ namespace DevStart.Application.Auth.TwoFactor.VerifyLogin
                     cancellationToken);
 
                 IReadOnlyList<RequiredConsent> required = await consentService.GetRequiredConsentsAsync(cancellationToken);
-                return OAuthAuthResult.ConsentRequired(new ConsentChallenge(consentToken, required));
+                return OAuthAuthResult
+                    .ConsentRequired(new ConsentChallenge(consentToken, required))
+                    .WithTrustedDevice(deviceGrant);
             }
 
-            string accessToken = tokenProvider.CreateAccessToken(user);
             IssuedRefreshToken refresh = await refreshTokenService.IssueAsync(
                 user, command.IpAddress, command.UserAgent, cancellationToken);
+            string accessToken = tokenProvider.CreateAccessToken(user, refresh.SessionId);
 
-            return OAuthAuthResult.Authenticated(
-                new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds));
+            return OAuthAuthResult
+                .Authenticated(new TokenPair(accessToken, refresh.RawToken, tokenProvider.AccessTokenLifetimeSeconds))
+                .WithTrustedDevice(deviceGrant);
+        }
+
+        private async Task<TrustedDeviceGrant?> IssueTrustedDeviceAsync(
+            User user, VerifyTwoFactorLoginCommand command, CancellationToken cancellationToken)
+        {
+            IssuedTrustedDevice? issued = await trustedDeviceService.IssueAsync(
+                user, command.IpAddress, command.UserAgent, cancellationToken);
+
+            return issued is null ? null : new TrustedDeviceGrant(issued.RawToken, issued.DeviceId, issued.ExpiresAt);
         }
     }
 }

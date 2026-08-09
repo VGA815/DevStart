@@ -16,5 +16,11 @@ namespace DevStart.Infrastructure.Authentication
                 .User
                 .GetUserId() ??
             throw new ApplicationException("User context is unavailable");
+
+        public Guid? SessionId =>
+            _httpContextAccessor
+                .HttpContext?
+                .User
+                .GetSessionId();
     }
 }

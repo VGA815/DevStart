@@ -23,6 +23,7 @@ namespace DevStart.UnitTests.Auth.TwoFactor
         private readonly TwoFactorEnrollmentService _enrollment;
         private readonly SetupTwoFactorLoginCommandHandler _setupSut;
         private readonly ConfirmTwoFactorSetupLoginCommandHandler _confirmSut;
+        private readonly ITrustedDeviceService _trustedDevices;
 
         public ConfirmTwoFactorSetupLoginCommandHandlerTests()
         {
@@ -33,13 +34,13 @@ namespace DevStart.UnitTests.Auth.TwoFactor
                 TwoFactorTestKit.CreateRecoveryCodeGenerator(),
                 _clock);
 
-            var refreshOptions = Options.Create(new RefreshTokenOptions { LifetimeDays = 30 });
-            var refreshSvc = new RefreshTokenService(_db, _clock, refreshOptions);
+            _trustedDevices = AuthTestKit.TrustedDevices(_db, _clock);
+            var refreshSvc = AuthTestKit.RefreshTokens(_db, _clock, trustedDevices: _trustedDevices);
 
             _setupSut = new SetupTwoFactorLoginCommandHandler(_db, _twoFactorStore, _enrollment, _clock);
             _confirmSut = new ConfirmTwoFactorSetupLoginCommandHandler(
                 _db, _twoFactorStore, _pendingRegistrationStore, _enrollment,
-                new StubTokenProvider(), refreshSvc, _consentService, _clock);
+                new StubTokenProvider(), refreshSvc, _trustedDevices, _consentService, _clock);
         }
 
         private async Task<(User Admin, string PendingToken)> SeedAdminWithSetupChallengeAsync()
@@ -82,6 +83,46 @@ namespace DevStart.UnitTests.Auth.TwoFactor
             Assert.True(stored.IsEnabled);
             Assert.Equal(10, await _db.TwoFactorRecoveryCodes.CountAsync());
             Assert.Empty(_twoFactorStore.Items);
+        }
+
+        [Fact]
+        public async Task AdminEnrollment_WithRememberDevice_TrustsTheBrowser_UnderTheAdminCap()
+        {
+            (User admin, string token) = await SeedAdminWithSetupChallengeAsync();
+
+            Result<TwoFactorLoginSetupResponse> setup = await _setupSut.Handle(
+                new SetupTwoFactorLoginCommand(token), default);
+
+            Result<TwoFactorSetupCompleteResponse> confirm = await _confirmSut.Handle(
+                new ConfirmTwoFactorSetupLoginCommand(
+                    token, TwoFactorTestKit.CurrentCodeFor(setup.Value.Secret), null, "ua", RememberDevice: true),
+                default);
+
+            Assert.True(confirm.IsSuccess);
+            Assert.NotNull(confirm.Value.Auth.TrustedDevice);
+
+            DevStart.Domain.TrustedDevices.TrustedDevice stored = await _db.TrustedDevices.SingleAsync();
+            Assert.Equal(admin.Id, stored.UserId);
+            // Admins get the shorter ceiling, not the 30-day default.
+            Assert.Equal(_clock.UtcNow.AddDays(7), stored.ExpiresAt);
+        }
+
+        [Fact]
+        public async Task AdminEnrollment_WithoutRememberDevice_TrustsNothing()
+        {
+            (_, string token) = await SeedAdminWithSetupChallengeAsync();
+
+            Result<TwoFactorLoginSetupResponse> setup = await _setupSut.Handle(
+                new SetupTwoFactorLoginCommand(token), default);
+
+            Result<TwoFactorSetupCompleteResponse> confirm = await _confirmSut.Handle(
+                new ConfirmTwoFactorSetupLoginCommand(
+                    token, TwoFactorTestKit.CurrentCodeFor(setup.Value.Secret), null, "ua"),
+                default);
+
+            Assert.True(confirm.IsSuccess);
+            Assert.Null(confirm.Value.Auth.TrustedDevice);
+            Assert.Empty(await _db.TrustedDevices.ToListAsync());
         }
 
         [Fact]
