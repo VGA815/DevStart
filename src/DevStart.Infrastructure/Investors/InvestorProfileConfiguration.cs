@@ -19,6 +19,7 @@ namespace DevStart.Infrastructure.Investors
                 .HasConversion<int>()
                 .IsRequired()
                 .HasColumnName("type");
+            builder.Property(x => x.AvatarId).HasColumnName("avatar_id");
             builder.Property(x => x.CreatedAt).HasColumnName("created_at");
             builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 

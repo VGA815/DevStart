@@ -8,6 +8,9 @@ namespace DevStart.Application.InvestmentApplications.GetAllByStartupId
         public Guid Id { get; init; }
         public Guid InvestorProfileId { get; init; }
         public string InvestorDisplayName { get; init; } = null!;
+
+        /// <summary>Аватарка заявителя: логотип фонда либо личная аватарка физлица.</summary>
+        public Guid? InvestorAvatarId { get; init; }
         public Guid StartupId { get; init; }
         public string StartupName { get; init; } = null!;
         public Guid? RoadmapItemId { get; init; }

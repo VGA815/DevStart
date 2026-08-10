@@ -48,7 +48,8 @@ namespace DevStart.Application.InvestorProfiles.Update
 
             investorProfile.Update(
                 command.Type,
-                dateTimeProvider.UtcNow);
+                dateTimeProvider.UtcNow,
+                command.AvatarId);
 
             await context.SaveChangesAsync(cancellationToken);
 

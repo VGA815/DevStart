@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Pagination;
+using DevStart.Domain.Investors;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +40,9 @@ internal sealed class GetInvestorProfilesQueryHandler(IApplicationDbContext cont
                 DisplayName = ip.Profile.Name ?? string.Empty,
                 Bio         = ip.Profile.Bio,
                 Website     = ip.Profile.Url,
+                // Фонд показывается своим логотипом (без подстановки фото владельца — если логотипа
+                // нет, клиент рисует инициалы названия), физлицо — аватаркой основного аккаунта.
+                AvatarId    = ip.Type == InvestorProfileType.Fund ? ip.AvatarId : ip.Profile.AvatarId,
                 CreatedAt   = ip.CreatedAt,
                 UpdatedAt   = ip.UpdatedAt
             })

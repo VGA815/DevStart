@@ -34,4 +34,48 @@ public sealed class InvestorProfileTests
         profile.Type.ShouldBe(InvestorProfileType.Fund);
         profile.UpdatedAt.ShouldBe(updatedAt);
     }
+
+    [Fact]
+    public void Create_ShouldKeepTheAvatar_WhenTheInvestorIsAFund()
+    {
+        Guid avatarId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+
+        InvestorProfile profile = InvestorProfile.Create(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            InvestorProfileType.Fund,
+            new DateTime(2026, 5, 16, 10, 0, 0, DateTimeKind.Utc),
+            avatarId);
+
+        profile.AvatarId.ShouldBe(avatarId);
+    }
+
+    [Fact]
+    public void Create_ShouldDropTheAvatar_WhenTheInvestorIsAnIndividual()
+    {
+        InvestorProfile profile = InvestorProfile.Create(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            InvestorProfileType.Individual,
+            new DateTime(2026, 5, 16, 10, 0, 0, DateTimeKind.Utc),
+            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
+
+        // Аватарка физлица живёт на общем Profile — своей у инвестор-профиля быть не должно.
+        profile.AvatarId.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Update_ShouldClearTheAvatar_WhenTheTypeSwitchesToIndividual()
+    {
+        InvestorProfile profile = InvestorProfile.Create(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            InvestorProfileType.Fund,
+            new DateTime(2026, 5, 16, 10, 0, 0, DateTimeKind.Utc),
+            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
+
+        profile.Update(
+            InvestorProfileType.Individual,
+            new DateTime(2026, 5, 16, 11, 0, 0, DateTimeKind.Utc),
+            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
+
+        profile.AvatarId.ShouldBeNull();
+    }
 }

@@ -49,7 +49,8 @@ namespace DevStart.Application.InvestorProfiles.Create
             InvestorProfile investorProfile = InvestorProfile.Create(
                 userId,
                 command.Type,
-                dateTimeProvider.UtcNow);
+                dateTimeProvider.UtcNow,
+                command.AvatarId);
 
             context.InvestorProfiles.Add(investorProfile);
             await context.SaveChangesAsync(cancellationToken);

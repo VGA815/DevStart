@@ -23,6 +23,10 @@ namespace DevStart.Application.InvestorProfiles.GetById
                     Bio = ip.Profile.Bio,
                     Website = ip.Profile.Url,
                     IsPublic = ip.Profile.IsPublic,
+                    // Фонд показывается своим логотипом (без подстановки фото владельца — если логотипа
+                    // нет, клиент рисует инициалы названия), физлицо — аватаркой основного аккаунта.
+                    AvatarId = ip.Type == InvestorProfileType.Fund ? ip.AvatarId : ip.Profile.AvatarId,
+                    FundAvatarId = ip.AvatarId,
                     CreatedAt = ip.CreatedAt,
                     UpdatedAt = ip.UpdatedAt
                 })

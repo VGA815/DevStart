@@ -9,6 +9,9 @@ namespace DevStart.Application.ExpertProfiles.GetAll
         public string DisplayName { get; init; } = null!;
         public string? Bio { get; init; }
         public string? Website { get; init; }
+
+        /// <summary>Аватарка основного аккаунта: своей у эксперт-профиля нет.</summary>
+        public Guid? AvatarId { get; init; }
         public string? LinkedInUrl { get; init; }
         public string? TwitterUrl { get; init; }
         public string? GitHubUrl { get; init; }

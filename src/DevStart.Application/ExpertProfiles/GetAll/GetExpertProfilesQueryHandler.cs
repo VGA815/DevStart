@@ -42,6 +42,7 @@ internal sealed class GetExpertProfilesQueryHandler(IApplicationDbContext contex
                 DisplayName     = ep.Profile.Name ?? string.Empty,
                 Bio             = ep.Profile.Bio,
                 Website         = ep.Profile.Url,
+                AvatarId        = ep.Profile.AvatarId,
                 LinkedInUrl     = ep.Profile.LinkedInUrl,
                 TwitterUrl      = ep.Profile.TwitterUrl,
                 GitHubUrl       = ep.Profile.GitHubUrl,

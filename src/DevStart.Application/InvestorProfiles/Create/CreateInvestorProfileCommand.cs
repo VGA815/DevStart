@@ -13,18 +13,24 @@ namespace DevStart.Application.InvestorProfiles.Create
         public string? Website { get; set; }
         public bool IsPublic { get; set; }
 
+        // Логотип фонда — единственная аватарка, которая живёт на инвестор-профиле. У физлица
+        // аватарка берётся из общего Profile, поэтому здесь значение игнорируется.
+        public Guid? AvatarId { get; set; }
+
         public CreateInvestorProfileCommand(
             InvestorProfileType type,
             string displayName,
             string? bio = null,
             string? website = null,
-            bool isPublic = true)
+            bool isPublic = true,
+            Guid? avatarId = null)
         {
             Type = type;
             DisplayName = displayName;
             Bio = bio;
             Website = website;
             IsPublic = isPublic;
+            AvatarId = avatarId;
         }
     }
 }

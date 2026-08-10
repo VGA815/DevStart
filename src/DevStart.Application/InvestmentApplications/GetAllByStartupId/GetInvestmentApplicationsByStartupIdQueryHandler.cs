@@ -3,6 +3,7 @@ using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Validation;
 using DevStart.Domain.InvestmentApplications;
+using DevStart.Domain.Investors;
 using DevStart.Domain.StartupMembers;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,18 @@ namespace DevStart.Application.InvestmentApplications.GetAllByStartupId
                         .Where(p => p.UserId == a.InvestorProfileId)
                         .Select(p => p.Name)
                         .FirstOrDefault() ?? string.Empty,
+                    // Фонд представлен собственным логотипом (у фонда без логотипа личное фото не
+                    // подставляем — клиент нарисует инициалы), физлицо — аватаркой аккаунта.
+                    InvestorAvatarId = context.InvestorProfiles
+                            .Any(ip => ip.UserId == a.InvestorProfileId && ip.Type == InvestorProfileType.Fund)
+                        ? context.InvestorProfiles
+                            .Where(ip => ip.UserId == a.InvestorProfileId)
+                            .Select(ip => ip.AvatarId)
+                            .FirstOrDefault()
+                        : context.Profiles
+                            .Where(p => p.UserId == a.InvestorProfileId)
+                            .Select(p => p.AvatarId)
+                            .FirstOrDefault(),
                     StartupId = a.StartupId,
                     StartupName = context.Startups
                         .Where(s => s.Id == a.StartupId)

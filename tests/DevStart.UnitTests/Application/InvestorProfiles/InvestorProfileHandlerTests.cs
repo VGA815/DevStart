@@ -159,6 +159,59 @@ public sealed class InvestorProfileHandlerTests
     }
 
     [Fact]
+    public async Task Update_ShouldStoreTheFundLogoWithoutTouchingThePersonalAvatar()
+    {
+        Guid userId = Guid.NewGuid();
+        Guid personalAvatarId = Guid.NewGuid();
+        Guid fundAvatarId = Guid.NewGuid();
+        Profile profile = SeedProfile(userId);
+        profile.AvatarId = personalAvatarId;
+        await _db.SaveChangesAsync();
+        await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
+
+        await UpdateHandler(userId).Handle(
+            new UpdateInvestorProfileCommand(
+                InvestorProfileType.Fund,
+                displayName: "Jane Fund",
+                isPublic: true,
+                avatarId: fundAvatarId),
+            CancellationToken.None);
+
+        InvestorProfile investorProfile = await _db.InvestorProfiles.SingleAsync(ip => ip.UserId == userId);
+        investorProfile.AvatarId.ShouldBe(fundAvatarId);
+
+        // Личная аватарка аккаунта остаётся своей: логотип фонда её не подменяет.
+        Profile stored = await _db.Profiles.SingleAsync(p => p.UserId == userId);
+        stored.AvatarId.ShouldBe(personalAvatarId);
+    }
+
+    [Fact]
+    public async Task Update_ShouldClearTheFundLogo_WhenTheTypeSwitchesToIndividual()
+    {
+        Guid userId = Guid.NewGuid();
+        SeedProfile(userId);
+        await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
+        await UpdateHandler(userId).Handle(
+            new UpdateInvestorProfileCommand(
+                InvestorProfileType.Fund,
+                displayName: "Jane Fund",
+                isPublic: true,
+                avatarId: Guid.NewGuid()),
+            CancellationToken.None);
+
+        await UpdateHandler(userId).Handle(
+            new UpdateInvestorProfileCommand(
+                InvestorProfileType.Individual,
+                displayName: "Jane I.",
+                isPublic: true,
+                avatarId: Guid.NewGuid()),
+            CancellationToken.None);
+
+        InvestorProfile investorProfile = await _db.InvestorProfiles.SingleAsync(ip => ip.UserId == userId);
+        investorProfile.AvatarId.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Update_ShouldFail_WhenNoInvestorProfileExists()
     {
         Guid userId = Guid.NewGuid();
