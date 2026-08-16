@@ -1,4 +1,5 @@
 ﻿using DevStart.WebApi.Endpoints;
+using DevStart.WebApi.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
@@ -39,6 +40,18 @@ namespace DevStart.WebApi.Extensions
         public static RouteHandlerBuilder HasPermission(this RouteHandlerBuilder app, string permission)
         {
             return app.RequireAuthorization(permission);
+        }
+
+        /// <summary>
+        /// Requires a valid Yandex SmartCaptcha token in the X-Captcha-Token header. A no-op when
+        /// Captcha:Enabled is false. Declare it alongside RequireRateLimiting("auth") — the two are
+        /// complementary: the limiter caps volume per IP, the captcha raises the per-request cost.
+        /// </summary>
+        public static RouteHandlerBuilder RequireCaptcha(this RouteHandlerBuilder app)
+        {
+            return app
+                .AddEndpointFilter<CaptchaEndpointFilter>()
+                .WithMetadata(new RequiresCaptchaMetadata());
         }
     }
 }

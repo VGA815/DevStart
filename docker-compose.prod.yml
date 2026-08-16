@@ -25,6 +25,16 @@ services:
       TwoFactor__EncryptionKey: "${TWO_FACTOR_ENCRYPTION_KEY}"
       TwoFactor__Issuer: "DevStart"
 
+      # Yandex SmartCaptcha on the anonymous auth endpoints. Enforcement is an env var, so it can
+      # be switched off instantly without a rebuild — unlike CAPTCHA_SITE_KEY, which is baked into
+      # the frontend image. Roll forward frontend-first; roll back API-first.
+      # ShadowMode=true verifies and logs without blocking — use it for the first pass in prod.
+      Captcha__Enabled: "${CAPTCHA_ENABLED:-false}"
+      Captcha__ServerKey: "${CAPTCHA_SERVER_KEY}"
+      Captcha__ShadowMode: "${CAPTCHA_SHADOW_MODE:-false}"
+      # A vendor outage must not lock everyone out; an explicit rejection is still a hard fail.
+      Captcha__FailOpen: "${CAPTCHA_FAIL_OPEN:-true}"
+
       TrustedDevices__Enabled: "${TRUSTED_DEVICES_ENABLED:-true}"
       TrustedDevices__MaxTrustDays: "${TRUSTED_DEVICE_MAX_DAYS:-30}"
       TrustedDevices__AdminMaxTrustDays: "${TRUSTED_DEVICE_ADMIN_MAX_DAYS:-7}"
@@ -372,6 +382,10 @@ services:
         # MATOMO_SITE_ID is baked into the bundle: changing it needs `up -d --build frontend`.
         MATOMO_URL: /matomo/
         MATOMO_SITE_ID: "${MATOMO_SITE_ID}"
+        # Yandex SmartCaptcha PUBLIC client key, also baked into the bundle. Must be built and
+        # deployed BEFORE the API's Captcha__Enabled is flipped to true, otherwise the browser
+        # sends no token and every login/registration 400s. Empty = widget disabled.
+        CAPTCHA_SITE_KEY: "${CAPTCHA_SITE_KEY}"
     restart: unless-stopped
     expose:
       - "80"

@@ -44,7 +44,8 @@ namespace DevStart.WebApi.Endpoints.Auth
                 return result.Match(Results.Ok, CustomResults.Problem);
             })
             .WithTags(Tags.Auth)
-            .RequireRateLimiting("auth");
+            .RequireRateLimiting("auth")
+            .RequireCaptcha();
         }
     }
 }

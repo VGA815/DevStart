@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.RateLimiting;
+using DevStart.WebApi.Infrastructure;
 using Microsoft.OpenApi;
 using System.Net;
 using System.Security.Claims;
@@ -34,7 +35,10 @@ namespace DevStart.WebApi.Extensions
                 {
                     [new OpenApiSecuritySchemeReference("Bearer", document)] = []
                 });
-                
+
+                // Declares X-Captcha-Token on the captcha-protected endpoints; nothing binds it, so
+                // Swashbuckle cannot discover it on its own.
+                o.OperationFilter<CaptchaHeaderOperationFilter>();
             });
 
             return services;

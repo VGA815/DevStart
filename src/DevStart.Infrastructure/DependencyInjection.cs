@@ -1,5 +1,6 @@
 ﻿using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.BackgroundJobs;
+using DevStart.Application.Abstractions.Captcha;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Notifications;
 using DevStart.Application.Abstractions.Payments;
@@ -15,6 +16,7 @@ using DevStart.Infrastructure.Authentication.TwoFactor;
 using DevStart.Infrastructure.Authorization;
 using DevStart.Infrastructure.BackgroundJobs;
 using DevStart.Infrastructure.Caching;
+using DevStart.Infrastructure.Captcha;
 using DevStart.Infrastructure.CommunityStandards;
 using DevStart.Infrastructure.Database;
 using DevStart.Infrastructure.Diagnostics;
@@ -67,7 +69,8 @@ namespace DevStart.Infrastructure
                 .AddBackgroundJobs(configuration)
                 .AddDealDocumentGeneration()
                 .AddBilling(configuration)
-                .AddValuation(configuration);
+                .AddValuation(configuration)
+                .AddCaptcha(configuration);
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
@@ -379,6 +382,34 @@ namespace DevStart.Infrastructure
             services.AddScoped<PaymentReconciliationJob>();
             services.AddScoped<SubscriptionMaintenanceJob>();
             services.AddHostedService<RecurringJobsRegistrar>();
+
+            return services;
+        }
+
+        // Yandex SmartCaptcha (invisible) on the anonymous auth endpoints. The options live in
+        // Application because the WebApi endpoint filter reads them too, and it cannot reference
+        // Infrastructure.
+        private static IServiceCollection AddCaptcha(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddOptions<CaptchaOptions>()
+                .Bind(configuration.GetSection(CaptchaOptions.SectionName))
+                // Conditional on Enabled — this is what makes the kill switch usable: a fresh clone,
+                // `dotnet run`, CI and the integration tests all boot without a Yandex key, while a
+                // production deployment that sets Enabled without a key still fails fast at startup.
+                .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.ServerKey),
+                    "Captcha:ServerKey is required when Captcha:Enabled is true. Configure it via the " +
+                    "Captcha__ServerKey environment variable.")
+                .Validate(o => Uri.TryCreate(o.ValidateUrl, UriKind.Absolute, out _),
+                    "Captcha:ValidateUrl must be an absolute URL")
+                .Validate(o => o.TimeoutSeconds is > 0 and <= 30,
+                    "Captcha:TimeoutSeconds must be between 1 and 30")
+                .ValidateOnStart();
+
+            // No resilience handler, deliberately unlike YooKassa: a 3-second budget sitting in front
+            // of every login is the wrong place for retries. Unavailable + fail-open is the policy.
+            services.AddHttpClient<ICaptchaVerifier, YandexSmartCaptchaVerifier>((sp, client) =>
+                client.Timeout = TimeSpan.FromSeconds(
+                    sp.GetRequiredService<IOptions<CaptchaOptions>>().Value.TimeoutSeconds));
 
             return services;
         }

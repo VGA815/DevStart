@@ -23,7 +23,8 @@ namespace DevStart.WebApi.Endpoints.EmailVerificationTokens
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
                 .WithTags(Tags.EmailVerification)
-                .RequireRateLimiting("auth");
+                .RequireRateLimiting("auth")
+                .RequireCaptcha();
         }
     }
 }

@@ -1,8 +1,10 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.BackgroundJobs;
+using DevStart.Application.Abstractions.Captcha;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Notifications;
 using DevStart.Application.Abstractions.Payments;
+using DevStart.Application.Configuration;
 using DevStart.Domain.ExternalLogins;
 using DevStart.Domain.Startups;
 using DevStart.Domain.Valuation;
@@ -15,6 +17,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using Respawn;
 using Respawn.Graph;
@@ -59,6 +62,13 @@ namespace DevStart.IntegrationTests.Infrastructure
         internal InMemoryPendingTwoFactorStore PendingTwoFactor { get; } = new();
         internal FakeExternalAuthProvider GoogleAuth { get; } = new() { Provider = ExternalLoginProvider.Google };
         internal FakeExternalAuthProvider GitHubAuth { get; } = new() { Provider = ExternalLoginProvider.GitHub };
+        internal FakeCaptchaVerifier Captcha { get; } = new();
+
+        /// <summary>
+        /// Mutable between requests (see <see cref="MutableOptionsMonitor{T}"/>): captcha tests flip
+        /// Enabled/FailOpen around themselves, everything else runs with it off.
+        /// </summary>
+        internal CaptchaOptions CaptchaOptions { get; } = new() { Enabled = false, FailOpen = true };
 
         public async Task InitializeAsync()
         {
@@ -155,6 +165,13 @@ namespace DevStart.IntegrationTests.Infrastructure
             // Enables the trusted-proxy path of the Hangfire dashboard filter so tests can cover it.
             ["Hangfire:Dashboard:ProxyAuthSecret"] = HangfireProxySecret,
 
+            // Captcha off by default so the existing auth tests keep posting bare requests with no
+            // X-Captcha-Token header. The ValidateOnStart rule is conditional on Enabled, so the key
+            // below is only here to keep the config shape realistic. CaptchaTests turns enforcement on
+            // per-test through the IOptionsMonitor override in ConfigureWebHost.
+            ["Captcha:Enabled"] = "false",
+            ["Captcha:ServerKey"] = "integration-tests-captcha-secret",
+
             ["Centrifugo:ApiUrl"] = "http://localhost:8000",
             ["Centrifugo:ApiKey"] = "test-api-key",
             ["Centrifugo:TokenHmacSecret"] = "integration-tests-centrifugo-hmac-secret-0123456789",
@@ -188,6 +205,9 @@ namespace DevStart.IntegrationTests.Infrastructure
                 Replace<IOAuthStateStore>(services, OAuthStateStore);
                 Replace<IPendingRegistrationStore>(services, PendingRegistrations);
                 Replace<IPendingTwoFactorStore>(services, PendingTwoFactor);
+                Replace<ICaptchaVerifier>(services, Captcha);
+                Replace<IOptionsMonitor<CaptchaOptions>>(
+                    services, new MutableOptionsMonitor<CaptchaOptions>(CaptchaOptions));
 
                 // The external auth providers are registered as a multi-binding (Google + GitHub) behind a
                 // factory, so swap the whole set.

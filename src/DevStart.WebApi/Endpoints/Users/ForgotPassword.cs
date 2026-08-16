@@ -26,7 +26,8 @@ namespace DevStart.WebApi.Endpoints.Users
                 return result.Match(Results.NoContent, CustomResults.Problem);
             })
                 .WithTags(Tags.Users)
-                .RequireRateLimiting("auth");
+                .RequireRateLimiting("auth")
+                .RequireCaptcha();
         }
     }
 }
