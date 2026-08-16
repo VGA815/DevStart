@@ -1,3 +1,4 @@
+using DevStart.Infrastructure.AccountDeletion;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.CommunityStandards;
 using DevStart.Infrastructure.ExpertCollaborationRequests;
@@ -44,6 +45,11 @@ namespace DevStart.Infrastructure.BackgroundJobs
 
             recurringJobManager.AddOrUpdate<SessionCleanupJob>(
                 "session-cleanup",
+                job => job.RunAsync(CancellationToken.None),
+                Cron.Daily());
+
+            recurringJobManager.AddOrUpdate<AccountDeletionJob>(
+                "account-deletion",
                 job => job.RunAsync(CancellationToken.None),
                 Cron.Daily());
 

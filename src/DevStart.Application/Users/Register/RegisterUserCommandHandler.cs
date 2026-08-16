@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Admin.Bans;
 using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.Profiles;
 using DevStart.Domain.UserConsents;
@@ -22,6 +23,14 @@ namespace DevStart.Application.Users.Register
             if (await context.Users.AnyAsync(u => u.Email == command.Email, cancellationToken))
             {
                 return Result.Failure<Guid>(UserErrors.EmailNotUnique);
+            }
+
+            // A banned account that was later erased leaves its ban behind as a hash. Re-registering
+            // with the same address is otherwise a clean way out of moderation.
+            if (await BannedIdentityGate.IsBarredAsync(
+                    context, command.Email, dateTimeProvider.UtcNow, cancellationToken))
+            {
+                return Result.Failure<Guid>(UserErrors.Banned);
             }
 
             // Validate consent document versions against the currently active documents

@@ -1,4 +1,5 @@
-﻿using DevStart.Domain.Admin;
+﻿using DevStart.Domain.AccountDeletion;
+using DevStart.Domain.Admin;
 using DevStart.Domain.ChatFiles;
 using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.DealDocuments;
@@ -88,6 +89,8 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<TrustedDevice> TrustedDevices { get; }
         DbSet<UserSecuritySettings> UserSecuritySettings { get; }
         DbSet<AdminActionLog> AdminActionLogs { get; }
+        DbSet<BannedIdentity> BannedIdentities { get; }
+        DbSet<AccountDeletionRequest> AccountDeletionRequests { get; }
         DbSet<PromoCode> PromoCodes { get; }
         DbSet<PromoCodeRedemption> PromoCodeRedemptions { get; }
         DbSet<ValuationBenchmark> ValuationBenchmarks { get; }

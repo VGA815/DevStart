@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Application.Abstractions.Messaging;
+using DevStart.Application.Admin.Bans;
 using DevStart.Application.Auth.TwoFactor;
 using DevStart.Application.UserConsents;
 using DevStart.Domain.ExternalLogins;
@@ -60,6 +61,12 @@ namespace DevStart.Application.Auth.OAuth.Complete
                 if (await context.Users.AnyAsync(u => u.Email == pending.Email, cancellationToken))
                 {
                     return Result.Failure<OAuthAuthResult>(UserErrors.EmailNotUnique);
+                }
+
+                // Same gate as password sign-up: an erased account does not wipe its ban (BannedIdentity).
+                if (await BannedIdentityGate.IsBarredAsync(context, pending.Email, now, cancellationToken))
+                {
+                    return Result.Failure<OAuthAuthResult>(UserErrors.Banned);
                 }
 
                 string username = await GenerateUniqueUsernameAsync(pending, cancellationToken);

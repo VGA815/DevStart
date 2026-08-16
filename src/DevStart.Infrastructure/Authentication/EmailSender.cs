@@ -109,6 +109,25 @@ namespace DevStart.Infrastructure.Authentication
             await TrySendAsync(message, "new-device-login", email);
         }
 
+        public async Task SendAccountDeletionScheduled(string email, DateTime scheduledFor)
+        {
+            string settingsUrl = Encode($"{_frontendOptions.BaseUrl.TrimEnd('/')}/dashboard/settings");
+            string when = Encode(scheduledFor.ToString("yyyy-MM-dd"));
+
+            IFluentEmail message = _fluentEmail
+                .To(email)
+                .Subject("Запрос на удаление аккаунта DevStart")
+                .Body(
+                    $"Мы получили запрос на удаление вашего аккаунта DevStart.<br><br>" +
+                    $"Аккаунт и связанные с ним персональные данные будут удалены {when} (UTC). " +
+                    "До этой даты аккаунт продолжает работать, а запрос можно отменить.<br><br>" +
+                    $"Если вы передумали или запрос сделали не вы — отмените удаление в " +
+                    $"<a href='{settingsUrl}'>настройках безопасности</a> и смените пароль.",
+                    isHtml: true);
+
+            await TrySendAsync(message, "account-deletion-scheduled", email);
+        }
+
         private static string Encode(string value) => HtmlEncoder.Default.Encode(value);
 
         // Email delivery is best-effort: both the verification and password-reset flows expose a resend

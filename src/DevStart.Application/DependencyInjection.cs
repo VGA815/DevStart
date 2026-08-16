@@ -67,6 +67,11 @@ namespace DevStart.Application
             // so IOptions<TrustedDeviceOptions> resolves even when the section is absent.
             services.AddOptions<Configuration.TrustedDeviceOptions>();
 
+            // Account erasure (ст. 21 ФЗ-152). Same shape: defaults here, "AccountDeletion" section
+            // bound over them by Infrastructure.
+            services.AddOptions<AccountDeletion.AccountDeletionOptions>();
+            services.AddScoped<AccountDeletion.IAccountEraser, AccountDeletion.AccountEraser>();
+
             return services;
         }
     }

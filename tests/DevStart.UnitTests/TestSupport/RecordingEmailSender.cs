@@ -8,6 +8,7 @@ namespace DevStart.UnitTests.TestSupport
         public List<(string Email, string Token)> PasswordResets { get; } = [];
         public List<(string Email, DateTime ExpiresAt)> SubscriptionExpirings { get; } = [];
         public List<(string Email, NewDeviceLoginInfo Info)> NewDeviceLogins { get; } = [];
+        public List<(string Email, DateTime ScheduledFor)> AccountDeletionNotices { get; } = [];
 
         // When set, the corresponding send throws — used to simulate an SMTP outage and verify callers
         // remain enumeration-safe / don't surface a 500.
@@ -43,6 +44,12 @@ namespace DevStart.UnitTests.TestSupport
         public Task SendNewDeviceLogin(string email, NewDeviceLoginInfo info)
         {
             NewDeviceLogins.Add((email, info));
+            return Task.CompletedTask;
+        }
+
+        public Task SendAccountDeletionScheduled(string email, DateTime scheduledFor)
+        {
+            AccountDeletionNotices.Add((email, scheduledFor));
             return Task.CompletedTask;
         }
     }

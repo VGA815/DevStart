@@ -5,6 +5,7 @@ namespace DevStart.UnitTests.TestSupport;
 internal sealed class CapturingFileStorage : IFileStorage
 {
     public List<UploadCall> Uploads { get; } = [];
+    public List<DeleteCall> Deletes { get; } = [];
 
     // When set, the corresponding operation throws instead of succeeding — used to simulate a storage
     // outage (or a missing object) so handlers can be verified to translate it into a Result.
@@ -41,10 +42,17 @@ internal sealed class CapturingFileStorage : IFileStorage
     public Task DeleteAsync(
         string objectKey,
         string bucket,
-        CancellationToken cancellationToken) =>
-        DeleteException is not null
-            ? throw DeleteException
-            : Task.CompletedTask;
+        CancellationToken cancellationToken)
+    {
+        if (DeleteException is not null)
+        {
+            throw DeleteException;
+        }
+
+        Deletes.Add(new DeleteCall(objectKey, bucket));
+
+        return Task.CompletedTask;
+    }
 
     public Task<string> GetPresignedUrl(
         string objectKey,
@@ -56,4 +64,6 @@ internal sealed class CapturingFileStorage : IFileStorage
             : Task.FromResult($"https://example.com/{bucket}/{objectKey}?expires={expirySeconds}");
 
     internal sealed record UploadCall(string ObjectKey, string Bucket, string ContentType, long Size);
+
+    internal sealed record DeleteCall(string ObjectKey, string Bucket);
 }

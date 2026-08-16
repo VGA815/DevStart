@@ -1,4 +1,5 @@
 ﻿using DevStart.Application.Abstractions.Data;
+using DevStart.Domain.AccountDeletion;
 using DevStart.Domain.Admin;
 using DevStart.Domain.ConsentDocuments;
 using DevStart.Domain.DealDocuments;
@@ -137,6 +138,10 @@ namespace DevStart.Infrastructure.Database
         public DbSet<UserSecuritySettings> UserSecuritySettings { get; set; }
 
         public DbSet<AdminActionLog> AdminActionLogs { get; set; }
+
+        public DbSet<BannedIdentity> BannedIdentities { get; set; }
+
+        public DbSet<AccountDeletionRequest> AccountDeletionRequests { get; set; }
 
         public DbSet<PromoCode> PromoCodes { get; set; }
 

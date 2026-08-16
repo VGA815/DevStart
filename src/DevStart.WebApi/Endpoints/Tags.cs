@@ -36,6 +36,7 @@
         public const string ConsentDocuments = "ConsentDocuments";
         public const string Auth = "Auth";
         public const string Sessions = "Sessions";
+        public const string AccountDeletion = "AccountDeletion";
         public const string Dashboard = "Dashboard";
         public const string Admin = "Admin";
     }

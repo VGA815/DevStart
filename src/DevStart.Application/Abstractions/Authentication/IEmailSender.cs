@@ -27,5 +27,12 @@ namespace DevStart.Application.Abstractions.Authentication
         /// background job, so it must not depend on the current HTTP context.
         /// </summary>
         Task SendNewDeviceLogin(string email, NewDeviceLoginInfo info);
+
+        /// <summary>
+        /// Confirms that the account is scheduled for erasure and says how to call it off. This is the
+        /// out-of-band half of the grace window: a deletion requested by someone who got hold of a
+        /// session is only visible to the owner here.
+        /// </summary>
+        Task SendAccountDeletionScheduled(string email, DateTime scheduledFor);
     }
 }
