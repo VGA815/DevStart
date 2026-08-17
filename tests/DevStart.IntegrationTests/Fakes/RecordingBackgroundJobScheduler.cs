@@ -14,8 +14,21 @@ namespace DevStart.IntegrationTests.Fakes
 
         public void EnqueueTermSheetGeneration(Guid dealId) => TermSheetGenerations.Enqueue(dealId);
 
+        public ConcurrentQueue<BenchmarkCollector> BenchmarkCollections { get; } = new();
+
         public void EnqueueNewDeviceLoginEmail(
             string email, string? browser, string? os, string? ipAddress, DateTime occurredAtUtc)
             => NewDeviceLoginEmails.Enqueue((email, browser, os, ipAddress, occurredAtUtc));
+
+        public void EnqueueMarketCapCollection() => BenchmarkCollections.Enqueue(BenchmarkCollector.MarketCap);
+
+        public void EnqueueRevenueCollection() => BenchmarkCollections.Enqueue(BenchmarkCollector.Revenue);
+    }
+
+    /// <summary>Which benchmark collector a test saw queued. Typed so an assertion cannot mistype it.</summary>
+    internal enum BenchmarkCollector
+    {
+        MarketCap,
+        Revenue,
     }
 }

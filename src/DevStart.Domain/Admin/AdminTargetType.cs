@@ -8,5 +8,8 @@ namespace DevStart.Domain.Admin
         PromoCode = 3,
         ValuationBenchmark = 4,
         ServiceOrder = 5,
+        BenchmarkIssuer = 6,
+        BenchmarkIndustryMapping = 7,
+        BenchmarkDataset = 8,
     }
 }

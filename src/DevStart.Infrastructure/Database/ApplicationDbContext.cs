@@ -149,6 +149,12 @@ namespace DevStart.Infrastructure.Database
 
         public DbSet<ValuationBenchmark> ValuationBenchmarks { get; set; }
 
+        public DbSet<BenchmarkIssuer> BenchmarkIssuers { get; set; }
+
+        public DbSet<BenchmarkIndustryMapping> BenchmarkIndustryMappings { get; set; }
+
+        public DbSet<BenchmarkObservation> BenchmarkObservations { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);

@@ -90,6 +90,28 @@ namespace DevStart.Infrastructure
             services.AddScoped<Application.Scoring.IValuationBenchmarkProvider, ValuationBenchmarkProvider>();
             services.AddHostedService<ValuationBenchmarksSeeder>();
 
+            // The benchmark workbench: the curated registry, the staging store, and the two collectors
+            // that fill it. None of this writes to valuation_benchmark — the only path there is still
+            // AddValuationBenchmarkCommand behind the admin form.
+            services.AddHostedService<BenchmarkRegistrySeeder>();
+            services.AddScoped<Application.Abstractions.Valuation.IBenchmarkObservationStore, BenchmarkObservationStore>();
+
+            services.Configure<MoexOptions>(configuration.GetSection(MoexOptions.SectionName));
+            services.Configure<GirBoOptions>(configuration.GetSection(GirBoOptions.SectionName));
+
+            // Base addresses come from configuration so an integration test can point the collectors at
+            // a stub server; the real endpoints are the defaults on the options types.
+            services.AddHttpClient<MoexIssClient>((sp, client) =>
+                client.Timeout = TimeSpan.FromSeconds(
+                    sp.GetRequiredService<IOptions<MoexOptions>>().Value.TimeoutSeconds));
+
+            services.AddHttpClient<GirBoClient>((sp, client) =>
+                client.Timeout = TimeSpan.FromSeconds(
+                    sp.GetRequiredService<IOptions<GirBoOptions>>().Value.TimeoutSeconds));
+
+            services.AddScoped<MoexMarketCapCollectionJob>();
+            services.AddScoped<GirBoRevenueCollectionJob>();
+
             // The community-document starter texts are embedded resources, so one instance can serve all.
             services.AddSingleton<
                 Application.CommunityStandards.ICommunityDocumentTemplateProvider,

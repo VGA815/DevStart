@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.BackgroundJobs;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.DealDocuments;
+using DevStart.Infrastructure.Valuation;
 using Hangfire;
 
 namespace DevStart.Infrastructure.BackgroundJobs
@@ -17,6 +18,16 @@ namespace DevStart.Infrastructure.BackgroundJobs
         {
             client.Enqueue<NewDeviceLoginEmailJob>(
                 j => j.SendAsync(email, browser, os, ipAddress, occurredAtUtc));
+        }
+
+        public void EnqueueMarketCapCollection()
+        {
+            client.Enqueue<MoexMarketCapCollectionJob>(j => j.RunAsync(CancellationToken.None));
+        }
+
+        public void EnqueueRevenueCollection()
+        {
+            client.Enqueue<GirBoRevenueCollectionJob>(j => j.RunAsync(CancellationToken.None));
         }
     }
 }

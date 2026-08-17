@@ -5,6 +5,7 @@ using DevStart.Infrastructure.ExpertCollaborationRequests;
 using DevStart.Infrastructure.Moderation;
 using DevStart.Infrastructure.Payments;
 using DevStart.Infrastructure.Subscriptions;
+using DevStart.Infrastructure.Valuation;
 using Hangfire;
 using Microsoft.Extensions.Hosting;
 
@@ -52,6 +53,21 @@ namespace DevStart.Infrastructure.BackgroundJobs
                 "account-deletion",
                 job => job.RunAsync(CancellationToken.None),
                 Cron.Daily());
+
+            // Benchmark collection is quarterly: the derived multiple is a quarterly figure, so a more
+            // frequent pull would add traffic and noise without adding information. Hangfire has no
+            // Cron.Quarterly, hence the explicit "1st of January, April, July and October" expression.
+            // Market caps first, revenue an hour later — both are independent, but staggering them keeps
+            // two outbound bursts off the same minute.
+            recurringJobManager.AddOrUpdate<MoexMarketCapCollectionJob>(
+                "benchmark-marketcap-collection",
+                job => job.RunAsync(CancellationToken.None),
+                "0 3 1 1,4,7,10 *");
+
+            recurringJobManager.AddOrUpdate<GirBoRevenueCollectionJob>(
+                "benchmark-revenue-collection",
+                job => job.RunAsync(CancellationToken.None),
+                "0 4 1 1,4,7,10 *");
 
             return Task.CompletedTask;
         }

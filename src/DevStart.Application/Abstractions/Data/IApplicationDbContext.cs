@@ -94,6 +94,9 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<PromoCode> PromoCodes { get; }
         DbSet<PromoCodeRedemption> PromoCodeRedemptions { get; }
         DbSet<ValuationBenchmark> ValuationBenchmarks { get; }
+        DbSet<BenchmarkIssuer> BenchmarkIssuers { get; }
+        DbSet<BenchmarkIndustryMapping> BenchmarkIndustryMappings { get; }
+        DbSet<BenchmarkObservation> BenchmarkObservations { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

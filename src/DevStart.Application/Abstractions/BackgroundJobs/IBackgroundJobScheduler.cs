@@ -15,5 +15,15 @@ namespace DevStart.Application.Abstractions.BackgroundJobs
         /// </summary>
         void EnqueueNewDeviceLoginEmail(
             string email, string? browser, string? os, string? ipAddress, DateTime occurredAtUtc);
+
+        /// <summary>
+        /// Runs the MOEX market-cap collection now instead of waiting for the quarter. Needed twice:
+        /// before the first scheduled run ever fires, and whenever a ticker list or an outage needs
+        /// re-checking without a four-month wait.
+        /// </summary>
+        void EnqueueMarketCapCollection();
+
+        /// <summary>Runs the ГИР БО revenue collection now. Same reasons as the market-cap run.</summary>
+        void EnqueueRevenueCollection();
     }
 }

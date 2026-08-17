@@ -14,5 +14,10 @@ namespace DevStart.Domain.Admin
         AddValuationBenchmark = 9,
         ResetUserTwoFactor = 10,
         CancelServiceOrder = 11,
+        SaveBenchmarkIssuer = 12,
+        SaveBenchmarkIndustryMapping = 13,
+        DeleteBenchmarkIndustryMapping = 14,
+        UploadDamodaranDataset = 15,
+        RunBenchmarkCollection = 16,
     }
 }
