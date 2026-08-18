@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Behaviors;
+using DevStart.Application.Abstractions.Behaviors;
 using DevStart.Application.Abstractions.Messaging;
 using DevStart.Application.Abstractions.Validation;
 using DevStart.Application.DealDocuments.Generation;
@@ -49,6 +49,8 @@ namespace DevStart.Application
             services.AddSingleton<IDealTermsValidator, DealTermsValidator>();
             services.AddSingleton<ICapTableCalculator, CapTableCalculator>();
             services.AddSingleton<StartupEquity.Vesting.IVestingCalculator, StartupEquity.Vesting.VestingCalculator>();
+            services.AddSingleton<ITermSheetComposer, TermSheetComposer>();
+            services.AddSingleton<ScoringReports.IScoringReportComposer, ScoringReports.ScoringReportComposer>();
 
             services.AddScoped<Scoring.IScoringDataProvider, Scoring.ScoringDataProvider>();
 

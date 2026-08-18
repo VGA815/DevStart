@@ -18,6 +18,14 @@ namespace DevStart.Infrastructure.DealDocuments
                 .HasColumnName("term_sheet_object_key")
                 .HasMaxLength(500)
                 .IsRequired();
+            builder.Property(x => x.TermSheetPdfObjectKey)
+                .HasColumnName("term_sheet_pdf_object_key")
+                .HasMaxLength(500)
+                .IsRequired();
+            builder.Property(x => x.TermSheetPdfSha256)
+                .HasColumnName("term_sheet_pdf_sha256")
+                .HasMaxLength(64)
+                .IsRequired();
             builder.Property(x => x.CapTableObjectKey)
                 .HasColumnName("cap_table_object_key")
                 .HasMaxLength(500)

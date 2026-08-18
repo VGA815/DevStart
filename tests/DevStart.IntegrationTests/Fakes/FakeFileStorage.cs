@@ -34,7 +34,7 @@ namespace DevStart.IntegrationTests.Fakes
             return Task.CompletedTask;
         }
 
-        public Task<string> GetPresignedUrl(string objectKey, string bucket, int expirySeconds, CancellationToken cancellationToken)
+        public Task<string> GetPresignedUrl(string objectKey, string bucket, int expirySeconds, CancellationToken cancellationToken, string? downloadFileName = null)
             => Task.FromResult($"https://files.test.local/{bucket}/{objectKey}?expires={expirySeconds}");
     }
 }

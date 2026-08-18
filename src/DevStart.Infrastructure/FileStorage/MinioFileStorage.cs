@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel;
 using Minio.DataModel.Args;
+using System.Text;
 
 namespace DevStart.Infrastructure.FileStorage
 {
@@ -99,13 +100,57 @@ namespace DevStart.Infrastructure.FileStorage
             }
         }
 
-        public async Task<string> GetPresignedUrl(string objectKey, string bucket, int expirySeconds, CancellationToken cancellationToken)
+        public async Task<string> GetPresignedUrl(
+            string objectKey,
+            string bucket,
+            int expirySeconds,
+            CancellationToken cancellationToken,
+            string? downloadFileName = null)
         {
-            return await GuardAsync(() => _externalMinioClient.PresignedGetObjectAsync(
-                new PresignedGetObjectArgs()
-                    .WithBucket(bucket)
-                    .WithExpiry(expirySeconds)
-                    .WithObject(objectKey)), "presign", bucket, objectKey, cancellationToken);
+            var args = new PresignedGetObjectArgs()
+                .WithBucket(bucket)
+                .WithExpiry(expirySeconds)
+                .WithObject(objectKey);
+
+            if (!string.IsNullOrEmpty(downloadFileName))
+            {
+                // The SDK emits this as a signed `response-content-disposition` query parameter,
+                // not as a request header, so the name is part of what the signature covers and
+                // cannot be swapped by whoever holds the link. Pinned by a test, because it is an
+                // SDK behaviour a version bump could change without any error surfacing here.
+                args = args.WithHeaders(new Dictionary<string, string>
+                {
+                    ["response-content-disposition"] =
+                        $"attachment; filename=\"{SanitizeFileName(downloadFileName)}\""
+                });
+            }
+
+            return await GuardAsync(() => _externalMinioClient.PresignedGetObjectAsync(args),
+                "presign", bucket, objectKey, cancellationToken);
+        }
+
+        /// <summary>
+        /// Reduces a download name to characters that are safe inside a quoted
+        /// Content-Disposition value.
+        /// <para>
+        /// Today every caller passes a name this class built itself, so nothing unsafe reaches
+        /// here. But the parameter sits on a public storage abstraction, and the value ends up
+        /// inside a response header the object store emits: a quote would end the filename early,
+        /// and CR/LF could split the header. Stripping is done here rather than trusted upstream,
+        /// because the caller that eventually forgets will not be this one.
+        /// </para>
+        /// </summary>
+        private static string SanitizeFileName(string fileName)
+        {
+            var safe = new StringBuilder(fileName.Length);
+            foreach (char c in fileName)
+            {
+                bool allowed = c is >= (char)0x20 and < (char)0x7f
+                    && c is not ('"' or '\\' or ';');
+                safe.Append(allowed ? c : '_');
+            }
+
+            return safe.ToString();
         }
 
         // Translate MinIO SDK / transport exceptions into a typed FileStorageException so callers can

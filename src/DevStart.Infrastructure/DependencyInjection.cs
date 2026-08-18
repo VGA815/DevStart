@@ -1,4 +1,4 @@
-﻿using DevStart.Application.Abstractions.Authentication;
+using DevStart.Application.Abstractions.Authentication;
 using DevStart.Application.Abstractions.BackgroundJobs;
 using DevStart.Application.Abstractions.Captcha;
 using DevStart.Application.Abstractions.Data;
@@ -383,7 +383,9 @@ namespace DevStart.Infrastructure
 
         private static IServiceCollection AddDealDocumentGeneration(this IServiceCollection services)
         {
-            services.AddScoped<ITermSheetGenerator, TermSheetGenerator>();
+            services.AddScoped<ITermSheetMarkdownRenderer, MarkdownTermSheetRenderer>();
+            services.AddScoped<ITermSheetPdfRenderer, PdfTermSheetRenderer>();
+            services.AddScoped<Application.ScoringReports.IScoringReportPdfRenderer, ScoringReports.PdfScoringReportRenderer>();
             services.AddHostedService<TemplatesSeeder>();
             services.AddHostedService<ConsentDocumentsSeeder>();
             return services;

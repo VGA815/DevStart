@@ -61,3 +61,11 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+###############################################################################
+# Fonts are binary: never let text=auto rewrite line endings inside a TTF.
+###############################################################################
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary

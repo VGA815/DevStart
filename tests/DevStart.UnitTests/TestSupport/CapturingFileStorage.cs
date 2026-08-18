@@ -54,16 +54,28 @@ internal sealed class CapturingFileStorage : IFileStorage
         return Task.CompletedTask;
     }
 
+    public List<PresignCall> Presigns { get; } = [];
+
     public Task<string> GetPresignedUrl(
         string objectKey,
         string bucket,
         int expirySeconds,
-        CancellationToken cancellationToken) =>
-        PresignException is not null
-            ? throw PresignException
-            : Task.FromResult($"https://example.com/{bucket}/{objectKey}?expires={expirySeconds}");
+        CancellationToken cancellationToken,
+        string? downloadFileName = null)
+    {
+        if (PresignException is not null)
+        {
+            throw PresignException;
+        }
+
+        Presigns.Add(new PresignCall(objectKey, bucket, expirySeconds, downloadFileName));
+
+        return Task.FromResult($"https://example.com/{bucket}/{objectKey}?expires={expirySeconds}");
+    }
 
     internal sealed record UploadCall(string ObjectKey, string Bucket, string ContentType, long Size);
 
     internal sealed record DeleteCall(string ObjectKey, string Bucket);
+
+    internal sealed record PresignCall(string ObjectKey, string Bucket, int ExpirySeconds, string? DownloadFileName);
 }

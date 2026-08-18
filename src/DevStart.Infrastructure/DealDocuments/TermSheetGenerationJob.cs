@@ -14,6 +14,7 @@ using DevStart.Domain.Startups;
 using DevStart.SharedKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -22,12 +23,22 @@ namespace DevStart.Infrastructure.DealDocuments
     /// <summary>
     /// Hangfire-driven background job. Triggered from
     /// `InvestmentApplicationAcceptedDomainEventHandler` after a deal is created.
-    /// Idempotent: returns early if a `DealDocument` already exists for the deal.
+    /// Idempotent: returns early if a complete `DealDocument` already exists for the deal.
+    /// <para>
+    /// Both renderings happen before the first upload. A failure while rendering therefore leaves
+    /// nothing behind — no objects in storage, no row — and Hangfire retries from a clean slate,
+    /// with `JobFailureAlertFilter` raising an alert once the retries are exhausted. The cost of
+    /// that ordering is accepted knowingly: a systematically broken PDF renderer withholds the
+    /// markdown too. The alternative, storing the row without a PDF, would create a
+    /// "document exists, PDF missing" state that every reader would have to handle forever.
+    /// </para>
     /// </summary>
     public sealed class TermSheetGenerationJob(
         IApplicationDbContext context,
         ICapTableCalculator capTableCalculator,
-        ITermSheetGenerator termSheetGenerator,
+        ITermSheetComposer termSheetComposer,
+        ITermSheetMarkdownRenderer markdownRenderer,
+        ITermSheetPdfRenderer pdfRenderer,
         IFoundingCapTableProvider capTableProvider,
         IVestingCalculator vestingCalculator,
         IFileStorage fileStorage,
@@ -38,11 +49,12 @@ namespace DevStart.Infrastructure.DealDocuments
     {
         public async Task GenerateAsync(Guid dealId, CancellationToken cancellationToken)
         {
-            // 1. Idempotency
-            bool exists = await context.DealDocuments
-                .AsNoTracking()
-                .AnyAsync(d => d.DealId == dealId, cancellationToken);
-            if (exists)
+            // 1. Idempotency. A complete set is never regenerated. A row written before PDF
+            //    generation existed carries an empty PDF key and is the one case worth revisiting:
+            //    since the job stops at the sight of a row, nothing else ever would.
+            DealDocument? existing = await context.DealDocuments
+                .SingleOrDefaultAsync(d => d.DealId == dealId, cancellationToken);
+            if (existing is { HasPdf: true })
             {
                 logger.LogInformation("DealDocument already exists for {DealId}, skipping", dealId);
                 return;
@@ -114,43 +126,54 @@ namespace DevStart.Infrastructure.DealDocuments
             // 4. Compute cap table
             CapTableResult capTable = capTableCalculator.Compute(deal, holdersBefore);
 
-            // 5. Render markdown
-            string markdown = await termSheetGenerator.RenderAsync(
-                deal, startup, score, capTable, foundingHolders, asOf, cancellationToken);
+            // 5. Compose the structural model, then render it
+            TermSheetModel model = termSheetComposer.Compose(
+                deal, startup, score, capTable, foundingHolders, asOf);
 
-            // 6. Upload markdown
-            string termSheetKey = DealDocumentBuckets.TermSheetObjectKey(dealId);
+            string markdown = await markdownRenderer.RenderAsync(model, cancellationToken);
             byte[] markdownBytes = Encoding.UTF8.GetBytes(markdown);
-            using (var ms = new MemoryStream(markdownBytes, writable: false))
-            {
-                await fileStorage.UploadAsync(
-                    termSheetKey,
-                    ms,
-                    DealDocumentBuckets.DealDocuments,
-                    "text/markdown; charset=utf-8",
-                    cancellationToken);
-            }
 
-            // 7. Upload cap table JSON
+            // 6. Render the PDF — before anything is uploaded, so that a rendering failure leaves no
+            //    partial state anywhere.
+            byte[] pdfBytes = pdfRenderer.Render(model);
+            string pdfSha256 = Convert.ToHexStringLower(SHA256.HashData(pdfBytes));
+
+            // 7. Upload all three objects
+            string termSheetKey = DealDocumentBuckets.TermSheetObjectKey(dealId);
+            string pdfKey = DealDocumentBuckets.TermSheetPdfObjectKey(dealId);
             string capTableKey = DealDocumentBuckets.CapTableObjectKey(dealId);
             byte[] capTableBytes = JsonSerializer.SerializeToUtf8Bytes(capTable);
-            using (var ms = new MemoryStream(capTableBytes, writable: false))
+
+            await UploadAsync(termSheetKey, markdownBytes, "text/markdown; charset=utf-8", cancellationToken);
+            await UploadAsync(pdfKey, pdfBytes, "application/pdf", cancellationToken);
+            await UploadAsync(capTableKey, capTableBytes, "application/json; charset=utf-8", cancellationToken);
+
+            // 8. Save the DealDocument. A pre-PDF row is completed in place; there is never a second
+            //    row for a deal, and a complete set is never rewritten.
+            DateTime utcNow = dateTimeProvider.UtcNow;
+            bool isNewDocument = existing is null;
+            if (existing is null)
             {
-                await fileStorage.UploadAsync(
-                    capTableKey,
-                    ms,
-                    DealDocumentBuckets.DealDocuments,
-                    "application/json; charset=utf-8",
-                    cancellationToken);
+                context.DealDocuments.Add(
+                    DealDocument.Create(dealId, termSheetKey, pdfKey, pdfSha256, capTableKey, utcNow));
+            }
+            else
+            {
+                existing.AttachPdf(pdfKey, pdfSha256, utcNow);
+                logger.LogInformation("Backfilled the PDF for the existing DealDocument of {DealId}", dealId);
             }
 
-            // 8. Save DealDocument
-            DateTime utcNow = dateTimeProvider.UtcNow;
-            DealDocument doc = DealDocument.Create(dealId, termSheetKey, capTableKey, utcNow);
-            context.DealDocuments.Add(doc);
             await context.SaveChangesAsync(cancellationToken);
 
-            // 9. Notify investor + founders/admins
+            // 9. Notify investor + founders/admins. A backfill adds a file to a set the recipients
+            //    were already told about, so it does not announce itself a second time.
+            if (!isNewDocument)
+            {
+                // The backfill logged what it actually did a few lines up; saying "generated deal
+                // documents" here would claim a full set was produced when only a PDF was added.
+                return;
+            }
+
             await notificationService.PublishAsync(Notification.Create(
                 userId: deal.InvestorProfileId,
                 type: NotificationType.DealDocumentsReady,
@@ -177,6 +200,21 @@ namespace DevStart.Infrastructure.DealDocuments
                 cancellationToken);
 
             logger.LogInformation("Generated deal documents for {DealId}", dealId);
+        }
+
+        private async Task UploadAsync(
+            string objectKey,
+            byte[] content,
+            string contentType,
+            CancellationToken cancellationToken)
+        {
+            using var stream = new MemoryStream(content, writable: false);
+            await fileStorage.UploadAsync(
+                objectKey,
+                stream,
+                DealDocumentBuckets.DealDocuments,
+                contentType,
+                cancellationToken);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -38,6 +38,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.Json.NET" />
     <PackageReference Include="Otp.NET" />
+    <PackageReference Include="QuestPDF" />
     <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 
@@ -51,6 +52,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Documents\Fonts\PT_Serif-Web-Regular.ttf" />
+    <EmbeddedResource Include="Documents\Fonts\PT_Serif-Web-Bold.ttf" />
+    <EmbeddedResource Include="Documents\Fonts\PT_Serif-Web-Italic.ttf" />
+    <EmbeddedResource Include="Documents\Fonts\PT_Sans-Web-Regular.ttf" />
+    <EmbeddedResource Include="Documents\Fonts\PT_Sans-Web-Bold.ttf" />
     <EmbeddedResource Include="DealDocuments\Templates\term-sheet-safe.md" />
     <EmbeddedResource Include="DealDocuments\Templates\term-sheet-convertible.md" />
     <EmbeddedResource Include="DealDocuments\Templates\term-sheet-priced.md" />

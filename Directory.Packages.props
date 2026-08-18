@@ -54,6 +54,18 @@
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Document rendering">
+    <!-- Community License: free below $1M annual revenue. The НПД ceiling is 2.4M ₽, two orders of
+         magnitude under the threshold, so it is unreachable before the tax regime itself changes. -->
+    <PackageVersion Include="QuestPDF" Version="2026.7.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <!-- Test-only: reads back the generated PDFs so the structure assertions inspect the real file
+         (page count, extracted text) rather than trusting the renderer's own view of itself. -->
+    <PackageVersion Include="PdfPig" Version="0.1.15" />
+  </ItemGroup>
+
   <ItemGroup Label="External services">
     <PackageVersion Include="FluentEmail.Smtp" Version="3.0.2" />
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.21" />

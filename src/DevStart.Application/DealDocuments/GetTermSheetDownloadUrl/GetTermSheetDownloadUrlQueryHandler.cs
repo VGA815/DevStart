@@ -67,14 +67,29 @@ namespace DevStart.Application.DealDocuments.GetTermSheetDownloadUrl
                 return Result.Failure<TermSheetDownloadUrlResponse>(DealDocumentErrors.NotFound(query.DealId));
             }
 
+            bool wantsPdf = query.Format == TermSheetFormat.Pdf;
+
+            // A document set generated before PDF rendering existed carries an empty PDF key. The
+            // generation job fills those in when it next runs for the deal; until then the honest
+            // answer is that this rendering does not exist, not a link to nothing.
+            if (wantsPdf && !doc.HasPdf)
+            {
+                return Result.Failure<TermSheetDownloadUrlResponse>(
+                    DealDocumentErrors.PdfNotGenerated(query.DealId));
+            }
+
+            string objectKey = wantsPdf ? doc.TermSheetPdfObjectKey : doc.TermSheetObjectKey;
+            string fileName = FileName(query.DealId, doc.GeneratedAt, wantsPdf);
+
             string url;
             try
             {
                 url = await fileStorage.GetPresignedUrl(
-                    doc.TermSheetObjectKey,
+                    objectKey,
                     DealDocumentBuckets.DealDocuments,
                     ExpirySeconds,
-                    cancellationToken);
+                    cancellationToken,
+                    fileName);
             }
             catch (FileStorageException ex)
             {
@@ -86,8 +101,19 @@ namespace DevStart.Application.DealDocuments.GetTermSheetDownloadUrl
             {
                 DealId = query.DealId,
                 Url = url,
-                ExpiresAt = dateTimeProvider.UtcNow.AddSeconds(ExpirySeconds)
+                ExpiresAt = dateTimeProvider.UtcNow.AddSeconds(ExpirySeconds),
+                Format = query.Format,
+                FileName = fileName,
+                Sha256 = wantsPdf ? doc.TermSheetPdfSha256 : null
             };
         }
+
+        /// <summary>
+        /// Deal and date, so that several downloaded term sheets can be told apart in a downloads
+        /// folder. ASCII only and no startup name: the value is signed into a Content-Disposition
+        /// header, where a Cyrillic name is an encoding problem rather than a nicety.
+        /// </summary>
+        private static string FileName(Guid dealId, DateTime generatedAt, bool pdf) =>
+            $"term-sheet-{dealId}-{generatedAt:yyyy-MM-dd}.{(pdf ? "pdf" : "md")}";
     }
 }
