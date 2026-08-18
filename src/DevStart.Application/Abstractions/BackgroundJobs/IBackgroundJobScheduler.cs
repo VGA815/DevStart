@@ -25,5 +25,11 @@ namespace DevStart.Application.Abstractions.BackgroundJobs
 
         /// <summary>Runs the ГИР БО revenue collection now. Same reasons as the market-cap run.</summary>
         void EnqueueRevenueCollection();
+
+        /// <summary>
+        /// Refreshes the local copy of the Rospatent register now instead of at the quarter. Needed for
+        /// the first fill — until it runs, every claimed record honestly reports "проверка недоступна".
+        /// </summary>
+        void EnqueuePatentRegistryImport();
     }
 }

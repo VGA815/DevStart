@@ -33,7 +33,9 @@ namespace DevStart.WebApi.Endpoints.Startups
             [property: JsonPropertyName("has_patents")] bool HasPatents = false,
             [property: JsonPropertyName("industry")] Industry? Industry = null,
             [property: JsonPropertyName("target_round_amount")] decimal? TargetRoundAmount = null,
-            [property: JsonPropertyName("has_strategic_partnerships")] bool? HasStrategicPartnerships = null);
+            [property: JsonPropertyName("has_strategic_partnerships")] bool? HasStrategicPartnerships = null,
+            [property: JsonPropertyName("inn")] string? Inn = null,
+            [property: JsonPropertyName("ogrn")] string? Ogrn = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPut("api/startups", async (
@@ -61,7 +63,9 @@ namespace DevStart.WebApi.Endpoints.Startups
                     request.HasPatents,
                     request.Industry,
                     request.TargetRoundAmount,
-                    request.HasStrategicPartnerships);
+                    request.HasStrategicPartnerships,
+                    request.Inn,
+                    request.Ogrn);
 
                 Result result = await handler.Handle(command, cancellationToken);
 

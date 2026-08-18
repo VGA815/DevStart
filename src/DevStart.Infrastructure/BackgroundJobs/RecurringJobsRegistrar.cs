@@ -3,6 +3,7 @@ using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.CommunityStandards;
 using DevStart.Infrastructure.ExpertCollaborationRequests;
 using DevStart.Infrastructure.Moderation;
+using DevStart.Infrastructure.PatentRegistry;
 using DevStart.Infrastructure.Payments;
 using DevStart.Infrastructure.Subscriptions;
 using DevStart.Infrastructure.Valuation;
@@ -68,6 +69,16 @@ namespace DevStart.Infrastructure.BackgroundJobs
                 "benchmark-revenue-collection",
                 job => job.RunAsync(CancellationToken.None),
                 "0 4 1 1,4,7,10 *");
+
+            // The Rospatent register refresh runs on the same quarterly rhythm as the benchmark
+            // collectors, an hour after them so the three outbound bursts do not share a minute. The
+            // register moves slowly and nothing downstream depends on same-day freshness: a record
+            // resolves against whatever was last loaded, and a lapsed patent starts reading as lapsed
+            // on the next refresh without a data migration.
+            recurringJobManager.AddOrUpdate<PatentRegistryImportJob>(
+                "patent-registry-import",
+                job => job.RunAsync(CancellationToken.None),
+                "0 5 1 1,4,7,10 *");
 
             return Task.CompletedTask;
         }

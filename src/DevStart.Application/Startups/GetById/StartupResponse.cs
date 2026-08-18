@@ -30,6 +30,16 @@ namespace DevStart.Application.Startups.GetById
         public bool HasStrategicPartnerships { get; init; }
 
         /// <summary>
+        /// ИНН the startup declared for its legal entity (SC-66). A declaration: the platform compares
+        /// it with the rightsholder of an IP record and, when a ЕГРЮЛ source is configured, checks that
+        /// the entity exists — neither of which establishes that the startup controls it.
+        /// </summary>
+        public string? Inn { get; init; }
+
+        /// <summary>ОГРН of the same declared entity.</summary>
+        public string? Ogrn { get; init; }
+
+        /// <summary>
         /// Whether a paid featured placement is currently running. This response is cached for
         /// <see cref="Abstractions.Caching.CacheTtl.Default"/>; the cache is dropped when a promotion is
         /// bought or refunded, so only natural expiry can leave the badge up for up to that long.

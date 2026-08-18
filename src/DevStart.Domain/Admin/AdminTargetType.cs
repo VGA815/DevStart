@@ -11,5 +11,6 @@ namespace DevStart.Domain.Admin
         BenchmarkIssuer = 6,
         BenchmarkIndustryMapping = 7,
         BenchmarkDataset = 8,
+        PatentRegistryDataset = 9,
     }
 }

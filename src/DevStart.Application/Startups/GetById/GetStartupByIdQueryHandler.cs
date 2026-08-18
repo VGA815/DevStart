@@ -39,6 +39,8 @@ namespace DevStart.Application.Startups.GetById
                     Industry = s.Industry,
                     TargetRoundAmount = s.TargetRoundAmount,
                     HasStrategicPartnerships = s.HasStrategicPartnerships,
+                    Inn = s.Inn,
+                    Ogrn = s.Ogrn,
                     IsFeatured = s.FeaturedUntil != null && s.FeaturedUntil > now,
                 })
                 .SingleOrDefaultAsync(cancellationToken);

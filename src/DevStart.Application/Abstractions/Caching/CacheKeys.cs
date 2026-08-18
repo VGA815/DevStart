@@ -28,6 +28,14 @@ namespace DevStart.Application.Abstractions.Caching
 
         public static string StartupCommunityStandards(Guid startupId) => $"{Version}:startups:{startupId}:community-standards";
 
+        /// <summary>
+        /// The startup's IP records together with how they resolve against the local register (SC-64).
+        /// Dropped when a record is added or removed. A quarterly register refresh is deliberately not
+        /// an invalidation event: it moves no number, and the TTL is short enough for a status change
+        /// to surface on its own.
+        /// </summary>
+        public static string StartupPatents(Guid startupId) => $"{Version}:startups:{startupId}:patents";
+
         public static string SubscriptionActiveByUser(Guid userId) => $"{Version}:subscriptions:{userId}:active";
 
         /// <summary>

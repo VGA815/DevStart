@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevStart.Application.Scoring
 {
-    internal sealed class ScoringDataProvider(IApplicationDbContext context) : IScoringDataProvider
+    internal sealed class ScoringDataProvider(
+        IApplicationDbContext context,
+        StartupPatents.IPatentRegistryResolver patentRegistryResolver) : IScoringDataProvider
     {
         // Only these metric types feed scoring. Primary signals (Mrr/Mau/MomGrowth) plus the
         // fallback proxies (Revenue/Users/GrowthRate) resolved in BuildTraction.
@@ -45,6 +47,11 @@ namespace DevStart.Application.Scoring
             ProductSignals product = await BuildProductAsync(startupId, cancellationToken);
             RoadmapSignals roadmap = await BuildRoadmapAsync(startupId, cancellationToken);
 
+            // Provenance only: this decides whether the Product factor is stamped "сверено с реестром",
+            // and feeds no component of any score (see ScoreFactorSource.RegistryChecked).
+            bool registryCheckedIp = await patentRegistryResolver.HasRegistryCheckedOwnershipAsync(
+                startupId, startup.Inn, cancellationToken);
+
             ScoringInputs inputs = new(
                 StartupId: startup.Id,
                 Stage: startup.Stage,
@@ -60,7 +67,8 @@ namespace DevStart.Application.Scoring
                 Roadmap: roadmap,
                 Industry: startup.Industry,
                 TargetRoundAmount: startup.TargetRoundAmount,
-                HasStrategicPartnerships: startup.HasStrategicPartnerships);
+                HasStrategicPartnerships: startup.HasStrategicPartnerships,
+                HasRegistryCheckedIp: registryCheckedIp);
 
             return inputs;
         }

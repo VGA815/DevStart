@@ -20,6 +20,21 @@ namespace DevStart.Application.Scoring
 
         /// <summary>Taken from an external, admin-curated benchmark (<c>valuation_benchmark</c>).</summary>
         ExternalBenchmark = 4,
+
+        /// <summary>
+        /// Checked against the local copy of the Rospatent register: a claimed number resolves there and
+        /// the rightsholder's ИНН equals the one the startup declared (SC-65/66).
+        ///
+        /// Named for what the platform did, not for what a reader might wish it meant. It is not
+        /// "ownership verified": the register says who the rightsholder is, ЕГРЮЛ says that entity
+        /// exists, and neither says the startup controls it. Claiming more here would be the same
+        /// mistake as calling the range an "estimate" instead of a computed guide.
+        ///
+        /// It carries no points. The factor's score, the valuation range and the set of methods used
+        /// are identical with and without it — pinned down by tests, because a numeric effect is the
+        /// kind of thing that arrives by accident and silently.
+        /// </summary>
+        RegistryChecked = 8,
     }
 
     /// <summary>One factor's contribution to the total score.</summary>

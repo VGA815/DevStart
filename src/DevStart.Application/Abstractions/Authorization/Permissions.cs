@@ -21,6 +21,10 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string StartupCompetitorsDelete         = "startup_competitors::delete";
         public const string StartupCompetitorsRead           = "startup_competitors::read";
 
+        public const string StartupPatentsCreate             = "startup_patents::create";
+        public const string StartupPatentsDelete             = "startup_patents::delete";
+        public const string StartupPatentsRead               = "startup_patents::read";
+
         public const string StartupFollowersCreate           = "startup_followers::create";
         public const string StartupFollowersDelete           = "startup_followers::delete";
 
@@ -118,6 +122,8 @@ namespace DevStart.Application.Abstractions.Authorization
 
         public const string AdminValuationBenchmarksRead     = "admin_valuation_benchmarks::read";
         public const string AdminValuationBenchmarksManage   = "admin_valuation_benchmarks::manage";
+
+        public const string AdminPatentRegistryManage        = "admin_patent_registry::manage";
 
         public const string AdminAuditRead                   = "admin_audit::read";
 

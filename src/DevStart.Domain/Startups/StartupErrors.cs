@@ -25,5 +25,17 @@ namespace DevStart.Domain.Startups
         public static readonly Error BanExpiryInPast = Error.Validation(
             "Startups.BanExpiryInPast",
             "The ban expiry date must be in the future");
+
+        /// <summary>
+        /// The declared ИНН fails its own check digit — a typo, caught locally before any external
+        /// lookup. A valid ИНН is still only a claim (see <see cref="RussianTaxId"/>).
+        /// </summary>
+        public static readonly Error InvalidInn = Error.Validation(
+            "Startups.InvalidInn",
+            "ИНН должен состоять из 10 цифр (для организации) или 12 (для ИП) и проходить проверку контрольной суммы");
+
+        public static readonly Error InvalidOgrn = Error.Validation(
+            "Startups.InvalidOgrn",
+            "ОГРН должен состоять из 13 цифр (или 15 для ОГРНИП) и проходить проверку контрольной суммы");
     }
 }

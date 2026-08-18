@@ -1009,6 +1009,73 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.ToTable("password_reset_tokens", "public");
                 });
 
+            modelBuilder.Entity("DevStart.Domain.PatentRegistry.PatentRegistryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fetched_at");
+
+                    b.Property<string>("HolderInn")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("holder_inn");
+
+                    b.Property<string>("HolderName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("holder_name");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("NumberNormalized")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("number_normalized");
+
+                    b.Property<DateOnly?>("RegisteredOn")
+                        .HasColumnType("date")
+                        .HasColumnName("registered_on");
+
+                    b.Property<string>("SourceNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("source_note");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_patent_registry_entries");
+
+                    b.HasIndex("HolderInn")
+                        .HasDatabaseName("ix_patent_registry_entries_holder_inn")
+                        .HasFilter("holder_inn IS NOT NULL");
+
+                    b.HasIndex("Kind", "NumberNormalized")
+                        .IsUnique()
+                        .HasDatabaseName("ux_patent_registry_entries_kind_number");
+
+                    b.ToTable("patent_registry_entries", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.Payments.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1863,6 +1930,47 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.ToTable("startup_metrics", "public");
                 });
 
+            modelBuilder.Entity("DevStart.Domain.StartupPatents.StartupPatent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("NumberNormalized")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("number_normalized");
+
+                    b.Property<string>("NumberRaw")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("number_raw");
+
+                    b.Property<Guid>("StartupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("startup_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_startup_patents");
+
+                    b.HasIndex("StartupId", "Kind", "NumberNormalized")
+                        .IsUnique()
+                        .HasDatabaseName("ux_startup_patents_startup_kind_number");
+
+                    b.ToTable("startup_patents", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.StartupProducts.StartupProduct", b =>
                 {
                     b.Property<Guid>("StartupId")
@@ -2007,6 +2115,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("industry");
 
+                    b.Property<string>("Inn")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("inn");
+
                     b.Property<bool>("IsBanned")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -2029,6 +2142,11 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
+
+                    b.Property<string>("Ogrn")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("ogrn");
 
                     b.Property<string>("PublicEmail")
                         .IsRequired()

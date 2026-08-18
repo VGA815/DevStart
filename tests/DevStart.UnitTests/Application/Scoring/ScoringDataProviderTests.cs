@@ -1,4 +1,5 @@
 using DevStart.Application.Scoring;
+using DevStart.Application.StartupPatents;
 using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.StartupMetrics;
@@ -19,7 +20,9 @@ public sealed class ScoringDataProviderTests
     private readonly ApplicationDbContext _db = InMemoryDbContextFactory.Create();
     private readonly Guid _startupId = Guid.NewGuid();
 
-    private IScoringDataProvider CreateSut() => new ScoringDataProvider(_db);
+    // The real resolver over the same in-memory context: the provider asks it whether any IP record is
+    // registry-checked, and with no records and no ИНН the honest answer is "no".
+    private IScoringDataProvider CreateSut() => new ScoringDataProvider(_db, new PatentRegistryResolver(_db));
 
     private void SeedStartup(StartupStage stage = StartupStage.Seed, decimal? tam = null, decimal? sam = null, decimal? som = null)
     {

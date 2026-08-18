@@ -51,6 +51,10 @@ namespace DevStart.Application
             services.AddSingleton<StartupEquity.Vesting.IVestingCalculator, StartupEquity.Vesting.VestingCalculator>();
 
             services.AddScoped<Scoring.IScoringDataProvider, Scoring.ScoringDataProvider>();
+
+            // Resolves claimed IP records against the local register copy — read-side only: it adds a
+            // provenance flag and never a point (SC-64/65).
+            services.AddScoped<StartupPatents.IPatentRegistryResolver, StartupPatents.PatentRegistryResolver>();
             services.AddScoped<StartupEquity.IFoundingCapTableProvider, StartupEquity.FoundingCapTableProvider>();
             services.AddScoped<UserConsents.IConsentService, UserConsents.ConsentService>();
             services.AddScoped<Startups.IStartupAuthorizationService, Startups.StartupAuthorizationService>();

@@ -12,7 +12,8 @@ namespace DevStart.Application.Scoring
 
             FactorOutcome team = ComputeTeamScore(inputs.Members);
             FactorOutcome market = ComputeMarketScore(inputs.Tam, inputs.Sam, inputs.Som, inputs.MarketGrowthRate);
-            FactorOutcome product = ComputeProductScore(inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap);
+            FactorOutcome product = ComputeProductScore(
+                inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap, inputs.HasRegistryCheckedIp);
             FactorOutcome traction = ComputeTractionScore(inputs.Traction);
             FactorOutcome competition = ComputeCompetitionScore(inputs.Competitors, inputs.Industry, benchmarks);
 
@@ -412,7 +413,11 @@ namespace DevStart.Application.Scoring
         // Proposed defaults — tunable: +5 for articulated positioning (value proposition AND
         // differentiators filled in), +5 for evidence of planning (>= 3 roadmap items).
         private static FactorOutcome ComputeProductScore(
-            StartupStage stage, bool hasPatents, ProductSignals product, RoadmapSignals roadmap)
+            StartupStage stage,
+            bool hasPatents,
+            ProductSignals product,
+            RoadmapSignals roadmap,
+            bool hasRegistryCheckedIp)
         {
             var builder = new FactorBuilder("product");
 
@@ -432,8 +437,10 @@ namespace DevStart.Application.Scoring
                 .In("roadmap_items", ScoreValue.Count(roadmap.ItemCount))
                 .Add($"base.stage_{stageCode}", baseScore);
 
-            // Patents carry no hint: it is an unverified one-click boolean, and prompting for it would
-            // turn a passive declaration into an active invitation. Revisit once it can be checked.
+            // Patents still carry no hint. The register check (SC-62…66) made the *records* checkable,
+            // but the checkbox beside them is still a one-click declaration worth +10, so prompting for
+            // it would still be the platform inviting an unverifiable claim. The invitation to enter
+            // numbers lives on the Product tab, where it costs nothing and promises nothing.
             if (hasPatents)
             {
                 builder.Add("bonus.patents", 10m);
@@ -459,7 +466,18 @@ namespace DevStart.Application.Scoring
 
             // Stage itself carries no hint either — raising it moves the weights as well as this base,
             // so prompting a stage change would be prompting a misdeclaration.
-            return builder.Build(ScoreFactorSource.SelfReported | ScoreFactorSource.PlatformDerived);
+            //
+            // The registry flag rides on the source, never on the score: every component above is
+            // untouched by it, so the factor's number is bit-for-bit the same with and without it. It
+            // exists so the investor can see which part of this factor rests on something the startup
+            // cannot edit.
+            ScoreFactorSource source = ScoreFactorSource.SelfReported | ScoreFactorSource.PlatformDerived;
+            if (hasRegistryCheckedIp)
+            {
+                source |= ScoreFactorSource.RegistryChecked;
+            }
+
+            return builder.Build(source);
         }
 
         // ---- Traction -----------------------------------------------------------------------------

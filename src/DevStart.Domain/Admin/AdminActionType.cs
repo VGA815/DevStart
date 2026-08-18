@@ -19,5 +19,7 @@ namespace DevStart.Domain.Admin
         DeleteBenchmarkIndustryMapping = 14,
         UploadDamodaranDataset = 15,
         RunBenchmarkCollection = 16,
+        UploadPatentRegistryDataset = 17,
+        RunPatentRegistryImport = 18,
     }
 }

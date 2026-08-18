@@ -23,6 +23,10 @@ namespace DevStart.IntegrationTests.Fakes
         public void EnqueueMarketCapCollection() => BenchmarkCollections.Enqueue(BenchmarkCollector.MarketCap);
 
         public void EnqueueRevenueCollection() => BenchmarkCollections.Enqueue(BenchmarkCollector.Revenue);
+
+        public ConcurrentQueue<DateTime> PatentRegistryImports { get; } = new();
+
+        public void EnqueuePatentRegistryImport() => PatentRegistryImports.Enqueue(DateTime.UtcNow);
     }
 
     /// <summary>Which benchmark collector a test saw queued. Typed so an assertion cannot mistype it.</summary>

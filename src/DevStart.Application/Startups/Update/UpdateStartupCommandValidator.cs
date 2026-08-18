@@ -1,3 +1,4 @@
+using DevStart.Domain.Startups;
 using FluentValidation;
 
 namespace DevStart.Application.Startups.Update
@@ -16,6 +17,24 @@ namespace DevStart.Application.Startups.Update
             RuleFor(s => s.Location).IsInEnum();
             RuleFor(s => s.Industry).IsInEnum().When(s => s.Industry.HasValue);
             RuleFor(s => s.TargetRoundAmount).GreaterThanOrEqualTo(0).When(s => s.TargetRoundAmount.HasValue);
+
+            // The check digit is a local, instant catch for a typo — worth doing before any external
+            // lookup, and worth doing whether or not one is ever configured. An empty string is the
+            // "clear it" case and skips the check.
+            //
+            // The wording is taken from the domain error rather than written again here. Both paths
+            // are reachable — the validator rejects an HTTP caller, the handler rejects anyone calling
+            // it directly — and two hand-written texts for one failure drift into two different
+            // explanations of the same thing.
+            RuleFor(s => s.Inn)
+                .Must(RussianTaxId.IsValidInn)
+                .WithMessage(StartupErrors.InvalidInn.Description)
+                .When(s => !string.IsNullOrWhiteSpace(s.Inn));
+
+            RuleFor(s => s.Ogrn)
+                .Must(RussianTaxId.IsValidOgrn)
+                .WithMessage(StartupErrors.InvalidOgrn.Description)
+                .When(s => !string.IsNullOrWhiteSpace(s.Ogrn));
         }
     }
 }

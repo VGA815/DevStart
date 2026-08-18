@@ -35,11 +35,23 @@ namespace DevStart.Application.Startups.Update
         /// <summary>Fifth Berkus factor. Null means "not supplied" — see <see cref="Industry"/>.</summary>
         public bool? HasStrategicPartnerships { get; set; }
 
+        /// <summary>
+        /// ИНН of the declared legal entity (SC-66). Three-valued on purpose: <c>null</c> leaves the
+        /// stored value alone, an empty string clears it, anything else is validated by its check digit
+        /// and stored. Without the "not supplied" case, a client that predates the field would silently
+        /// wipe it on every save.
+        /// </summary>
+        public string? Inn { get; set; }
+
+        /// <summary>ОГРН of the same entity. Same three-valued semantics as <see cref="Inn"/>.</summary>
+        public string? Ogrn { get; set; }
+
         public UpdateStartupCommand(Guid startupId, string name, string publicEmail, string description, string url, bool isStopped, StartupStage startupStage,
             List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId, string? shortDescription,
             decimal? tam = null, decimal? sam = null, decimal? som = null,
             decimal? marketGrowthRate = null, bool hasPatents = false,
-            Industry? industry = null, decimal? targetRoundAmount = null, bool? hasStrategicPartnerships = null)
+            Industry? industry = null, decimal? targetRoundAmount = null, bool? hasStrategicPartnerships = null,
+            string? inn = null, string? ogrn = null)
         {
             StartupId = startupId;
             Name = name;
@@ -61,6 +73,8 @@ namespace DevStart.Application.Startups.Update
             Industry = industry;
             TargetRoundAmount = targetRoundAmount;
             HasStrategicPartnerships = hasStrategicPartnerships;
+            Inn = inn;
+            Ogrn = ogrn;
         }
     }
 }

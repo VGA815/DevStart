@@ -31,6 +31,16 @@ namespace DevStart.Domain.Startups
         /// <summary>Whether the startup has strategic partnerships — the fifth Berkus factor.</summary>
         public bool HasStrategicPartnerships { get; set; }
 
+        /// <summary>
+        /// ИНН of the legal entity the startup says it operates as (SC-66). Digits only, check-digit
+        /// validated on write. It is a declaration, not a proof of control: it lets the platform
+        /// compare the declared entity against the rightsholder of an IP record, and nothing more.
+        /// </summary>
+        public string? Inn { get; set; }
+
+        /// <summary>ОГРН of the same declared entity. Same standing as <see cref="Inn"/>.</summary>
+        public string? Ogrn { get; set; }
+
         public bool IsBanned { get; set; }
         public string? BanReason { get; set; }
         public DateTime? BannedAt { get; set; }
@@ -121,7 +131,7 @@ namespace DevStart.Domain.Startups
             decimal? tam = null, decimal? sam = null, decimal? som = null,
             decimal? marketGrowthRate = null, bool hasPatents = false,
             Industry industry = Industry.Other, decimal? targetRoundAmount = null,
-            bool hasStrategicPartnerships = false)
+            bool hasStrategicPartnerships = false, string? inn = null, string? ogrn = null)
             => new ()
             {
                 Id = Guid.NewGuid(),
@@ -145,7 +155,9 @@ namespace DevStart.Domain.Startups
                 HasPatents = hasPatents,
                 Industry = industry,
                 TargetRoundAmount = targetRoundAmount,
-                HasStrategicPartnerships = hasStrategicPartnerships
+                HasStrategicPartnerships = hasStrategicPartnerships,
+                Inn = inn,
+                Ogrn = ogrn
             };
         public Startup() { }
     }

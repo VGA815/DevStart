@@ -2,6 +2,11 @@ using DevStart.Domain.Startups;
 
 namespace DevStart.Application.Scoring
 {
+    /// <summary>
+    /// Everything the engines read. <c>HasRegistryCheckedIp</c> is the odd one out: it feeds the
+    /// Product factor's provenance flag and nothing else — no component, no bonus, no valuation input.
+    /// See <see cref="ScoreFactorSource.RegistryChecked"/>.
+    /// </summary>
     public sealed record ScoringInputs(
         Guid StartupId,
         StartupStage Stage,
@@ -17,7 +22,8 @@ namespace DevStart.Application.Scoring
         RoadmapSignals Roadmap,
         Industry Industry = Industry.Other,
         decimal? TargetRoundAmount = null,
-        bool HasStrategicPartnerships = false);
+        bool HasStrategicPartnerships = false,
+        bool HasRegistryCheckedIp = false);
 
     /// <summary>
     /// Resolved traction signals. The single home for the dirty-input guard (negative MRR/MAU floored

@@ -61,6 +61,42 @@ namespace DevStart.Application.Startups.Update
             {
                 startup.HasStrategicPartnerships = command.HasStrategicPartnerships.Value;
             }
+
+            // ИНН / ОГРН: null leaves the stored value alone, empty clears it, anything else is stored
+            // digits-only after its check digit passes. The validator rejects a malformed value first;
+            // this second check keeps the rule true for any caller that reaches the handler directly.
+            if (command.Inn is not null)
+            {
+                if (command.Inn.Trim().Length == 0)
+                {
+                    startup.Inn = null;
+                }
+                else if (!RussianTaxId.IsValidInn(command.Inn))
+                {
+                    return Result.Failure(StartupErrors.InvalidInn);
+                }
+                else
+                {
+                    startup.Inn = RussianTaxId.Normalize(command.Inn);
+                }
+            }
+
+            if (command.Ogrn is not null)
+            {
+                if (command.Ogrn.Trim().Length == 0)
+                {
+                    startup.Ogrn = null;
+                }
+                else if (!RussianTaxId.IsValidOgrn(command.Ogrn))
+                {
+                    return Result.Failure(StartupErrors.InvalidOgrn);
+                }
+                else
+                {
+                    startup.Ogrn = RussianTaxId.Normalize(command.Ogrn);
+                }
+            }
+
             startup.UpdatedAt = dateTimeProvider.UtcNow;
 
             startup.Raise(new StartupUpdatedDomainEvent(startup.Id));
@@ -68,6 +104,10 @@ namespace DevStart.Application.Startups.Update
             await context.SaveChangesAsync(cancellationToken);
 
             await cacheService.RemoveAsync(CacheKeys.StartupScore(startup.Id), cancellationToken);
+
+            // The declared ИНН is what the register comparison is made against, so changing it changes
+            // how the IP records read.
+            await cacheService.RemoveAsync(CacheKeys.StartupPatents(startup.Id), cancellationToken);
 
             return Result.Success();
         }

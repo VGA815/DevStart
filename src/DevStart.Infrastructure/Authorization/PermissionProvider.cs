@@ -30,6 +30,10 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupCompetitorsDelete,
                 Permissions.StartupCompetitorsRead,
 
+                Permissions.StartupPatentsCreate,
+                Permissions.StartupPatentsDelete,
+                Permissions.StartupPatentsRead,
+
                 Permissions.StartupFollowersCreate,
                 Permissions.StartupFollowersDelete,
 
@@ -128,6 +132,10 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupCompetitorsDelete,
                 Permissions.StartupCompetitorsRead,
 
+                Permissions.StartupPatentsCreate,
+                Permissions.StartupPatentsDelete,
+                Permissions.StartupPatentsRead,
+
                 Permissions.StartupFollowersCreate,
                 Permissions.StartupFollowersDelete,
 
@@ -221,6 +229,7 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.AdminPromoCodesManage,
                 Permissions.AdminValuationBenchmarksRead,
                 Permissions.AdminValuationBenchmarksManage,
+                Permissions.AdminPatentRegistryManage,
                 Permissions.AdminAuditRead,
                 Permissions.AdminObservabilityRead,
                 Permissions.AdminNpdRead,

@@ -32,6 +32,8 @@ namespace DevStart.Infrastructure.Startups
             builder.Property(x => x.Industry).HasColumnName("industry").HasDefaultValue(Industry.Other);
             builder.Property(x => x.TargetRoundAmount).HasColumnName("target_round_amount").HasColumnType("numeric(18,2)");
             builder.Property(x => x.HasStrategicPartnerships).HasColumnName("has_strategic_partnerships").HasDefaultValue(false);
+            builder.Property(x => x.Inn).HasColumnName("inn").HasMaxLength(12);
+            builder.Property(x => x.Ogrn).HasColumnName("ogrn").HasMaxLength(15);
             builder.Property(x => x.IsBanned).HasColumnName("is_banned").HasDefaultValue(false);
             builder.Property(x => x.BanReason).HasColumnName("ban_reason").HasColumnType("text");
             builder.Property(x => x.BannedAt).HasColumnName("banned_at");

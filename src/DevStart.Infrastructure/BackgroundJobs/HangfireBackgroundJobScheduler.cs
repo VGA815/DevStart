@@ -1,6 +1,7 @@
 using DevStart.Application.Abstractions.BackgroundJobs;
 using DevStart.Infrastructure.Authentication;
 using DevStart.Infrastructure.DealDocuments;
+using DevStart.Infrastructure.PatentRegistry;
 using DevStart.Infrastructure.Valuation;
 using Hangfire;
 
@@ -28,6 +29,11 @@ namespace DevStart.Infrastructure.BackgroundJobs
         public void EnqueueRevenueCollection()
         {
             client.Enqueue<GirBoRevenueCollectionJob>(j => j.RunAsync(CancellationToken.None));
+        }
+
+        public void EnqueuePatentRegistryImport()
+        {
+            client.Enqueue<PatentRegistryImportJob>(j => j.RunAsync(CancellationToken.None));
         }
     }
 }

@@ -70,6 +70,7 @@ namespace DevStart.Infrastructure
                 .AddDealDocumentGeneration()
                 .AddBilling(configuration)
                 .AddValuation(configuration)
+                .AddPatentRegistry(configuration)
                 .AddCaptcha(configuration);
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
@@ -116,6 +117,30 @@ namespace DevStart.Infrastructure
             services.AddSingleton<
                 Application.CommunityStandards.ICommunityDocumentTemplateProvider,
                 Infrastructure.CommunityStandards.CommunityDocumentTemplateProvider>();
+
+            return services;
+        }
+
+        // The local copy of the Rospatent register (SC-63): the loader, its quarterly job, and the
+        // resolver that reads it. Nothing here touches the score or the valuation — a resolved record
+        // adds provenance, never points (docs/scoring-methodology.md).
+        private static IServiceCollection AddPatentRegistry(
+            this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<PatentRegistry.RospatentOptions>(
+                configuration.GetSection(PatentRegistry.RospatentOptions.SectionName));
+
+            services.AddHttpClient<PatentRegistry.RospatentDumpClient>((sp, client) =>
+                client.Timeout = TimeSpan.FromSeconds(
+                    sp.GetRequiredService<IOptions<PatentRegistry.RospatentOptions>>().Value.TimeoutSeconds));
+
+            services.AddScoped<Application.Abstractions.PatentRegistry.IPatentRegistryStore,
+                PatentRegistry.PatentRegistryStore>();
+            services.AddScoped<PatentRegistry.PatentRegistryImportJob>();
+
+            // No ЕГРЮЛ source is wired by default; the stub answers "unavailable" and the UI says so.
+            services.AddScoped<Application.Abstractions.Registry.ILegalEntityRegistry,
+                Registry.UnavailableLegalEntityRegistry>();
 
             return services;
         }
