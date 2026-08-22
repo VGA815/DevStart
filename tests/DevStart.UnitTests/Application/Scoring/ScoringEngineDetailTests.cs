@@ -1,4 +1,4 @@
-using DevStart.Application;
+﻿using DevStart.Application;
 using DevStart.Application.Scoring;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Startups;
@@ -122,13 +122,18 @@ public sealed class ScoringEngineDetailTests
     /// information — extended here to overstating it. A hint is the platform actively asking for an
     /// input, so it must never point at one the founder can simply inflate, nor at anything that is
     /// satisfied by deleting data. This is the policy of docs/scoring-methodology.md as code.
+    ///
+    /// The list is written the other way round on purpose: a new self-declared input goes in here
+    /// <b>by default</b> and comes out only together with a check that makes prompting for it honest.
+    /// Otherwise an input added between two other things ends up allowed simply because nobody
+    /// remembered to add it (docs/scoring-inputs-plan.md, "Сквозное правило для подсказок").
     /// </summary>
     [Fact]
     public void Hints_ShouldNeverPromoteGameableSelfDeclaration()
     {
         string[] forbidden =
         [
-            "patents",      // unverified one-click boolean, pending a Rospatent check
+            "patents",      // SC-62…66 made the IP *records* checkable; the checkbox is still one click
             "stage",        // raising it moves the weights too — that is a misdeclaration, not progress
             "cagr",         // no honest fill hint exists: the lowest CAGR tier is worth 0
             "tam_",         // the *tier* jump; "fill_tam" (worth the floor tier) is allowed
@@ -137,6 +142,8 @@ public sealed class ScoringEngineDetailTests
             "exit",
             "total_cards",  // the number of competitor cards is exactly the driver v5 removed
             "intensity",    // the startup cannot edit the sector benchmark
+            "partnership",  // М3: a self-declared list with no external register to check it against
+            "round",        // М4: the target round is a valuation input; prompting for it prompts a number
             "delete",
             "remove",
         ];
@@ -387,11 +394,15 @@ public sealed class ScoringEngineDetailTests
             "product.input.has_positioning",
             "product.input.roadmap_items",
             "product.input.stage",
+            "product.input.stage_consistency",
             "stage.idea",
             "stage.mvp",
             "stage.pre_seed",
             "stage.seed",
             "stage.series_a",
+            "stage_consistency.not_applicable",
+            "stage_consistency.supported",
+            "stage_consistency.unsupported",
             "team.base.industry_experience",
             "team.base.no_experience",
             "team.base.no_members",
@@ -504,6 +515,17 @@ public sealed class ScoringEngineDetailTests
                 traction: new TractionSignals(2_000_000m, 0m, 15m, HasData: true)),
             ValuationBenchmarkSet.Empty);
 
+        // М4: a declared stage the metrics do not bear out. Nothing here blocks or moves a number —
+        // the case exists so the cross-check's third state is emitted and pinned like the other two.
+        yield return (
+            "series A declared with nothing on the metrics tab",
+            Inputs(
+                StartupStage.SeriesA,
+                tam: 4_000_000_000m,
+                competitors: new CompetitorSignals(1, 1),
+                members: [new MemberInput(Guid.NewGuid(), StartupRole.Founder, StartupPosition.CEO, 5, false, 1)]),
+            ValuationBenchmarkSet.Empty);
+
         yield return ("maxed out", Maxed(), ValuationBenchmarkSet.Empty);
 
         yield return (
@@ -573,5 +595,6 @@ public sealed class ScoringEngineDetailTests
             Traction: traction ?? TractionSignals.Empty,
             Product: product ?? ProductSignals.None,
             Roadmap: roadmap ?? RoadmapSignals.None,
+            Partnerships: PartnershipSignals.None,
             Industry: industry);
 }

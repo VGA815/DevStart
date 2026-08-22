@@ -57,11 +57,6 @@ namespace DevStart.Application.Startups.Update
             {
                 startup.Industry = command.Industry.Value;
             }
-            if (command.HasStrategicPartnerships.HasValue)
-            {
-                startup.HasStrategicPartnerships = command.HasStrategicPartnerships.Value;
-            }
-
             // ИНН / ОГРН: null leaves the stored value alone, empty clears it, anything else is stored
             // digits-only after its check digit passes. The validator rejects a malformed value first;
             // this second check keeps the rule true for any caller that reaches the handler directly.

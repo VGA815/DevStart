@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Users;
@@ -122,10 +122,10 @@ namespace DevStart.IntegrationTests.Startups
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
-        // Sector and partnerships are not on every client's update payload. Omitting them must
-        // leave the stored values alone — resetting them would silently wipe the scoring inputs.
+        // The sector is not on every client's update payload. Omitting it must leave the stored value
+        // alone — resetting it would silently wipe the scoring inputs keyed off it.
         [Fact]
-        public async Task UpdateStartup_WithoutSectorFields_KeepsStoredSectorAndPartnerships()
+        public async Task UpdateStartup_WithoutSectorFields_KeepsStoredSector()
         {
             User user = await SeedUserAsync();
             HttpClient client = CreateAuthenticatedClient(user);
@@ -139,7 +139,6 @@ namespace DevStart.IntegrationTests.Startups
             {
                 Domain.Startups.Startup startup = await db.Startups.SingleAsync(s => s.Id == startupId);
                 startup.Industry = Domain.Startups.Industry.Fintech;
-                startup.HasStrategicPartnerships = true;
                 await db.SaveChangesAsync();
             });
 
@@ -166,7 +165,6 @@ namespace DevStart.IntegrationTests.Startups
                 Domain.Startups.Startup startup = await db.Startups.SingleAsync(s => s.Id == startupId);
                 startup.Name.ShouldBe("Sector Co Renamed");
                 startup.Industry.ShouldBe(Domain.Startups.Industry.Fintech);
-                startup.HasStrategicPartnerships.ShouldBeTrue();
             });
         }
     }

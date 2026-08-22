@@ -1,5 +1,6 @@
 using DevStart.Application.Abstractions.Data;
 using DevStart.Domain.PatentRegistry;
+using DevStart.Domain.Registries;
 using DevStart.Domain.StartupPatents;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,13 +80,13 @@ namespace DevStart.Application.StartupPatents
             {
                 if (!loadedKinds.Contains(record.Kind))
                 {
-                    resolved.Add(Unresolved(record, PatentResolutionState.RegistryUnavailable));
+                    resolved.Add(Unresolved(record, RegistryLookupState.RegistryUnavailable));
                     continue;
                 }
 
                 if (!byKey.TryGetValue((record.Kind, record.NumberNormalized), out PatentRegistryEntry? entry))
                 {
-                    resolved.Add(Unresolved(record, PatentResolutionState.NotFoundInRegistry));
+                    resolved.Add(Unresolved(record, RegistryLookupState.NotFoundInRegistry));
                     continue;
                 }
 
@@ -95,7 +96,7 @@ namespace DevStart.Application.StartupPatents
                     record.NumberRaw,
                     record.NumberNormalized,
                     record.CreatedAt,
-                    PatentResolutionState.Found,
+                    RegistryLookupState.Found,
                     Compare(declaredInn, entry.HolderInn),
                     entry.Title,
                     entry.HolderName,
@@ -146,30 +147,30 @@ namespace DevStart.Application.StartupPatents
             return records.Any(r => matched.Contains((r.Kind, r.NumberNormalized)));
         }
 
-        private static ResolvedStartupPatent Unresolved(StartupPatent record, PatentResolutionState state) =>
+        private static ResolvedStartupPatent Unresolved(StartupPatent record, RegistryLookupState state) =>
             new(record.Id,
                 record.Kind,
                 record.NumberRaw,
                 record.NumberNormalized,
                 record.CreatedAt,
                 state,
-                PatentOwnershipComparison.NotComparable,
+                DeclaredValueComparison.NotComparable,
                 Title: null,
                 HolderName: null,
                 HolderInn: null,
                 RegisteredOn: null,
                 ProtectionStatus: null);
 
-        private static PatentOwnershipComparison Compare(string? declaredInn, string? holderInn)
+        private static DeclaredValueComparison Compare(string? declaredInn, string? holderInn)
         {
             if (string.IsNullOrEmpty(declaredInn) || string.IsNullOrEmpty(holderInn))
             {
-                return PatentOwnershipComparison.NotComparable;
+                return DeclaredValueComparison.NotComparable;
             }
 
             return string.Equals(declaredInn, holderInn, StringComparison.Ordinal)
-                ? PatentOwnershipComparison.MatchesDeclaredInn
-                : PatentOwnershipComparison.DiffersFromDeclaredInn;
+                ? DeclaredValueComparison.Matches
+                : DeclaredValueComparison.Differs;
         }
     }
 }

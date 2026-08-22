@@ -26,6 +26,7 @@ using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupCommunityStandards;
 using DevStart.Domain.PatentRegistry;
 using DevStart.Domain.StartupCompetitors;
+using DevStart.Domain.StartupPartnerships;
 using DevStart.Domain.StartupPatents;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupEquity;
@@ -116,6 +117,7 @@ namespace DevStart.Infrastructure.Database
         public DbSet<StartupCompetitor> StartupCompetitors { get; set; }
 
         public DbSet<StartupPatent> StartupPatents { get; set; }
+        public DbSet<StartupPartnership> StartupPartnerships { get; set; }
 
         public DbSet<PatentRegistryEntry> PatentRegistryEntries { get; set; }
 

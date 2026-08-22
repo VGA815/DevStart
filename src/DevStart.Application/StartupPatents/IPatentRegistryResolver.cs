@@ -1,4 +1,5 @@
 using DevStart.Domain.PatentRegistry;
+using DevStart.Domain.Registries;
 using DevStart.Domain.StartupPatents;
 
 namespace DevStart.Application.StartupPatents
@@ -33,8 +34,8 @@ namespace DevStart.Application.StartupPatents
         string NumberRaw,
         string NumberNormalized,
         DateTime CreatedAt,
-        PatentResolutionState State,
-        PatentOwnershipComparison Ownership,
+        RegistryLookupState State,
+        DeclaredValueComparison Ownership,
         string? Title,
         string? HolderName,
         string? HolderInn,

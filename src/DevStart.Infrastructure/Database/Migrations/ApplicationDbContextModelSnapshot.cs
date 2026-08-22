@@ -1942,6 +1942,62 @@ namespace DevStart.Infrastructure.Database.Migrations
                     b.ToTable("startup_metrics", "public");
                 });
 
+            modelBuilder.Entity("DevStart.Domain.StartupPartnerships.StartupPartnership", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("NormalizedDomain")
+                        .IsRequired()
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)")
+                        .HasColumnName("normalized_domain");
+
+                    b.Property<string>("PartnerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("partner_name");
+
+                    b.Property<Guid>("StartupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("startup_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Website")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("website");
+
+                    b.HasKey("Id")
+                        .HasName("pk_startup_partnerships");
+
+                    b.HasIndex("StartupId", "NormalizedDomain")
+                        .IsUnique()
+                        .HasDatabaseName("ux_startup_partnerships_startup_domain");
+
+                    b.ToTable("startup_partnerships", "public");
+                });
+
             modelBuilder.Entity("DevStart.Domain.StartupPatents.StartupPatent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2114,12 +2170,6 @@ namespace DevStart.Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("has_patents");
-
-                    b.Property<bool>("HasStrategicPartnerships")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("has_strategic_partnerships");
 
                     b.Property<int>("Industry")
                         .ValueGeneratedOnAdd()

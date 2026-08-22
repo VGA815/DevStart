@@ -1,4 +1,4 @@
-using DevStart.Application.Scoring;
+﻿using DevStart.Application.Scoring;
 using DevStart.Domain.Startups;
 using Microsoft.Extensions.Options;
 using Shouldly;
@@ -35,14 +35,20 @@ public sealed class ValuationCalculatorTests
         decimal product = 50m, decimal traction = 50m, decimal? competition = 50m) =>
         new(total, team, market, product, traction, competition, 0m, 0m, [], Now);
 
+    /// <summary>
+    /// The round the VC method needs to participate at all (М4). Declared by default so the ensemble
+    /// tests below keep exercising the method; the tests about withholding it pass <c>null</c>.
+    /// </summary>
+    private const decimal DefaultRound = 100_000_000m;
+
     private static ScoringInputs Inputs(
         StartupStage stage,
         Industry industry = Industry.Other,
         decimal mrr = 0m,
-        bool partnerships = false,
+        PartnershipSignals? partnerships = null,
         bool articulated = false,
         bool patents = false,
-        decimal? targetRoundAmount = null) =>
+        decimal? targetRoundAmount = DefaultRound) =>
         new(
             Guid.NewGuid(),
             stage,
@@ -53,9 +59,9 @@ public sealed class ValuationCalculatorTests
             Traction: TractionSignals.From(mrr, 0m, 0m),
             Product: new ProductSignals(articulated),
             Roadmap: RoadmapSignals.None,
+            Partnerships: partnerships ?? PartnershipSignals.None,
             Industry: industry,
-            TargetRoundAmount: targetRoundAmount,
-            HasStrategicPartnerships: partnerships);
+            TargetRoundAmount: targetRoundAmount);
 
     private static decimal MethodValue(ValuationResult r, string method) =>
         r.Methods.Single(m => m.Method == method).Value;
@@ -69,26 +75,55 @@ public sealed class ValuationCalculatorTests
         // = 3.4 of 5 ceilings × ₽45M = ₽153M ≈ 0.68 × ₽225M max — the spec's $1.7M / $2.5M ratio.
         ValuationResult r = Compute(
             Score(team: 100m, traction: 60m),
-            Inputs(StartupStage.Mvp, articulated: true, partnerships: false, patents: false));
+            Inputs(StartupStage.Mvp, articulated: true, patents: false));
 
         decimal berkus = MethodValue(r, "Berkus");
         berkus.ShouldBe(153_000_000m);
         (berkus / 225_000_000m).ShouldBe(0.68m);
     }
 
-    [Fact]
-    public void Berkus_FullPartnerships_AddsTheFifthFactor()
+    /// <summary>
+    /// М3: the fifth Berkus factor is a ladder, not a switch. It used to be one checkbox worth the
+    /// whole ₽45M ceiling — the largest effect-per-keystroke left in the model. Now each worked-out
+    /// partnership record is worth a third of it, and the fourth record is worth nothing.
+    /// </summary>
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 15_000_000)]
+    [InlineData(2, 30_000_000)]
+    [InlineData(3, 45_000_000)]
+    [InlineData(4, 45_000_000)] // saturated
+    public void Berkus_GradesPartnershipsByWorkedOutRecords_SaturatingAtThree(int workedOut, decimal expectedGain)
     {
-        decimal withoutPartnerships = MethodValue(
-            Compute(Score(team: 100m, traction: 60m),
-                Inputs(StartupStage.Mvp, articulated: true, partnerships: false)),
+        decimal none = MethodValue(
+            Compute(Score(team: 100m, traction: 60m), Inputs(StartupStage.Mvp, articulated: true)),
             "Berkus");
-        decimal withPartnerships = MethodValue(
+        decimal withRecords = MethodValue(
             Compute(Score(team: 100m, traction: 60m),
-                Inputs(StartupStage.Mvp, articulated: true, partnerships: true)),
+                Inputs(StartupStage.Mvp, articulated: true,
+                    partnerships: new PartnershipSignals(TotalCount: workedOut, WorkedOutCount: workedOut))),
             "Berkus");
 
-        (withPartnerships - withoutPartnerships).ShouldBe(45_000_000m); // exactly one ceiling
+        (withRecords - none).ShouldBe(expectedGain);
+    }
+
+    /// <summary>
+    /// The total is carried for transparency and is not a driver — ten placeholder records with no
+    /// account of the arrangement are worth exactly what none are.
+    /// </summary>
+    [Fact]
+    public void Berkus_IgnoresPartnershipRecordsThatSayNothing()
+    {
+        decimal none = MethodValue(
+            Compute(Score(team: 100m, traction: 60m), Inputs(StartupStage.Mvp, articulated: true)),
+            "Berkus");
+        decimal placeholders = MethodValue(
+            Compute(Score(team: 100m, traction: 60m),
+                Inputs(StartupStage.Mvp, articulated: true,
+                    partnerships: new PartnershipSignals(TotalCount: 10, WorkedOutCount: 0))),
+            "Berkus");
+
+        placeholders.ShouldBe(none);
     }
 
     [Fact]
@@ -130,7 +165,8 @@ public sealed class ValuationCalculatorTests
     [Fact]
     public void VcMethod_SeriesA_ReversesFromExitToAboutTheWorkedExample()
     {
-        // Pre-revenue SeriesA: assumed exit revenue ₽500M × 6× = TV ₽3 000M; post = TV / 1.4^5 ≈ ₽557.8M.
+        // Pre-revenue SeriesA: assumed exit revenue ₽500M × 6× = TV ₽3 000M; post = TV / 1.4^5 ≈ ₽557.8M,
+        // and pre-money is that less the declared round.
         ValuationResult r = Compute(Score(), Inputs(StartupStage.SeriesA, Industry.Saas, mrr: 0m));
 
         decimal discount = 1m;
@@ -138,10 +174,11 @@ public sealed class ValuationCalculatorTests
         {
             discount *= 1.40m;
         }
-        decimal expected = Math.Round(3_000_000_000m / discount, 0, MidpointRounding.AwayFromZero);
+        decimal postMoney = 3_000_000_000m / discount;
+        decimal expected = Math.Round(postMoney - DefaultRound, 0, MidpointRounding.AwayFromZero);
 
         MethodValue(r, "VcMethod").ShouldBe(expected);
-        expected.ShouldBeInRange(557_000_000m, 558_000_000m);
+        (expected + DefaultRound).ShouldBeInRange(557_000_000m, 558_000_000m);
     }
 
     [Fact]
@@ -159,16 +196,68 @@ public sealed class ValuationCalculatorTests
     }
 
     [Fact]
-    public void VcMethod_SubtractsRoundAmount_ForPreMoney_WhenTargetKnown()
+    public void VcMethod_SubtractsTheRound_SoALargerRoundMeansALowerPreMoney()
     {
-        decimal postMoney = MethodValue(
-            Compute(Score(), Inputs(StartupStage.SeriesA, Industry.Saas)),
-            "VcMethod");
-        decimal preMoney = MethodValue(
+        decimal small = MethodValue(
             Compute(Score(), Inputs(StartupStage.SeriesA, Industry.Saas, targetRoundAmount: 100_000_000m)),
             "VcMethod");
+        decimal large = MethodValue(
+            Compute(Score(), Inputs(StartupStage.SeriesA, Industry.Saas, targetRoundAmount: 300_000_000m)),
+            "VcMethod");
 
-        (postMoney - preMoney).ShouldBe(100_000_000m);
+        (small - large).ShouldBe(200_000_000m);
+    }
+
+    // ---- М4: no gain from withholding the round ----
+
+    /// <summary>
+    /// The inversion this closes: pre-money is post-money minus the round, so an empty field used to
+    /// skip the subtraction and hand back the largest pre-money the method can produce. Leaving the
+    /// field blank paid — the audit's criterion №1, an action in the UI that raises the result by
+    /// hiding data. The method now drops out instead, by the same "no input → no component" rule that
+    /// already governs Scorecard without a median and Comparable without a multiple.
+    /// </summary>
+    [Theory]
+    [InlineData(StartupStage.Mvp)]
+    [InlineData(StartupStage.Seed)]
+    [InlineData(StartupStage.SeriesA)]
+    public void VcMethod_DropsOutOfEnsemble_WhenNoRoundDeclared(StartupStage stage)
+    {
+        ValuationResult r = Compute(Score(), Inputs(stage, targetRoundAmount: null));
+
+        r.MethodsUsed.ShouldNotContain("VcMethod");
+    }
+
+    [Theory]
+    [InlineData(StartupStage.Mvp, 0)]
+    [InlineData(StartupStage.Seed, 0)]
+    [InlineData(StartupStage.SeriesA, 0)]
+    [InlineData(StartupStage.Mvp, 10_000_000)]
+    [InlineData(StartupStage.Seed, 10_000_000)]
+    [InlineData(StartupStage.SeriesA, 10_000_000)]
+    public void WithholdingTheRound_NeverRaisesTheValuation(StartupStage stage, int mrr)
+    {
+        ValuationResult declared = Compute(
+            Score(), Inputs(stage, Industry.Saas, mrr: mrr, targetRoundAmount: 50_000_000m));
+        ValuationResult withheld = Compute(
+            Score(), Inputs(stage, Industry.Saas, mrr: mrr, targetRoundAmount: null));
+
+        withheld.Point.ShouldBeLessThanOrEqualTo(declared.Point);
+        withheld.High.ShouldBeLessThanOrEqualTo(declared.High);
+    }
+
+    /// <summary>
+    /// A zero or negative round is not a declaration either — it is the same empty field with a
+    /// character in it, and it must not buy the method back.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1_000_000)]
+    public void VcMethod_DropsOut_WhenTheRoundIsNotPositive(int round)
+    {
+        ValuationResult r = Compute(Score(), Inputs(StartupStage.SeriesA, targetRoundAmount: round));
+
+        r.MethodsUsed.ShouldNotContain("VcMethod");
     }
 
     // ---- Ensemble: applicability matrix + weight renormalization ----
@@ -257,10 +346,10 @@ public sealed class ValuationCalculatorTests
         seed.High.ShouldBeGreaterThan(seed.Low);
         seed.Point.ShouldBeGreaterThan(0m);
 
-        // Early-stage Berkus example — partnerships zeroed keeps Berkus below its ₽225M ceiling.
+        // Early-stage Berkus example — no partnership records keeps Berkus below its ₽225M ceiling.
         ValuationResult preSeed = Compute(
             Score(team: 100m, traction: 60m),
-            Inputs(StartupStage.PreSeed, articulated: true, partnerships: false));
+            Inputs(StartupStage.PreSeed, articulated: true));
         MethodValue(preSeed, "Berkus").ShouldBeLessThan(225_000_000m);
     }
 
@@ -270,7 +359,7 @@ public sealed class ValuationCalculatorTests
     public void Scorecard_DropsOutOfEnsemble_WhenNoMedianOnFile()
     {
         // Idea applies Berkus + Scorecard; with an empty set the median is absent, so only Berkus
-        // remains and absorbs the full (renormalized) weight.
+        // remains and absorbs the full (renormalized) weight. (VC does not apply at Idea at all.)
         ValuationResult r = Compute(Score(), Inputs(StartupStage.Idea), ValuationBenchmarkSet.Empty);
 
         r.MethodsUsed.ShouldBe(["Berkus"]);

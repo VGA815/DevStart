@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using DevStart.Domain.StartupCommunityStandards;
@@ -35,7 +35,6 @@ namespace DevStart.IntegrationTests.Startups
             short_description = "Integration testing made easy.",
             industry = 1,
             target_round_amount = 50_000_000m,
-            has_strategic_partnerships = true,
         };
 
         private async Task<Guid> CreateStartupAsync(User owner, string name)

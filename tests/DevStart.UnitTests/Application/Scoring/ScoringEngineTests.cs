@@ -1,4 +1,4 @@
-using DevStart.Application;
+﻿using DevStart.Application;
 using DevStart.Application.Scoring;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Startups;
@@ -463,5 +463,6 @@ public sealed class ScoringEngineTests
             Traction: traction ?? TractionSignals.Empty,
             Product: product ?? ProductSignals.None,
             Roadmap: roadmap ?? RoadmapSignals.None,
+            Partnerships: PartnershipSignals.None,
             Industry: industry);
 }

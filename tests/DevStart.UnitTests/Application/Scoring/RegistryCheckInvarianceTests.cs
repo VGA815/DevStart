@@ -1,4 +1,4 @@
-using DevStart.Application;
+﻿using DevStart.Application;
 using DevStart.Application.Scoring;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.Startups;
@@ -149,8 +149,8 @@ public sealed class RegistryCheckInvarianceTests
             Traction: TractionSignals.From(1_500_000m, 20_000m, 15m),
             Product: new ProductSignals(HasArticulatedPositioning: true),
             Roadmap: new RoadmapSignals(ItemCount: 5, DoneCount: 2),
+            Partnerships: new PartnershipSignals(TotalCount: 2, WorkedOutCount: 2),
             Industry: Industry.Other,
             TargetRoundAmount: 30_000_000m,
-            HasStrategicPartnerships: true,
             HasRegistryCheckedIp: registryChecked);
 }

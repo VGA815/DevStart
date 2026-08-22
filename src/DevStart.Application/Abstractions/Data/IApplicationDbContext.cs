@@ -25,6 +25,7 @@ using DevStart.Domain.Profiles;
 using DevStart.Domain.StartupCommunityStandards;
 using DevStart.Domain.PatentRegistry;
 using DevStart.Domain.StartupCompetitors;
+using DevStart.Domain.StartupPartnerships;
 using DevStart.Domain.StartupPatents;
 using DevStart.Domain.StartupDocumentFiles;
 using DevStart.Domain.StartupEquity;
@@ -79,6 +80,7 @@ namespace DevStart.Application.Abstractions.Data
         DbSet<InvestmentDeal> InvestmentDeals { get; }
         DbSet<StartupCompetitor> StartupCompetitors { get; }
         DbSet<StartupPatent> StartupPatents { get; }
+        DbSet<StartupPartnership> StartupPartnerships { get; }
         DbSet<PatentRegistryEntry> PatentRegistryEntries { get; }
         DbSet<DealDocument> DealDocuments { get; }
         DbSet<Subscription> Subscriptions { get; }

@@ -28,9 +28,6 @@ namespace DevStart.Domain.Startups
         /// <summary>Target raising amount for the current round (RUB). Used for the VC Method pre/post-money split.</summary>
         public decimal? TargetRoundAmount { get; set; }
 
-        /// <summary>Whether the startup has strategic partnerships — the fifth Berkus factor.</summary>
-        public bool HasStrategicPartnerships { get; set; }
-
         /// <summary>
         /// ИНН of the legal entity the startup says it operates as (SC-66). Digits only, check-digit
         /// validated on write. It is a declaration, not a proof of control: it lets the platform
@@ -131,7 +128,7 @@ namespace DevStart.Domain.Startups
             decimal? tam = null, decimal? sam = null, decimal? som = null,
             decimal? marketGrowthRate = null, bool hasPatents = false,
             Industry industry = Industry.Other, decimal? targetRoundAmount = null,
-            bool hasStrategicPartnerships = false, string? inn = null, string? ogrn = null)
+            string? inn = null, string? ogrn = null)
             => new ()
             {
                 Id = Guid.NewGuid(),
@@ -155,7 +152,6 @@ namespace DevStart.Domain.Startups
                 HasPatents = hasPatents,
                 Industry = industry,
                 TargetRoundAmount = targetRoundAmount,
-                HasStrategicPartnerships = hasStrategicPartnerships,
                 Inn = inn,
                 Ogrn = ogrn
             };

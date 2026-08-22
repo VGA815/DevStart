@@ -43,6 +43,7 @@ namespace DevStart.Application.Scoring
                 .ToListAsync(cancellationToken);
 
             CompetitorSignals competitors = await BuildCompetitorsAsync(startupId, cancellationToken);
+            PartnershipSignals partnerships = await BuildPartnershipsAsync(startupId, cancellationToken);
             TractionSignals traction = await BuildTractionAsync(startupId, cancellationToken);
             ProductSignals product = await BuildProductAsync(startupId, cancellationToken);
             RoadmapSignals roadmap = await BuildRoadmapAsync(startupId, cancellationToken);
@@ -65,9 +66,9 @@ namespace DevStart.Application.Scoring
                 Traction: traction,
                 Product: product,
                 Roadmap: roadmap,
+                Partnerships: partnerships,
                 Industry: startup.Industry,
                 TargetRoundAmount: startup.TargetRoundAmount,
-                HasStrategicPartnerships: startup.HasStrategicPartnerships,
                 HasRegistryCheckedIp: registryCheckedIp);
 
             return inputs;
@@ -90,6 +91,23 @@ namespace DevStart.Application.Scoring
                 && (!string.IsNullOrWhiteSpace(c.StrengthsVsUs) || !string.IsNullOrWhiteSpace(c.WeaknessesVsUs)));
 
             return new CompetitorSignals(cards.Count, wellDocumented);
+        }
+
+        // A partnership record counts as worked out when it says what the arrangement actually is —
+        // the partner's website is mandatory on every write, so the description is what separates a
+        // record from a placeholder. Same rule and same reason as the competitor cards above: the
+        // total travels for transparency, the worked-out count is what the Berkus factor reads.
+        private async Task<PartnershipSignals> BuildPartnershipsAsync(Guid startupId, CancellationToken cancellationToken)
+        {
+            List<string?> descriptions = await context.StartupPartnerships
+                .AsNoTracking()
+                .Where(p => p.StartupId == startupId)
+                .Select(p => p.Description)
+                .ToListAsync(cancellationToken);
+
+            int workedOut = descriptions.Count(d => !string.IsNullOrWhiteSpace(d));
+
+            return new PartnershipSignals(descriptions.Count, workedOut);
         }
 
         // Latest snapshot per consumed metric type. Only the consumed types are pulled (not the whole

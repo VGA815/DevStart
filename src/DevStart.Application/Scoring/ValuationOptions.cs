@@ -18,12 +18,16 @@ namespace DevStart.Application.Scoring
 
         // Covers both methodologies (scoring and valuation) — they share this one version string, which
         // travels on every result and snapshot.
+        // v6: withholding an input is never the better move, in the valuation ensemble too. The VC
+        // method drops out until a target round is declared (an empty field used to skip the
+        // subtraction and hand back the largest pre-money), and the fifth Berkus factor is graded by
+        // the count of worked-out partnership records instead of a one-click checkbox.
         // v5: the competition scoring factor is driven by the quality of the startup's competitor
         // analysis plus an external sector-intensity benchmark, never by the number of cards; a factor
         // with no data drops out and the weights renormalize (scoring and Scorecard alike).
         // v4: the valuation's ARR anchor is derived only from a true Mrr metric — a Revenue-proxied
         // MRR no longer annualizes into ARR (its period is undefined), so Comparable/VC inputs changed.
-        public string MethodologyVersion { get; set; } = "v5-2026.07-competition-quality-driven";
+        public string MethodologyVersion { get; set; } = "v6-2026.08-no-gain-from-withholding";
 
         /// <summary>Half-width of the band drawn around the weighted point estimate (e.g. 0.25 = ±25%).</summary>
         public decimal RangeBand { get; set; } = 0.25m;

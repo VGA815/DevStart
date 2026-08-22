@@ -1,8 +1,9 @@
-using DevStart.Application.Scoring;
+﻿using DevStart.Application.Scoring;
 using DevStart.Application.StartupPatents;
 using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.StartupMembers;
 using DevStart.Domain.StartupMetrics;
+using DevStart.Domain.StartupPartnerships;
 using DevStart.Domain.StartupProducts;
 using DevStart.Domain.StartupRoadmapItems;
 using DevStart.Domain.Startups;
@@ -169,7 +170,7 @@ public sealed class ScoringDataProviderTests
     }
 
     [Fact]
-    public async Task GetInputsAsync_MapsValuationSignals_IndustryTargetAmountAndPartnerships()
+    public async Task GetInputsAsync_MapsValuationSignals_IndustryAndTargetAmount()
     {
         _db.Startups.Add(new Startup
         {
@@ -179,7 +180,6 @@ public sealed class ScoringDataProviderTests
             Stage = StartupStage.Seed,
             Industry = Industry.Saas,
             TargetRoundAmount = 50_000_000m,
-            HasStrategicPartnerships = true,
             CreatedAt = Now,
             UpdatedAt = Now,
         });
@@ -189,8 +189,33 @@ public sealed class ScoringDataProviderTests
 
         inputs.Industry.ShouldBe(Industry.Saas);
         inputs.TargetRoundAmount.ShouldBe(50_000_000m);
-        inputs.HasStrategicPartnerships.ShouldBeTrue();
     }
+
+    /// <summary>
+    /// The partnership half of М3: the driver is the count of records that say what the arrangement
+    /// is, and the total travels alongside it for transparency only. A record with no description is
+    /// listed and counts for nothing — the same rule as an unanalysed competitor card.
+    /// </summary>
+    [Fact]
+    public async Task GetInputsAsync_CountsOnlyWorkedOutPartnerships()
+    {
+        SeedStartup();
+        _db.StartupPartnerships.AddRange(
+            Partnership("Big Retailer", "https://retailer.example", "распространяет продукт в 40 точках"),
+            Partnership("Университет", "https://uni.example", "   "),
+            Partnership("Integrator", "https://integrator.example", null));
+        await _db.SaveChangesAsync();
+
+        ScoringInputs inputs = (await CreateSut().GetInputsAsync(_startupId, CancellationToken.None)).Value;
+
+        inputs.Partnerships.TotalCount.ShouldBe(3);
+        inputs.Partnerships.WorkedOutCount.ShouldBe(1);
+    }
+
+    private StartupPartnership Partnership(string name, string website, string? description) =>
+        StartupPartnership.Create(
+            _startupId, name, website, StartupPartnership.NormalizeDomain(website)!,
+            PartnershipKind.Distribution, description, Now);
 
     [Fact]
     public async Task GetInputsAsync_DefaultsValuationSignals_WhenUnset()
@@ -202,7 +227,7 @@ public sealed class ScoringDataProviderTests
 
         inputs.Industry.ShouldBe(Industry.Other);
         inputs.TargetRoundAmount.ShouldBeNull();
-        inputs.HasStrategicPartnerships.ShouldBeFalse();
+        inputs.Partnerships.ShouldBe(PartnershipSignals.None);
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using DevStart.Domain.StartupPartnerships;
 using DevStart.Domain.Startups;
 using Microsoft.Extensions.Options;
 
@@ -11,20 +12,24 @@ namespace DevStart.Application.Scoring
     ///
     /// Methodology:
     ///   Applicability   Berkus: Idea/PreSeed/Mvp · Scorecard: Idea–Seed (needs a median) ·
-    ///                   VC: Mvp/Seed/SeriesA · Comparable: Mvp/Seed/SeriesA (needs a sector multiple
-    ///                   and ARR &gt; 0).
+    ///                   VC: Mvp/Seed/SeriesA (needs a declared target round) · Comparable:
+    ///                   Mvp/Seed/SeriesA (needs a sector multiple and ARR &gt; 0).
     ///   Berkus          5 factors (idea, prototype, team, partnerships, traction), each a 0..1 signal ×
-    ///                   a RUB ceiling; partnerships → 0 when absent.
+    ///                   a RUB ceiling. Partnerships is graded by the count of worked-out partnership
+    ///                   records, saturating at three — 0 when there are none.
     ///   Scorecard       stage/sector median × Σ(weightᵢ × multiplierᵢ), multiplierᵢ = clamp(0.5 + subᵢ/100,
     ///                   0.5..1.5). "Sales" factor is proxied by the traction sub-score. A sub-score with
     ///                   no data drops out and the factor weights are renormalized — feeding 0 in would
     ///                   silently apply the floor multiplier. No median on file → the method drops out of
     ///                   the ensemble (insufficient data, not a hardcoded floor).
     ///   VC Method       TV = exitRevenue × sector multiple; post-money = TV / (1+IRR)^n; pre-money =
-    ///                   post-money − target round amount (when known). Exit revenue = ARR × growth, or a
-    ///                   stage default when pre-revenue.
+    ///                   post-money − target round amount. Exit revenue = ARR × growth, or a stage
+    ///                   default when pre-revenue. No round on file → the method drops out, because
+    ///                   skipping the subtraction would reward leaving the field blank.
     ///   Comparable      sector revenue multiple × ARR; drops out when there is no multiple or no revenue.
-    ///   Ensemble        weights renormalized to sum 1.0 over the methods that actually contribute.
+    ///   Ensemble        weights renormalized to sum 1.0 over the methods that actually contribute; a
+    ///                   method dropped for a *withheld* input also caps the point at what it would
+    ///                   have been with that method at its floor, so withholding is never a gain.
     ///   Range           Low = min(point×(1−band), minMethod); High = max(point×(1+band), maxMethod);
     ///                   guarantees Low ≤ Point ≤ High.
     ///   Guardrails      negatives clamped to 0; when no method contributes → insufficient-data (empty/0).
@@ -47,9 +52,27 @@ namespace DevStart.Application.Scoring
             {
                 methods.Add(Scorecard(score, inputs, median, benchmarks.HasSectorMedian(inputs.Industry, stage), _o.ScorecardWeight));
             }
+            // Methods that apply to the stage but dropped out because the startup withheld an input of
+            // theirs, together with the least favourable value they could have had. See the ceiling
+            // rule below.
+            var withheld = new List<(decimal Floor, decimal Weight)>();
+
+            // The round is an input of the VC method, not a decoration on it: pre-money is post-money
+            // minus the round. Without it there is no subtraction step, so an empty field would hand
+            // back the largest pre-money the method can produce — leaving the field blank would pay.
+            // The method therefore drops out, by the same "no input → no component" rule that already
+            // governs Scorecard without a median and Comparable without a multiple (М4). Its floor is
+            // 0: an undeclared round could be large enough to swallow the whole post-money.
             if (VcApplies(stage))
             {
-                methods.Add(Vc(inputs, _o.VcWeight));
+                if (inputs.TargetRoundAmount is > 0m)
+                {
+                    methods.Add(Vc(inputs, inputs.TargetRoundAmount.Value, _o.VcWeight));
+                }
+                else
+                {
+                    withheld.Add((0m, _o.VcWeight));
+                }
             }
             if (ComparableApplies(stage))
             {
@@ -78,6 +101,7 @@ namespace DevStart.Application.Scoring
 
             var breakdown = new List<ValuationBreakdown>(methods.Count);
             decimal point = 0m;
+            decimal weightedSum = 0m;
             decimal minMethod = decimal.MaxValue;
             decimal maxMethod = decimal.MinValue;
             decimal weightAccumulator = 0m;
@@ -87,6 +111,7 @@ namespace DevStart.Application.Scoring
                 Method m = methods[i];
                 decimal exactWeight = m.BaseWeight / totalBaseWeight;
                 point += m.Value * exactWeight;
+                weightedSum += m.Value * m.BaseWeight;
                 minMethod = Math.Min(minMethod, m.Value);
                 maxMethod = Math.Max(maxMethod, m.Value);
 
@@ -98,6 +123,26 @@ namespace DevStart.Application.Scoring
                     : Round2(exactWeight);
                 weightAccumulator += weight;
                 breakdown.Add(new ValuationBreakdown(m.Name, m.Value, weight, m.Assumptions));
+            }
+
+            // Ceiling rule for a method the startup withheld an input from — the same rule the scoring
+            // engine applies to a factor that dropped out (see ScoringEngine.Combine). Dropping the
+            // method out is not enough on its own: renormalizing over the survivors makes the missing
+            // method equal to the average of the rest, which sits *above* it whenever the method would
+            // have come in low. At Seed with a Scorecard median on file that is the common case, so
+            // clearing the round field would have raised the shown valuation — the very inversion М4
+            // exists to close. Capping at "the result had this method come in at its floor" makes the
+            // withheld input neutral at best and never a gain.
+            //
+            // Only self-withheld inputs are capped. Scorecard without a median and Comparable without a
+            // sector multiple also drop out, but those are admin-curated benchmarks the startup cannot
+            // touch: there is nothing being withheld and nothing to guard against.
+            foreach ((decimal floor, decimal weight) in withheld)
+            {
+                if (weight > 0m)
+                {
+                    point = Math.Min(point, (weightedSum + floor * weight) / (totalBaseWeight + weight));
+                }
             }
 
             point = RoundRub(point);
@@ -137,23 +182,33 @@ namespace DevStart.Application.Scoring
             decimal idea = inputs.Product.HasArticulatedPositioning ? 1.0m : 0.5m;
             decimal prototype = Clamp01(PrototypeBaseline(inputs.Stage) + (inputs.HasPatents ? 0.2m : 0m));
             decimal team = Clamp01(score.TeamScore / 100m);
-            decimal partnerships = inputs.HasStrategicPartnerships ? 1.0m : 0.0m;
             decimal traction = Clamp01(score.TractionScore / 100m);
+
+            // The fifth factor is graded, not boolean (М3). It used to be a checkbox: one click bought
+            // the whole ceiling, which was the largest effect-per-keystroke left in the model. Now the
+            // ceiling is earned a third at a time by partnership records that say what the arrangement
+            // is — the count of worked-out records, saturating, exactly as the competitor analysis
+            // works in the scoring engine.
+            int workedOut = inputs.Partnerships.WorkedOutCount;
+            decimal partnershipsValue = SaturatingCount.Of(
+                b.PartnershipsCeiling, workedOut, StartupPartnership.SaturationCount);
+            decimal partnerships = SaturatingCount.Share(workedOut, StartupPartnership.SaturationCount);
 
             decimal value = RoundRub(
                 idea * b.IdeaCeiling +
                 prototype * b.PrototypeCeiling +
                 team * b.TeamCeiling +
-                partnerships * b.PartnershipsCeiling +
+                partnershipsValue +
                 traction * b.TractionCeiling);
 
             var assumptions = new List<string>
             {
-                $"idea {idea:0.##}, prototype {prototype:0.##}, team {team:0.##}, traction {traction:0.##}"
+                $"idea {idea:0.##}, prototype {prototype:0.##}, team {team:0.##}, traction {traction:0.##}",
+                workedOut > 0
+                    ? $"partnerships {partnerships:0.##}: {workedOut} worked-out record(s) of "
+                        + $"{inputs.Partnerships.TotalCount}, saturating at {StartupPartnership.SaturationCount}"
+                    : $"no worked-out partnership records of {inputs.Partnerships.TotalCount} — factor zeroed"
             };
-            assumptions.Add(inputs.HasStrategicPartnerships
-                ? "strategic partnerships present"
-                : "no strategic partnerships — factor zeroed");
 
             return new Method("Berkus", Math.Max(0m, value), baseWeight, assumptions);
         }
@@ -227,7 +282,7 @@ namespace DevStart.Application.Scoring
 
         // ---- VC Method -------------------------------------------------------------------------
 
-        private Method Vc(ScoringInputs inputs, decimal baseWeight)
+        private Method Vc(ScoringInputs inputs, decimal targetRoundAmount, decimal baseWeight)
         {
             VcMethodOptions v = _o.Vc;
             decimal arr = Math.Max(0m, inputs.Traction.AnnualRecurringRevenue);
@@ -249,20 +304,17 @@ namespace DevStart.Application.Scoring
             decimal discount = PowDecimal(1m + irr, n);
             decimal postMoney = discount > 0m ? terminalValue / discount : 0m;
 
-            decimal value = postMoney;
+            // Unconditional now: the caller only builds this method when a round is on file, so the
+            // subtraction is never skipped and the assumption never lies about which step ran.
+            decimal value = postMoney - targetRoundAmount;
             var assumptions = new List<string>
             {
                 preRevenue
                     ? $"pre-revenue: assumed exit revenue ₽{exitRevenue:N0}"
                     : $"exit revenue ₽{exitRevenue:N0} (ARR ₽{arr:N0} × {v.ExitRevenueGrowthMultiple:0.##})",
-                $"exit multiple {multiple:0.##}×, IRR {irr:P0}, horizon {n}y → post-money ₽{RoundRub(postMoney):N0}"
+                $"exit multiple {multiple:0.##}×, IRR {irr:P0}, horizon {n}y → post-money ₽{RoundRub(postMoney):N0}",
+                $"pre-money = post-money − round ₽{targetRoundAmount:N0}"
             };
-
-            if (inputs.TargetRoundAmount is > 0m)
-            {
-                value = postMoney - inputs.TargetRoundAmount.Value;
-                assumptions.Add($"pre-money = post-money − round ₽{inputs.TargetRoundAmount.Value:N0}");
-            }
 
             return new Method("VcMethod", Math.Max(0m, RoundRub(value)), baseWeight, assumptions);
         }

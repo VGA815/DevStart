@@ -27,7 +27,6 @@ namespace DevStart.Application.Startups.GetById
         /// <summary>Target raising amount for the current round (RUB).</summary>
         public decimal? TargetRoundAmount { get; init; }
 
-        public bool HasStrategicPartnerships { get; init; }
 
         /// <summary>
         /// ИНН the startup declared for its legal entity (SC-66). A declaration: the platform compares

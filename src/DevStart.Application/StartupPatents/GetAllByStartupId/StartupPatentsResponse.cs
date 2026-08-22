@@ -1,5 +1,6 @@
 using DevStart.Application.Abstractions.Registry;
 using DevStart.Domain.PatentRegistry;
+using DevStart.Domain.Registries;
 using DevStart.Domain.StartupPatents;
 
 namespace DevStart.Application.StartupPatents.GetAllByStartupId
@@ -49,10 +50,10 @@ namespace DevStart.Application.StartupPatents.GetAllByStartupId
         /// <summary>Digits only — what the register was searched by.</summary>
         public string NumberNormalized { get; init; } = null!;
 
-        public PatentResolutionState State { get; init; }
+        public RegistryLookupState State { get; init; }
 
         /// <summary>How the rightsholder's ИНН compares with the declared one. A comparison, not a proof.</summary>
-        public PatentOwnershipComparison Ownership { get; init; }
+        public DeclaredValueComparison Ownership { get; init; }
 
         public string? Title { get; init; }
 

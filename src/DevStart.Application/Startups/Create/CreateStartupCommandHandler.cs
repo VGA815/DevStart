@@ -48,8 +48,7 @@ namespace DevStart.Application.Startups.Create
                 command.MarketGrowthRate,
                 command.HasPatents,
                 command.Industry,
-                command.TargetRoundAmount,
-                command.HasStrategicPartnerships);
+                command.TargetRoundAmount);
 
             StartupMember startupMember = StartupMember.Create(
                 command.UserId,

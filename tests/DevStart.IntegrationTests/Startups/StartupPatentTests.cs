@@ -1,7 +1,8 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using DevStart.Domain.PatentRegistry;
+using DevStart.Domain.Registries;
 using DevStart.Domain.StartupPatents;
 using DevStart.Domain.Users;
 using DevStart.IntegrationTests.Infrastructure;
@@ -46,7 +47,6 @@ namespace DevStart.IntegrationTests.Startups
             industry = 1, // Saas
             target_round_amount = 50_000_000m,
             has_patents = true,
-            has_strategic_partnerships = true,
         };
 
         private static object PatentBody(Guid startupId, IntellectualPropertyKind kind, string number) => new
@@ -210,18 +210,18 @@ namespace DevStart.IntegrationTests.Startups
             records.Length.ShouldBe(3);
 
             JsonElement found = records.Single(r => r.GetProperty("numberNormalized").GetString() == "2023612345");
-            found.GetProperty("state").GetInt32().ShouldBe((int)PatentResolutionState.Found);
+            found.GetProperty("state").GetInt32().ShouldBe((int)RegistryLookupState.Found);
             found.GetProperty("holderName").GetString().ShouldBe("ООО «Ромашка»");
             found.GetProperty("ownership").GetInt32()
-                .ShouldBe((int)PatentOwnershipComparison.MatchesDeclaredInn);
+                .ShouldBe((int)DeclaredValueComparison.Matches);
 
             // The miss is returned, not swallowed: a hidden non-match would make "enter twenty
             // numbers, show the three that stick" a working tactic.
             records.Single(r => r.GetProperty("numberNormalized").GetString() == "2023619999")
-                .GetProperty("state").GetInt32().ShouldBe((int)PatentResolutionState.NotFoundInRegistry);
+                .GetProperty("state").GetInt32().ShouldBe((int)RegistryLookupState.NotFoundInRegistry);
 
             records.Single(r => r.GetProperty("numberNormalized").GetString() == "812345")
-                .GetProperty("state").GetInt32().ShouldBe((int)PatentResolutionState.RegistryUnavailable);
+                .GetProperty("state").GetInt32().ShouldBe((int)RegistryLookupState.RegistryUnavailable);
 
             // No ЕГРЮЛ source is wired in this host: the answer is "unavailable", never a finding.
             root.GetProperty("legalEntity").GetProperty("state").GetInt32().ShouldBe(0);
@@ -242,9 +242,9 @@ namespace DevStart.IntegrationTests.Startups
                 await (await client.GetAsync($"api/startups/{startupId}/patents")).Content.ReadAsStringAsync());
 
             JsonElement record = doc.RootElement.GetProperty("records").EnumerateArray().Single();
-            record.GetProperty("state").GetInt32().ShouldBe((int)PatentResolutionState.Found);
+            record.GetProperty("state").GetInt32().ShouldBe((int)RegistryLookupState.Found);
             record.GetProperty("ownership").GetInt32()
-                .ShouldBe((int)PatentOwnershipComparison.DiffersFromDeclaredInn);
+                .ShouldBe((int)DeclaredValueComparison.Differs);
         }
 
         [Fact]

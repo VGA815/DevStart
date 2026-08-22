@@ -1,5 +1,6 @@
 using DevStart.Application.StartupPatents;
 using DevStart.Domain.PatentRegistry;
+using DevStart.Domain.Registries;
 using DevStart.Domain.StartupPatents;
 using DevStart.Domain.Startups;
 using DevStart.Infrastructure.Database;
@@ -35,11 +36,11 @@ public sealed class PatentRegistryResolverTests
 
         resolution.Records
             .Single(r => r.Kind == IntellectualPropertyKind.ComputerProgram).State
-            .ShouldBe(PatentResolutionState.NotFoundInRegistry);
+            .ShouldBe(RegistryLookupState.NotFoundInRegistry);
 
         resolution.Records
             .Single(r => r.Kind == IntellectualPropertyKind.Trademark).State
-            .ShouldBe(PatentResolutionState.RegistryUnavailable);
+            .ShouldBe(RegistryLookupState.RegistryUnavailable);
     }
 
     [Fact]
@@ -55,23 +56,23 @@ public sealed class PatentRegistryResolverTests
 
         ResolvedStartupPatent record = (await CreateSut().ResolveAsync(_startupId, default)).Records.Single();
 
-        record.State.ShouldBe(PatentResolutionState.Found);
+        record.State.ShouldBe(RegistryLookupState.Found);
         record.Title.ShouldBe("Программа учёта");
         record.HolderName.ShouldBe("ООО «Ромашка»");
         record.ProtectionStatus.ShouldBe(PatentProtectionStatus.EarlyTerminated);
 
         // The startup declared no ИНН, so nothing about ownership is comparable — the holder is shown
         // as the register gives it, with no claim attached.
-        record.Ownership.ShouldBe(PatentOwnershipComparison.NotComparable);
+        record.Ownership.ShouldBe(DeclaredValueComparison.NotComparable);
     }
 
     [Theory]
-    [InlineData(DeclaredInn, DeclaredInn, PatentOwnershipComparison.MatchesDeclaredInn)]
-    [InlineData(DeclaredInn, OtherInn, PatentOwnershipComparison.DiffersFromDeclaredInn)]
-    [InlineData(DeclaredInn, null, PatentOwnershipComparison.NotComparable)]
-    [InlineData(null, DeclaredInn, PatentOwnershipComparison.NotComparable)]
+    [InlineData(DeclaredInn, DeclaredInn, DeclaredValueComparison.Matches)]
+    [InlineData(DeclaredInn, OtherInn, DeclaredValueComparison.Differs)]
+    [InlineData(DeclaredInn, null, DeclaredValueComparison.NotComparable)]
+    [InlineData(null, DeclaredInn, DeclaredValueComparison.NotComparable)]
     public async Task Resolve_ShouldCompareDeclaredInnWithTheHolder(
-        string? declaredInn, string? holderInn, PatentOwnershipComparison expected)
+        string? declaredInn, string? holderInn, DeclaredValueComparison expected)
     {
         SeedStartup(declaredInn);
         SeedRegistryEntry(IntellectualPropertyKind.ComputerProgram, "2023612345", holderInn);

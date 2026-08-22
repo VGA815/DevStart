@@ -13,7 +13,8 @@ namespace DevStart.Application.Scoring
             FactorOutcome team = ComputeTeamScore(inputs.Members);
             FactorOutcome market = ComputeMarketScore(inputs.Tam, inputs.Sam, inputs.Som, inputs.MarketGrowthRate);
             FactorOutcome product = ComputeProductScore(
-                inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap, inputs.HasRegistryCheckedIp);
+                inputs.Stage, inputs.HasPatents, inputs.Product, inputs.Roadmap, inputs.HasRegistryCheckedIp,
+                inputs.Traction);
             FactorOutcome traction = ComputeTractionScore(inputs.Traction);
             FactorOutcome competition = ComputeCompetitionScore(inputs.Competitors, inputs.Industry, benchmarks);
 
@@ -417,7 +418,8 @@ namespace DevStart.Application.Scoring
             bool hasPatents,
             ProductSignals product,
             RoadmapSignals roadmap,
-            bool hasRegistryCheckedIp)
+            bool hasRegistryCheckedIp,
+            TractionSignals traction)
         {
             var builder = new FactorBuilder("product");
 
@@ -430,8 +432,11 @@ namespace DevStart.Application.Scoring
                 _ => ("idea", 15m)
             };
 
+            (string consistencyCode, bool stageBorneOut) = CrossCheckStage(stage, traction);
+
             builder
                 .In("stage", ScoreValue.Of($"stage.{stageCode}"))
+                .In("stage_consistency", ScoreValue.Of($"stage_consistency.{consistencyCode}"))
                 .In("has_patents", ScoreValue.Flag(hasPatents))
                 .In("has_positioning", ScoreValue.Flag(product.HasArticulatedPositioning))
                 .In("roadmap_items", ScoreValue.Count(roadmap.ItemCount))
@@ -467,18 +472,54 @@ namespace DevStart.Application.Scoring
             // Stage itself carries no hint either — raising it moves the weights as well as this base,
             // so prompting a stage change would be prompting a misdeclaration.
             //
-            // The registry flag rides on the source, never on the score: every component above is
-            // untouched by it, so the factor's number is bit-for-bit the same with and without it. It
-            // exists so the investor can see which part of this factor rests on something the startup
-            // cannot edit.
+            // Both provenance flags ride on the source, never on the score: every component above is
+            // untouched by them, so the factor's number is bit-for-bit the same with and without. They
+            // exist so the investor can see which part of this factor rests on something other than
+            // the founder's word — the register for the IP records, the platform's own metrics for the
+            // declared stage.
             ScoreFactorSource source = ScoreFactorSource.SelfReported | ScoreFactorSource.PlatformDerived;
             if (hasRegistryCheckedIp)
             {
                 source |= ScoreFactorSource.RegistryChecked;
             }
+            if (stageBorneOut)
+            {
+                source |= ScoreFactorSource.CrossChecked;
+            }
 
             return builder.Build(source);
         }
+
+        /// <summary>
+        /// Cross-checks the declared stage against the metrics on file. Idea/PreSeed/Mvp claim no
+        /// traction, so there is nothing to contradict; Seed claims *some* (users or revenue) and
+        /// SeriesA claims revenue. Returns the code that ships in the factor's inputs and whether the
+        /// declaration was borne out.
+        ///
+        /// Nothing is blocked and no number moves — an overstated stage is a signal for the investor,
+        /// not an input for the engine (М4 in docs/scoring-inputs-plan.md).
+        ///
+        /// "No metrics at all" lands in the same <c>unsupported</c> state as "metrics that fall short",
+        /// deliberately. If silence read as "nothing to check", leaving the metrics tab empty would be
+        /// the cheapest way to keep a declared stage unchallenged — the exact shape of gaming this
+        /// mechanism exists to close. Which of the two it is stays visible regardless: the traction
+        /// factor's own inputs already tell "absent" apart from "reported 0".
+        ///
+        /// A Revenue-proxied MRR counts as revenue here. Its period is undefined, which is why it never
+        /// annualizes into the valuation's ARR anchor — but the question asked here is only whether
+        /// money is coming in, and to that it is a perfectly good answer.
+        /// </summary>
+        private static (string Code, bool BorneOut) CrossCheckStage(StartupStage stage, TractionSignals traction) =>
+            stage switch
+            {
+                StartupStage.Seed => traction.Mrr > 0m || traction.Mau > 0m
+                    ? ("supported", true)
+                    : ("unsupported", false),
+                StartupStage.SeriesA => traction.Mrr > 0m
+                    ? ("supported", true)
+                    : ("unsupported", false),
+                _ => ("not_applicable", false)
+            };
 
         // ---- Traction -----------------------------------------------------------------------------
 
@@ -594,14 +635,19 @@ namespace DevStart.Application.Scoring
         /// </summary>
         private const decimal CompetitionBaselineWithoutBenchmark = 50m;
 
-        /// <summary>Bonus per well-documented competitor card, saturating at three. Proposed defaults — tunable.</summary>
-        private static decimal DocumentationBonus(int wellDocumentedCount) => wellDocumentedCount switch
-        {
-            <= 0 => 0m,
-            1 => 10m,
-            2 => 20m,
-            _ => 30m
-        };
+        /// <summary>Full bonus for a competitor analysis, reached at <see cref="CompetitorSaturationCount"/> cards.</summary>
+        private const decimal MaxDocumentationBonus = 30m;
+
+        /// <summary>Well-documented cards past which the analysis bonus stops growing.</summary>
+        private const int CompetitorSaturationCount = 3;
+
+        /// <summary>
+        /// Bonus for the quality of the startup's competitor analysis: 10 / 20 / 30 points, saturating
+        /// at three well-documented cards. Proposed defaults — tunable. The ladder itself is shared
+        /// with the Berkus partnerships factor (<see cref="SaturatingCount"/>).
+        /// </summary>
+        private static decimal DocumentationBonus(int wellDocumentedCount) =>
+            SaturatingCount.Of(MaxDocumentationBonus, wellDocumentedCount, CompetitorSaturationCount);
 
         /// <summary>
         /// Competition factor. Two independent components, neither of which is the number of cards:
@@ -659,7 +705,7 @@ namespace DevStart.Application.Scoring
                 source |= ScoreFactorSource.SelfReported;
             }
 
-            if (competitors.WellDocumentedCount < 3)
+            if (competitors.WellDocumentedCount < CompetitorSaturationCount)
             {
                 int next = competitors.WellDocumentedCount + 1;
                 builder.Hint("document_card", DocumentationBonus(next) - bonus, ScoreValue.Count(next));

@@ -1,3 +1,4 @@
+using DevStart.Domain.Common;
 using DevStart.SharedKernel;
 
 namespace DevStart.Domain.StartupCompetitors
@@ -76,27 +77,9 @@ namespace DevStart.Domain.StartupCompetitors
         }
 
         /// <summary>
-        /// Reduces a website to its comparable domain: host only, lower-cased, without a leading
-        /// "www." or a trailing dot. Returns <c>null</c> for anything that is not an absolute http(s)
-        /// URL — the validators reject those before they reach here, so a null means "not comparable"
-        /// rather than "duplicate of every other null".
+        /// Reduces a website to its comparable domain. The rule itself lives in
+        /// <see cref="WebsiteDomain"/> — partnership records key off the same one.
         /// </summary>
-        public static string? NormalizeDomain(string? website)
-        {
-            if (string.IsNullOrWhiteSpace(website)
-                || !Uri.TryCreate(website.Trim(), UriKind.Absolute, out Uri? uri)
-                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-            {
-                return null;
-            }
-
-            string host = uri.Host.ToLowerInvariant().TrimEnd('.');
-            if (host.StartsWith("www.", StringComparison.Ordinal))
-            {
-                host = host[4..];
-            }
-
-            return host.Length == 0 ? null : host;
-        }
+        public static string? NormalizeDomain(string? website) => WebsiteDomain.Normalize(website);
     }
 }

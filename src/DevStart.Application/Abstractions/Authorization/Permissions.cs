@@ -1,4 +1,4 @@
-namespace DevStart.Application.Abstractions.Authorization
+﻿namespace DevStart.Application.Abstractions.Authorization
 {
     public static class Permissions
     {
@@ -20,6 +20,11 @@ namespace DevStart.Application.Abstractions.Authorization
         public const string StartupCompetitorsUpdate         = "startup_competitors::update";
         public const string StartupCompetitorsDelete         = "startup_competitors::delete";
         public const string StartupCompetitorsRead           = "startup_competitors::read";
+
+        public const string StartupPartnershipsCreate        = "startup_partnerships::create";
+        public const string StartupPartnershipsUpdate        = "startup_partnerships::update";
+        public const string StartupPartnershipsDelete        = "startup_partnerships::delete";
+        public const string StartupPartnershipsRead          = "startup_partnerships::read";
 
         public const string StartupPatentsCreate             = "startup_patents::create";
         public const string StartupPatentsDelete             = "startup_patents::delete";

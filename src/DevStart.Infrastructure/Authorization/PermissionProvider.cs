@@ -1,4 +1,4 @@
-using DevStart.Application.Abstractions.Authorization;
+﻿using DevStart.Application.Abstractions.Authorization;
 using DevStart.Application.Abstractions.Data;
 using DevStart.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +29,11 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupCompetitorsUpdate,
                 Permissions.StartupCompetitorsDelete,
                 Permissions.StartupCompetitorsRead,
+
+                Permissions.StartupPartnershipsCreate,
+                Permissions.StartupPartnershipsUpdate,
+                Permissions.StartupPartnershipsDelete,
+                Permissions.StartupPartnershipsRead,
 
                 Permissions.StartupPatentsCreate,
                 Permissions.StartupPatentsDelete,
@@ -131,6 +136,11 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.StartupCompetitorsUpdate,
                 Permissions.StartupCompetitorsDelete,
                 Permissions.StartupCompetitorsRead,
+
+                Permissions.StartupPartnershipsCreate,
+                Permissions.StartupPartnershipsUpdate,
+                Permissions.StartupPartnershipsDelete,
+                Permissions.StartupPartnershipsRead,
 
                 Permissions.StartupPatentsCreate,
                 Permissions.StartupPatentsDelete,

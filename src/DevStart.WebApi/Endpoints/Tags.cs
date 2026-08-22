@@ -7,6 +7,7 @@
         public const string Startups = "Startups";
         public const string StartupCompetitors = "StartupCompetitors";
         public const string StartupPatents = "StartupPatents";
+        public const string StartupPartnerships = "StartupPartnerships";
         public const string StartupRoadmapItems = "StartupRoadmapItems";
         public const string StartupProducts = "StartupProducts";
         public const string StartupMetrics = "StartupMetrics";

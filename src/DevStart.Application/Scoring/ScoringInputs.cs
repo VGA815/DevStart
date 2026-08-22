@@ -20,9 +20,9 @@ namespace DevStart.Application.Scoring
         TractionSignals Traction,
         ProductSignals Product,
         RoadmapSignals Roadmap,
+        PartnershipSignals Partnerships,
         Industry Industry = Industry.Other,
         decimal? TargetRoundAmount = null,
-        bool HasStrategicPartnerships = false,
         bool HasRegistryCheckedIp = false);
 
     /// <summary>
@@ -68,6 +68,18 @@ namespace DevStart.Application.Scoring
     public sealed record CompetitorSignals(int TotalCount, int WellDocumentedCount)
     {
         public static readonly CompetitorSignals None = new(0, 0);
+    }
+
+    /// <summary>
+    /// Strategic-partnership signals. Same shape and same reasoning as <see cref="CompetitorSignals"/>:
+    /// <see cref="TotalCount"/> travels for transparency only, and the driver is
+    /// <see cref="WorkedOutCount"/> — records that actually say what the arrangement is. These replace
+    /// the old <c>HasStrategicPartnerships</c> checkbox, which opened a whole Berkus ceiling for one
+    /// click (М3 in docs/scoring-inputs-plan.md).
+    /// </summary>
+    public sealed record PartnershipSignals(int TotalCount, int WorkedOutCount)
+    {
+        public static readonly PartnershipSignals None = new(0, 0);
     }
 
     /// <summary>Structural product signals derived from the startup's product description.</summary>

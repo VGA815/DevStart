@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using DevStart.Domain.StartupCompetitors;
 using DevStart.Domain.Users;
@@ -39,7 +39,6 @@ namespace DevStart.IntegrationTests.Startups
             short_description = "Integration testing made easy.",
             industry = 1, // Saas
             target_round_amount = 50_000_000m,
-            has_strategic_partnerships = true,
         };
 
         private static object CompetitorBody(

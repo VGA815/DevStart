@@ -1,4 +1,4 @@
-using DevStart.Application.Abstractions.Messaging;
+﻿using DevStart.Application.Abstractions.Messaging;
 using DevStart.Domain.Startups;
 
 namespace DevStart.Application.Startups.Update
@@ -32,9 +32,6 @@ namespace DevStart.Application.Startups.Update
         public Industry? Industry { get; set; }
         public decimal? TargetRoundAmount { get; set; }
 
-        /// <summary>Fifth Berkus factor. Null means "not supplied" — see <see cref="Industry"/>.</summary>
-        public bool? HasStrategicPartnerships { get; set; }
-
         /// <summary>
         /// ИНН of the declared legal entity (SC-66). Three-valued on purpose: <c>null</c> leaves the
         /// stored value alone, an empty string clears it, anything else is validated by its check digit
@@ -50,7 +47,7 @@ namespace DevStart.Application.Startups.Update
             List<string> socialMediaLinks, StartupLocation location, string billingEmail, Guid? avatarId, string? shortDescription,
             decimal? tam = null, decimal? sam = null, decimal? som = null,
             decimal? marketGrowthRate = null, bool hasPatents = false,
-            Industry? industry = null, decimal? targetRoundAmount = null, bool? hasStrategicPartnerships = null,
+            Industry? industry = null, decimal? targetRoundAmount = null,
             string? inn = null, string? ogrn = null)
         {
             StartupId = startupId;
@@ -72,7 +69,6 @@ namespace DevStart.Application.Startups.Update
             HasPatents = hasPatents;
             Industry = industry;
             TargetRoundAmount = targetRoundAmount;
-            HasStrategicPartnerships = hasStrategicPartnerships;
             Inn = inn;
             Ogrn = ogrn;
         }

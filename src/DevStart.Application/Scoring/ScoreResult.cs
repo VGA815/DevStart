@@ -35,6 +35,23 @@ namespace DevStart.Application.Scoring
         /// kind of thing that arrives by accident and silently.
         /// </summary>
         RegistryChecked = 8,
+
+        /// <summary>
+        /// A declared input of this factor was compared against other data the platform already holds,
+        /// and held up. Today that is the declared stage against the traction metrics: a Seed that
+        /// shows users or revenue, a Series A that shows revenue (М4).
+        ///
+        /// Set only when the comparison *confirms* the declaration, on the same reading as
+        /// <see cref="RegistryChecked"/>: a source flag says what the factor rests on, not what the
+        /// platform suspects. A declaration the metrics do not bear out simply leaves the flag off,
+        /// and the outcome itself — confirmed / not borne out / nothing to compare — travels in the
+        /// factor's <c>inputs</c> under <c>product.input.stage_consistency</c>, where there is room to
+        /// be specific.
+        ///
+        /// Carries no points either. Nothing is blocked and no number moves: an overstated stage is
+        /// addressed to the investor reading the profile, not to the engine.
+        /// </summary>
+        CrossChecked = 16,
     }
 
     /// <summary>One factor's contribution to the total score.</summary>

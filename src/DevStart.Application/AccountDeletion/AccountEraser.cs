@@ -363,6 +363,8 @@ namespace DevStart.Application.AccountDeletion
             await RemoveWhereAsync(context.StartupMetrics, m => m.StartupId == startupId, cancellationToken);
             await RemoveWhereAsync(context.StartupRoadmapItems, r => r.StartupId == startupId, cancellationToken);
             await RemoveWhereAsync(context.StartupCompetitors, c => c.StartupId == startupId, cancellationToken);
+            await RemoveWhereAsync(context.StartupPartnerships, p => p.StartupId == startupId, cancellationToken);
+            await RemoveWhereAsync(context.StartupPatents, p => p.StartupId == startupId, cancellationToken);
             await RemoveWhereAsync(context.StartupCommunityDocuments, d => d.StartupId == startupId, cancellationToken);
             await RemoveWhereAsync(context.StartupCommunityStandards, s => s.StartupId == startupId, cancellationToken);
             await RemoveWhereAsync(context.StartupValuationSnapshots, s => s.StartupId == startupId, cancellationToken);
