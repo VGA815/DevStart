@@ -32,7 +32,9 @@ namespace DevStart.Application.InvestorProfiles.GetById
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 
-            if (response is null)
+            // Непубличный профиль скрыт от всех, кроме владельца, и скрыт именно как «нет такого»:
+            // каталог его не показывает, значит и по прямой ссылке существование подтверждать нечем.
+            if (response is null || (!response.IsPublic && query.ViewerId != query.UserId))
             {
                 return Result.Failure<InvestorProfileResponse>(InvestorProfileErrors.NotFound(query.UserId));
             }

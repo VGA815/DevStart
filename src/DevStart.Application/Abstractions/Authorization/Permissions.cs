@@ -70,18 +70,18 @@
         public const string ChatFilesUpload                  = "chat_files::upload";
         public const string ChatFilesRead                    = "chat_files::read";
 
+        // Чтения здесь нет намеренно: каталоги инвесторов и экспертов и карточки за ними анонимны,
+        // как и каталог стартапов. Видимость решает не право, а флаг публичности профиля — он
+        // проверяется в обработчике, потому что владелец должен читать и свою непубличную карточку.
         public const string InvestorProfilesCreate           = "investor_profiles::create";
         public const string InvestorProfilesUpdate           = "investor_profiles::update";
-        public const string InvestorProfilesRead             = "investor_profiles::read";
 
         public const string ExpertProfilesCreate             = "expert_profiles::create";
         public const string ExpertProfilesUpdate             = "expert_profiles::update";
-        public const string ExpertProfilesRead               = "expert_profiles::read";
 
         public const string ExpertExperiencesCreate          = "expert_experiences::create";
         public const string ExpertExperiencesUpdate          = "expert_experiences::update";
         public const string ExpertExperiencesDelete          = "expert_experiences::delete";
-        public const string ExpertExperiencesRead            = "expert_experiences::read";
 
         public const string ExpertCollaborationRequestsCreate   = "expert_collaboration_requests::create";
         public const string ExpertCollaborationRequestsRespond  = "expert_collaboration_requests::respond";

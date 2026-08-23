@@ -1,3 +1,4 @@
+using DevStart.Application.ExpertExperiences.GetAllByExpertProfileId;
 using DevStart.Application.ExpertProfiles.Create;
 using DevStart.Application.ExpertProfiles.GetById;
 using DevStart.Application.ExpertProfiles.Update;
@@ -51,8 +52,9 @@ public sealed class ExpertProfileHandlerTests
 
         await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
 
+        // Профиль создаётся непубличным, поэтому читаем его как владелец — так же, как дашборд.
         Result<ExpertProfileResponse> read = await new GetExpertProfileByIdQueryHandler(_db)
-            .Handle(new GetExpertProfileByIdQuery(userId), CancellationToken.None);
+            .Handle(new GetExpertProfileByIdQuery(userId, userId), CancellationToken.None);
 
         read.IsSuccess.ShouldBeTrue();
         read.Value.DisplayName.ShouldBe("Jane Expert");
@@ -179,6 +181,102 @@ public sealed class ExpertProfileHandlerTests
 
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBe(ExpertProfileErrors.NotFound(userId));
+    }
+
+    /// <summary>
+    /// Каталог экспертов открыт анониму, а карточка — нет: клик по видимому в списке профилю
+    /// отвечал «эксперта не существует». Читатель карточки теперь тот же, что и читатель каталога.
+    /// </summary>
+    [Fact]
+    public async Task GetById_ShouldReturnAPublicProfile_ToAnAnonymousViewer()
+    {
+        Guid userId = Guid.NewGuid();
+        await SeedPublicExpert(userId);
+
+        Result<ExpertProfileResponse> read = await new GetExpertProfileByIdQueryHandler(_db)
+            .Handle(new GetExpertProfileByIdQuery(userId, viewerId: null), CancellationToken.None);
+
+        read.IsSuccess.ShouldBeTrue();
+        read.Value.DisplayName.ShouldBe("Jane Public");
+    }
+
+    [Fact]
+    public async Task GetById_ShouldHideANonPublicProfile_FromEveryoneButItsOwner()
+    {
+        Guid userId = Guid.NewGuid();
+        SeedProfile(userId);
+        await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
+
+        var handler = new GetExpertProfileByIdQueryHandler(_db);
+
+        Result<ExpertProfileResponse> anonymous = await handler
+            .Handle(new GetExpertProfileByIdQuery(userId, viewerId: null), CancellationToken.None);
+        Result<ExpertProfileResponse> stranger = await handler
+            .Handle(new GetExpertProfileByIdQuery(userId, Guid.NewGuid()), CancellationToken.None);
+        Result<ExpertProfileResponse> owner = await handler
+            .Handle(new GetExpertProfileByIdQuery(userId, userId), CancellationToken.None);
+
+        // Не «нет доступа», а «нет такого»: каталог непубличный профиль не показывает, значит и по
+        // прямой ссылке подтверждать его существование нечем.
+        anonymous.Error.ShouldBe(ExpertProfileErrors.NotFound(userId));
+        stranger.Error.ShouldBe(ExpertProfileErrors.NotFound(userId));
+        owner.IsSuccess.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Опыт — основное содержимое карточки. Если он остаётся закрытым, аноним получает открывшуюся,
+    /// но пустую страницу — то же самое «профиля как будто нет», только другими словами.
+    /// </summary>
+    [Fact]
+    public async Task GetExperiences_ShouldFollowTheVisibilityOfTheCardTheyBelongTo()
+    {
+        Guid publicUserId = Guid.NewGuid();
+        Guid privateUserId = Guid.NewGuid();
+        Guid publicProfileId = await SeedPublicExpert(publicUserId, "Jane Public");
+
+        SeedProfile(privateUserId);
+        await CreateHandler(privateUserId).Handle(CreateCommand(), CancellationToken.None);
+        Guid privateProfileId = (await _db.ExpertProfiles.SingleAsync(ep => ep.UserId == privateUserId)).Id;
+
+        SeedExperience(publicProfileId);
+        SeedExperience(privateProfileId);
+
+        var handler = new GetExpertExperiencesByExpertProfileIdQueryHandler(_db);
+
+        Result<List<ExpertExperienceResponse>> onPublic = await handler.Handle(
+            new GetExpertExperiencesByExpertProfileIdQuery(publicProfileId, viewerId: null),
+            CancellationToken.None);
+        Result<List<ExpertExperienceResponse>> onPrivate = await handler.Handle(
+            new GetExpertExperiencesByExpertProfileIdQuery(privateProfileId, viewerId: null),
+            CancellationToken.None);
+        Result<List<ExpertExperienceResponse>> onPrivateAsOwner = await handler.Handle(
+            new GetExpertExperiencesByExpertProfileIdQuery(privateProfileId, privateUserId),
+            CancellationToken.None);
+
+        onPublic.Value.Count.ShouldBe(1);
+        onPrivate.Value.ShouldBeEmpty();
+        onPrivateAsOwner.Value.Count.ShouldBe(1);
+    }
+
+    private async Task<Guid> SeedPublicExpert(Guid userId, string displayName = "Jane Public")
+    {
+        SeedProfile(userId);
+        await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
+        await UpdateHandler(userId).Handle(
+            new UpdateExpertProfileCommand(
+                [ExpertSpecialization.Product],
+                displayName: displayName,
+                isPublic: true),
+            CancellationToken.None);
+
+        return (await _db.ExpertProfiles.SingleAsync(ep => ep.UserId == userId)).Id;
+    }
+
+    private void SeedExperience(Guid expertProfileId)
+    {
+        _db.ExpertExperiences.Add(ExpertExperience.Create(
+            expertProfileId, "Acme", "CPO", new DateOnly(2020, 1, 1), null, null, Now));
+        _db.SaveChanges();
     }
 
     private CreateExpertProfileCommandHandler CreateHandler(Guid userId) =>

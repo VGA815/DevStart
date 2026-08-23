@@ -81,7 +81,6 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.InvestorProfilesCreate,
                 Permissions.InvestorProfilesUpdate,
-                Permissions.InvestorProfilesRead,
 
                 Permissions.InvestmentApplicationsCreate,
                 Permissions.InvestmentApplicationsRespond,
@@ -110,11 +109,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.ExpertExperiencesCreate,
                 Permissions.ExpertExperiencesUpdate,
                 Permissions.ExpertExperiencesDelete,
-                Permissions.ExpertExperiencesRead,
 
                 Permissions.ExpertProfilesCreate,
                 Permissions.ExpertProfilesUpdate,
-                Permissions.ExpertProfilesRead,
             },
             [UserSystemRole.Admin] = new HashSet<string>
             {
@@ -188,7 +185,6 @@ namespace DevStart.Infrastructure.Authorization
 
                 Permissions.InvestorProfilesCreate,
                 Permissions.InvestorProfilesUpdate,
-                Permissions.InvestorProfilesRead,
 
                 Permissions.InvestmentApplicationsCreate,
                 Permissions.InvestmentApplicationsRespond,
@@ -222,11 +218,9 @@ namespace DevStart.Infrastructure.Authorization
                 Permissions.ExpertExperiencesCreate,
                 Permissions.ExpertExperiencesUpdate,
                 Permissions.ExpertExperiencesDelete,
-                Permissions.ExpertExperiencesRead,
 
                 Permissions.ExpertProfilesCreate,
                 Permissions.ExpertProfilesUpdate,
-                Permissions.ExpertProfilesRead,
 
                 Permissions.AdminUsersRead,
                 Permissions.AdminUsersBan,

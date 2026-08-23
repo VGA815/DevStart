@@ -12,6 +12,20 @@ namespace DevStart.Application.ExpertExperiences.GetAllByExpertProfileId
             GetExpertExperiencesByExpertProfileIdQuery query,
             CancellationToken cancellationToken)
         {
+            var owner = await context.ExpertProfiles
+                .AsNoTracking()
+                .Where(ep => ep.Id == query.ExpertProfileId)
+                .Select(ep => new { ep.UserId, ep.Profile.IsPublic })
+                .SingleOrDefaultAsync(cancellationToken);
+
+            // Тот же рубеж видимости, что и у самой карточки. Пустой список, а не отказ: карточка
+            // непубличного профиля уже отвечает «нет такого», и повторять это здесь нечем — список
+            // несуществующего для зрителя профиля и есть пустой список.
+            if (owner is null || (!owner.IsPublic && query.ViewerId != owner.UserId))
+            {
+                return new List<ExpertExperienceResponse>();
+            }
+
             List<ExpertExperienceResponse> result = await context.ExpertExperiences
                 .AsNoTracking()
                 .Where(e => e.ExpertProfileId == query.ExpertProfileId)

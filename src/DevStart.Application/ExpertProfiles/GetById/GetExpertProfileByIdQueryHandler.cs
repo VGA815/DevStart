@@ -32,7 +32,9 @@ namespace DevStart.Application.ExpertProfiles.GetById
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 
-            if (data is null)
+            // Непубличный профиль скрыт от всех, кроме владельца, и скрыт именно как «нет такого»:
+            // каталог его не показывает, значит и по прямой ссылке существование подтверждать нечем.
+            if (data is null || (!data.IsPublic && query.ViewerId != query.UserId))
             {
                 return Result.Failure<ExpertProfileResponse>(ExpertProfileErrors.NotFound(query.UserId));
             }

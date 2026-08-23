@@ -47,8 +47,9 @@ public sealed class InvestorProfileHandlerTests
 
         await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
 
+        // Профиль создаётся непубличным, поэтому читаем его как владелец — так же, как дашборд.
         Result<InvestorProfileResponse> read = await new GetInvestorProfileByIdQueryHandler(_db)
-            .Handle(new GetInvestorProfileByIdQuery(userId), CancellationToken.None);
+            .Handle(new GetInvestorProfileByIdQuery(userId, userId), CancellationToken.None);
 
         read.IsSuccess.ShouldBeTrue();
         read.Value.DisplayName.ShouldBe("Jane Investor");
@@ -223,6 +224,50 @@ public sealed class InvestorProfileHandlerTests
 
         result.IsFailure.ShouldBeTrue();
         result.Error.ShouldBe(InvestorProfileErrors.NotFound(userId));
+    }
+
+    /// <summary>
+    /// Каталог инвесторов открыт анониму, а карточка — нет: клик по видимому в списке профилю
+    /// отвечал «инвестора не существует». Читатель карточки теперь тот же, что и читатель каталога.
+    /// </summary>
+    [Fact]
+    public async Task GetById_ShouldReturnAPublicProfile_ToAnAnonymousViewer()
+    {
+        Guid userId = Guid.NewGuid();
+        SeedProfile(userId);
+        await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
+        await UpdateHandler(userId).Handle(
+            new UpdateInvestorProfileCommand(InvestorProfileType.Fund, displayName: "Jane Fund", isPublic: true),
+            CancellationToken.None);
+
+        Result<InvestorProfileResponse> read = await new GetInvestorProfileByIdQueryHandler(_db)
+            .Handle(new GetInvestorProfileByIdQuery(userId, viewerId: null), CancellationToken.None);
+
+        read.IsSuccess.ShouldBeTrue();
+        read.Value.DisplayName.ShouldBe("Jane Fund");
+    }
+
+    [Fact]
+    public async Task GetById_ShouldHideANonPublicProfile_FromEveryoneButItsOwner()
+    {
+        Guid userId = Guid.NewGuid();
+        SeedProfile(userId);
+        await CreateHandler(userId).Handle(CreateCommand(), CancellationToken.None);
+
+        var handler = new GetInvestorProfileByIdQueryHandler(_db);
+
+        Result<InvestorProfileResponse> anonymous = await handler
+            .Handle(new GetInvestorProfileByIdQuery(userId, viewerId: null), CancellationToken.None);
+        Result<InvestorProfileResponse> stranger = await handler
+            .Handle(new GetInvestorProfileByIdQuery(userId, Guid.NewGuid()), CancellationToken.None);
+        Result<InvestorProfileResponse> owner = await handler
+            .Handle(new GetInvestorProfileByIdQuery(userId, userId), CancellationToken.None);
+
+        // Не «нет доступа», а «нет такого»: каталог непубличный профиль не показывает, значит и по
+        // прямой ссылке подтверждать его существование нечем.
+        anonymous.Error.ShouldBe(InvestorProfileErrors.NotFound(userId));
+        stranger.Error.ShouldBe(InvestorProfileErrors.NotFound(userId));
+        owner.IsSuccess.ShouldBeTrue();
     }
 
     private CreateInvestorProfileCommandHandler CreateHandler(Guid userId) =>
